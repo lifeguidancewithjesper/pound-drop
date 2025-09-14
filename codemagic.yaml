@@ -19,9 +19,20 @@ workflows:
       - name: Prebuild iOS
         script: |
           npx expo prebuild --platform ios --clear
+      - name: Set up automatic code signing
+        script: |
+          app-store-connect fetch-signing-files $BUNDLE_ID \
+            --type IOS_APP_STORE \
+            --create
+      - name: Use signing profiles
+        script: |
+          xcode-project use-profiles
       - name: Build iOS
         script: |
-          xcode-project build-ipa --workspace "ios/$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+          xcode-project build-ipa \
+            --workspace "ios/$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME" \
+            --config "Release"
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
