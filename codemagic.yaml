@@ -9,7 +9,6 @@ workflows:
         bundle_identifier: com.lifeguidancewithjesper.pounddrop
       vars:
         BUNDLE_ID: com.lifeguidancewithjesper.pounddrop
-        APPLE_TEAM_ID: "8VKM26D99V"
         XCODE_WORKSPACE: PoundDrop.xcworkspace
         XCODE_SCHEME: PoundDrop
     scripts:
@@ -27,7 +26,7 @@ workflows:
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create \
-            --team-id "$APPLE_TEAM_ID"
+            --team-id 8VKM26D99V
       - name: Add certificates to keychain
         script: keychain add-certificates
       - name: Use signing profiles
