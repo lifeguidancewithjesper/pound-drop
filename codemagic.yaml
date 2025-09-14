@@ -11,8 +11,6 @@ workflows:
         BUNDLE_ID: com.lifeguidancewithjesper.pounddrop
         XCODE_WORKSPACE: PoundDrop.xcworkspace
         XCODE_SCHEME: PoundDrop
-      groups:
-        - app_store_credentials
     scripts:
       - name: Install dependencies
         script: |
@@ -34,6 +32,6 @@ workflows:
           success: true
           failure: true
       app_store_connect:
-        api_key: Encrypted(APP_STORE_CONNECT_PRIVATE_KEY)
-        key_id: Encrypted(APP_STORE_CONNECT_KEY_IDENTIFIER)
-        issuer_id: Encrypted(APP_STORE_CONNECT_ISSUER_ID)
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
