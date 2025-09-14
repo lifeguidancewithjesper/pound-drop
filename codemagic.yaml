@@ -1,7 +1,39 @@
-echo "# pound-drop" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/lifeguidancewithjesper/pound-drop.git
-git push -u origin main
+workflows:
+  react-native-ios:
+    name: Pound Drop iOS Build
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.lifeguidancewithjesper.pounddrop
+      vars:
+        BUNDLE_ID: com.lifeguidancewithjesper.pounddrop
+        XCODE_WORKSPACE: PoundDrop.xcworkspace
+        XCODE_SCHEME: PoundDrop
+      groups:
+        - app_store_credentials
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install -g @expo/cli
+          npm ci
+      - name: Prebuild iOS
+        script: |
+          npx expo prebuild --platform ios --clear
+      - name: Build iOS
+        script: |
+          xcode-project build-ipa --workspace "ios/$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - jesper@lifeguidancewithjesper.com
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        api_key: Encrypted(APP_STORE_CONNECT_PRIVATE_KEY)
+        key_id: Encrypted(APP_STORE_CONNECT_KEY_IDENTIFIER)
+        issuer_id: Encrypted(APP_STORE_CONNECT_ISSUER_ID)
