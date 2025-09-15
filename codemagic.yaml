@@ -1,45 +1,83 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS Build
-    instance_type: mac_mini_m2
+    name: Pound Drop iOS Build - iOS 18 SDK
     max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: codemagic
     environment:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.lifeguidancewithjesper.pounddrop
       vars:
-        BUNDLE_ID: com.lifeguidancewithjesper.pounddrop
-        XCODE_WORKSPACE: PoundDrop.xcworkspace
-        XCODE_SCHEME: PoundDrop
+        BUNDLE_ID: "com.lifeguidancewithjesper.pounddrop"
+        APPLE_TEAM_ID: "8VKM26D99V"
+        XCODE_WORKSPACE: "PoundDrop.xcworkspace"
+        XCODE_SCHEME: "PoundDrop"
+        # Force Xcode 16.4 for iOS 18 SDK compliance
+        XCODE_VERSION: "16.4"
+        # Expo app directory
+        CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
     scripts:
-      - name: Install dependencies
+      - name: Install Node dependencies
         script: |
-          npm install -g @expo/cli
+          cd mobile-app/pound-drop-fresh
+          npm install -g @expo/cli@latest
           npm ci
-      - name: Prebuild iOS
+          
+      - name: Fix Expo dependencies  
         script: |
+          cd mobile-app/pound-drop-fresh
+          npx expo install --fix
+          npx expo doctor --fix
+          
+      - name: Prebuild iOS project
+        script: |
+          cd mobile-app/pound-drop-fresh
           npx expo prebuild --platform ios --clear
-      - name: Initialize keychain
-        script: keychain initialize
-      - name: Fetch signing files (create if missing)
+          
+      - name: Initialize keychain for code signing
         script: |
+          keychain initialize
+          
+      - name: Fetch/create App Store signing files
+        script: |
+          echo "Fetching signing files for: $BUNDLE_ID"
+          echo "Apple Team ID: $APPLE_TEAM_ID"
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create \
-            --team-id 8VKM26D99V
+            --team-id "$APPLE_TEAM_ID" \
+            --verbose
+          
       - name: Add certificates to keychain
-        script: keychain add-certificates
-      - name: Use signing profiles
-        script: xcode-project use-profiles
-      - name: Build iOS
         script: |
+          keychain add-certificates --verbose
+          
+      - name: Set up provisioning profiles
+        script: |
+          cd mobile-app/pound-drop-fresh
+          xcode-project use-profiles --verbose
+          
+      - name: Install CocoaPods dependencies
+        script: |
+          cd mobile-app/pound-drop-fresh/ios
+          pod install --clean-install
+          
+      - name: Build iOS app for App Store
+        script: |
+          cd mobile-app/pound-drop-fresh
           xcode-project build-ipa \
             --workspace "ios/$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME" \
-            --config "Release" \
-            --export-method app-store
+            --configuration "Release" \
+            --export-method app-store \
+            --verbose
+            
     artifacts:
-      - build/ios/ipa/*.ipa
+      - mobile-app/pound-drop-fresh/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      
     publishing:
       email:
         recipients:
@@ -48,6 +86,30 @@ workflows:
           success: true
           failure: true
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        auth: integration
+        
+  android:
+    name: Pound Drop Android Build
+    max_build_duration: 120
+    instance_type: linux_x2
+    environment:
+      android_signing:
+        - keystore_reference
+      vars:
+        CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
+      groups:
+        - google_play_credentials
+    scripts:
+      - name: Install Node dependencies
+        script: |
+          cd mobile-app/pound-drop-fresh
+          npm ci
+          
+      - name: Build Android APK/AAB
+        script: |
+          cd mobile-app/pound-drop-fresh
+          npx expo build:android --type app-bundle
+          
+    artifacts:
+      - mobile-app/pound-drop-fresh/build/**/*.aab
+      - mobile-app/pound-drop-fresh/build/**/*.apk
