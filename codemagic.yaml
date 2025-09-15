@@ -22,23 +22,32 @@ workflows:
           cd mobile-app/pound-drop-fresh
           npm install -g @expo/cli@latest
           npm ci
+          
       - name: Fix Expo dependencies  
         script: |
           cd mobile-app/pound-drop-fresh
           npx expo install --fix
           npx expo doctor --fix
+          
       - name: Prebuild iOS project
         script: |
           cd mobile-app/pound-drop-fresh
           npx expo prebuild --platform ios --clear
+          
+      - name: Fetch existing signing files only
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE
       - name: Set up code signing settings on Xcode project
         script: |
           cd mobile-app/pound-drop-fresh
           xcode-project use-profiles
+          
       - name: Install CocoaPods dependencies
         script: |
           cd mobile-app/pound-drop-fresh/ios
           pod install --clean-install
+          
       - name: Build iOS app for App Store
         script: |
           cd mobile-app/pound-drop-fresh
@@ -48,9 +57,11 @@ workflows:
             --configuration "Release" \
             --export-method app-store \
             --verbose
+            
     artifacts:
       - mobile-app/pound-drop-fresh/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+      
     publishing:
       email:
         recipients:
@@ -60,3 +71,29 @@ workflows:
           failure: true
       app_store_connect:
         auth: integration
+        
+  android:
+    name: Pound Drop Android Build
+    max_build_duration: 120
+    instance_type: linux_x2
+    environment:
+      android_signing:
+        - keystore_reference
+      vars:
+        CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
+      groups:
+        - google_play_credentials
+    scripts:
+      - name: Install Node dependencies
+        script: |
+          cd mobile-app/pound-drop-fresh
+          npm ci
+          
+      - name: Build Android APK/AAB
+        script: |
+          cd mobile-app/pound-drop-fresh
+          npx expo build:android --type app-bundle
+          
+    artifacts:
+      - mobile-app/pound-drop-fresh/build/**/*.aab
+      - mobile-app/pound-drop-fresh/build/**/*.apk
