@@ -48,3 +48,15 @@ workflows:
             --configuration "Release" \
             --export-method app-store \
             --verbose
+    artifacts:
+      - mobile-app/pound-drop-fresh/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - jesper@lifeguidancewithjesper.com
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
