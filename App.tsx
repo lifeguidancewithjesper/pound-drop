@@ -1,32 +1,30 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Hello Pound Drop!</Text>
-      <Text style={styles.subtext}>Your mobile app is working!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#8B5CF6',
-    marginBottom: 16,
-  },
-  subtext: {
-    fontSize: 16,
-    color: '#666',
-  },
-});
+import React from 'react'; 
+import { NavigationContainer } from '@react-navigation/native'; 
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; 
+import Ionicons from '@expo/vector-icons/Ionicons'; 
+import { StatusBar } from 'expo-status-bar'; 
+ 
+import DashboardScreen from './src/screens/DashboardScreen'; 
+import WellnessLogScreen from './src/screens/WellnessLogScreen'; 
+import MealLoggerScreen from './src/screens/MealLoggerScreen'; 
+import ProgressScreen from './src/screens/ProgressScreen'; 
+import ProfileScreen from './src/screens/ProfileScreen'; 
+ 
+const Tab = createBottomTabNavigator(); 
+ 
+export default function App() { 
+  return ( 
+    <> 
+      <StatusBar style="dark" /> 
+      <NavigationContainer> 
+        <Tab.Navigator> 
+          <Tab.Screen name="Dashboard" component={DashboardScreen} /> 
+          <Tab.Screen name="Wellness" component={WellnessLogScreen} /> 
+          <Tab.Screen name="Meals" component={MealLoggerScreen} /> 
+          <Tab.Screen name="Progress" component={ProgressScreen} /> 
+          <Tab.Screen name="Profile" component={ProfileScreen} /> 
+        </Tab.Navigator> 
+      </NavigationContainer> 
+    </> 
+  ); 
+} 
