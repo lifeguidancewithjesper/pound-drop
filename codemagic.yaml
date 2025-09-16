@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - Clean Build
+    name: Pound Drop iOS - Final Fix
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -25,31 +25,55 @@ workflows:
         script: |
           npx expo prebuild --platform ios --clean
           
-      - name: Install CocoaPods
+      - name: Build iOS app for App Store
         script: |
-          cd ios && pod install --clean-install && cd ..
+          set -eo pipefail
           
-      - name: Build iOS app for App Store  
-        script: |
-          # Ensure we're at repo root
-          pwd
-          # Locate generated workspace
-          WORKSPACE=$(ls ios/*.xcworkspace | head -n1)
-          if [ -z "$WORKSPACE" ]; then echo "No .xcworkspace found under ios/"; exit 1; fi
+          # Ensure pods are properly installed
+          if [ ! -d ios ]; then echo "ios/ not found"; exit 1; fi
+          (cd ios && pod install --repo-update)
+          
+          # Find ONLY top-level .xcworkspace directories in ios/
+          WORKSPACE=$(find ios -maxdepth 1 -type d -name "*.xcworkspace" -print -quit)
+          if [ -z "$WORKSPACE" ]; then 
+            echo "No top-level .xcworkspace in ios/ after pod install"
+            ls -la ios
+            exit 1
+          fi
           echo "Using workspace: $WORKSPACE"
-
-          # Derive scheme from workspace (first listed scheme)
-          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" | awk '/Schemes:/{flag=1;next}/^\s*$/{if(flag){exit}}flag' | head -1 | xargs)
-          if [ -z "$SCHEME" ]; then echo "No scheme found in $WORKSPACE"; exit 1; fi
+          
+          # Enumerate schemes and pick the best match
+          SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | sed 's/^[[:space:]]*//')
+          echo "Available schemes:"
+          echo "$SCHEMES"
+          
+          # Try to find a good scheme match, fallback to first scheme
+          SCHEME=""
+          for s in PoundDrop "Pound Drop" pounddrop pound-drop; do
+            if echo "$SCHEMES" | grep -Fx "$s" >/dev/null; then 
+              SCHEME="$s"
+              break
+            fi
+          done
+          
+          # If no match found, use first available scheme
+          if [ -z "$SCHEME" ]; then 
+            SCHEME=$(echo "$SCHEMES" | head -n1)
+          fi
+          
+          if [ -z "$SCHEME" ]; then 
+            echo "No scheme found in $WORKSPACE"
+            exit 1
+          fi
           echo "Using scheme: $SCHEME"
-
+          
           # Code signing and build
           keychain add-certificates
           xcode-project use-profiles
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
             --scheme "$SCHEME" \
-            --config "Release"
+            --config Release
             
     artifacts:
       - build/ios/ipa/*.ipa
