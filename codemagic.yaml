@@ -17,21 +17,24 @@ workflows:
         XCODE_WORKSPACE: "PoundDrop.xcworkspace"
         XCODE_SCHEME: "PoundDrop"
         XCODE_VERSION: "16.4"
-        CM_BUILD_DIR: "."
+        # Build from complete Expo project with babel.config.js
+        CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
     scripts:
       - name: Install Node dependencies
         script: |
-          echo "Setting up mobile app from root files..."
-          cp package-mobile.json package.json
-          npm install
+          echo "Building from complete Expo project with Metro configuration..."
+          cd $CM_BUILD_DIR
+          npm ci
           
       - name: Fix Expo dependencies  
         script: |
+          cd $CM_BUILD_DIR
           npx expo install --fix
           npx expo-doctor || echo "Expo doctor completed"
           
       - name: Prebuild iOS project
         script: |
+          cd $CM_BUILD_DIR
           npx expo prebuild --platform ios --clean
           
       - name: Set up code signing
@@ -41,18 +44,18 @@ workflows:
           
       - name: Install CocoaPods dependencies
         script: |
-          cd ios
+          cd $CM_BUILD_DIR/ios
           pod install --clean-install
           
       - name: Build iOS app for App Store
         script: |
           xcode-project build-ipa \
-            --workspace "ios/$XCODE_WORKSPACE" \
+            --workspace "$CM_BUILD_DIR/ios/$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME" \
             --config "Release"
             
     artifacts:
-      - build/ios/ipa/*.ipa
+      - mobile-app/pound-drop-fresh/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
       
     publishing:
