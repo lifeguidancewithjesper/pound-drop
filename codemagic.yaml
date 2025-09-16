@@ -25,6 +25,7 @@ workflows:
         script: |
           echo "Installing Expo CLI and dependencies..."
           npm install -g @expo/cli@latest
+          cp package-mobile.json package.json
           npm install
           
       - name: Fix Expo dependencies  
