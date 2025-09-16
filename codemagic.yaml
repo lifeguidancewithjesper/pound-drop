@@ -34,10 +34,12 @@ workflows:
           cd mobile-app/pound-drop-fresh
           npx expo prebuild --platform ios --clear
           
-      - name: Fetch existing signing files only
+      - name: Fetch/create signing files automatically
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE
+            --type IOS_APP_STORE \
+            --create \
+            --team-id "$APPLE_TEAM_ID"
       - name: Set up code signing settings on Xcode project
         script: |
           cd mobile-app/pound-drop-fresh
@@ -71,29 +73,3 @@ workflows:
           failure: true
       app_store_connect:
         auth: integration
-        
-  android:
-    name: Pound Drop Android Build
-    max_build_duration: 120
-    instance_type: linux_x2
-    environment:
-      android_signing:
-        - keystore_reference
-      vars:
-        CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
-      groups:
-        - google_play_credentials
-    scripts:
-      - name: Install Node dependencies
-        script: |
-          cd mobile-app/pound-drop-fresh
-          npm ci
-          
-      - name: Build Android APK/AAB
-        script: |
-          cd mobile-app/pound-drop-fresh
-          npx expo build:android --type app-bundle
-          
-    artifacts:
-      - mobile-app/pound-drop-fresh/build/**/*.aab
-      - mobile-app/pound-drop-fresh/build/**/*.apk
