@@ -1,57 +1,69 @@
 workflows:
-  ios-workflow:
-    name: iOS Workflow 
+  react-native-ios:
+    name: Pound Drop iOS Build - iOS 18 SDK
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
-      app_store_connect: Codemagic
+      app_store_connect: codemagic
     environment:
       ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.pounddrop.app2024
+        certificates:
+          - pound-drop-ios-distribution
+        provisioning_profiles:
+          - pound-drop-app-store-profile
       vars:
-        BUNDLE_ID: "com.pounddrop.app2024"
+        BUNDLE_ID: "com.lifeguidancewithjesper.pounddrop"
+        APPLE_TEAM_ID: "8VKM26D99V"
         XCODE_WORKSPACE: "PoundDrop.xcworkspace"
         XCODE_SCHEME: "PoundDrop"
+        XCODE_VERSION: "16.4"
+        # Build from complete mobile app directory
         CM_BUILD_DIR: "./mobile-app/pound-drop-mobile"
-      node: 18.17.0
-      xcode: 16.4
-      cocoapods: default
     scripts:
-      - name: Set up iOS signing
+      - name: Install Node dependencies
         script: |
-          echo $IOS_DISTRIBUTION_CERTIFICATE | base64 --decode > ios_distribution.p12
-          security create-keychain -p "" ~/Library/Keychains/build.keychain
-          security import ios_distribution.p12 -k ~/Library/Keychains/build.keychain -P "" -A
-          security list-keychains -s ~/Library/Keychains/build.keychain
-          security default-keychain ~/Library/Keychains/build.keychain
-          security unlock-keychain -p "" ~/Library/Keychains/build.keychain
-      - name: Install npm dependencies
-        script: |
+          echo "Building from complete mobile app folder..."
           cd $CM_BUILD_DIR
           npm ci
-      - name: Install/fix Expo dependencies  
+          
+      - name: Fix Expo dependencies  
         script: |
           cd $CM_BUILD_DIR
           npx expo install --fix
+          npx expo-doctor || echo "Expo doctor completed"
+          
       - name: Prebuild iOS project
         script: |
           cd $CM_BUILD_DIR
           npx expo prebuild --platform ios --clean
+          
+      - name: Set up code signing
+        script: |
+          keychain add-certificates
+          xcode-project use-profiles
+          
       - name: Install CocoaPods dependencies
         script: |
           cd $CM_BUILD_DIR/ios
           pod install --clean-install
+          
       - name: Build iOS app for App Store
         script: |
           xcode-project build-ipa \
             --workspace "$CM_BUILD_DIR/ios/$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME" \
             --config "Release"
+            
     artifacts:
-      - build/ios/ipa/*.ipa
+      - mobile-app/pound-drop-mobile/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+      
     publishing:
+      email:
+        recipients:
+          - jesper@lifeguidancewithjesper.com
+        notify:
+          success: true
+          failure: true
       app_store_connect:
         auth: integration
-        submit_to_app_store: false
