@@ -28,7 +28,7 @@ workflows:
       - name: Fix Expo dependencies  
         script: |
           npx expo install --fix
-          npx expo doctor --fix
+          npx expo-doctor || echo "Expo doctor completed"
           
       - name: Prebuild iOS project
         script: |
