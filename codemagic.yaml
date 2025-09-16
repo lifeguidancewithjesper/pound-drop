@@ -11,8 +11,6 @@ workflows:
         bundle_identifier: com.lifeguidancewithjesper.pounddrop
         certificates:
           - pound-drop-ios-distribution
-      groups:
-        - ios_credentials
       vars:
         BUNDLE_ID: "com.lifeguidancewithjesper.pounddrop"
         APPLE_TEAM_ID: "8VKM26D99V"
