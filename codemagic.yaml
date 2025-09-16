@@ -1,95 +1,57 @@
 workflows:
-  react-native-ios:
-    name: Pound Drop iOS Build - iOS 18 SDK
+  ios-workflow:
+    name: iOS Workflow 
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
-      app_store_connect: codemagic
+      app_store_connect: Codemagic
     environment:
       ios_signing:
-        certificates:
-          - pound-drop-ios-distribution
-        provisioning_profiles:
-          - pound-drop-app-store-profile
+        distribution_type: app_store
+        bundle_identifier: com.pounddrop.app2024
       vars:
-        BUNDLE_ID: "com.lifeguidancewithjesper.pounddrop"
-        APPLE_TEAM_ID: "8VKM26D99V"
+        BUNDLE_ID: "com.pounddrop.app2024"
         XCODE_WORKSPACE: "PoundDrop.xcworkspace"
         XCODE_SCHEME: "PoundDrop"
-        # Force Xcode 16.4 for iOS 18 SDK compliance
-        XCODE_VERSION: "16.4"
-        # Build from repository root
-        CM_BUILD_DIR: "."
+        CM_BUILD_DIR: "./mobile-app/pound-drop-mobile"
+      node: 18.17.0
+      xcode: 16.4
+      cocoapods: default
     scripts:
-      - name: Install Node dependencies
+      - name: Set up iOS signing
         script: |
-          echo "Installing Expo CLI and dependencies..."
-          npm install -g @expo/cli@latest
-          cp package-mobile.json package.json
-          npm install
-          
-      - name: Fix Expo dependencies  
+          echo $IOS_DISTRIBUTION_CERTIFICATE | base64 --decode > ios_distribution.p12
+          security create-keychain -p "" ~/Library/Keychains/build.keychain
+          security import ios_distribution.p12 -k ~/Library/Keychains/build.keychain -P "" -A
+          security list-keychains -s ~/Library/Keychains/build.keychain
+          security default-keychain ~/Library/Keychains/build.keychain
+          security unlock-keychain -p "" ~/Library/Keychains/build.keychain
+      - name: Install npm dependencies
         script: |
+          cd $CM_BUILD_DIR
+          npm ci
+      - name: Install/fix Expo dependencies  
+        script: |
+          cd $CM_BUILD_DIR
           npx expo install --fix
-          npx expo-doctor || echo "Expo doctor completed"
-          
       - name: Prebuild iOS project
         script: |
+          cd $CM_BUILD_DIR
           npx expo prebuild --platform ios --clean
-          
-      - name: Set up code signing
-        script: |
-          keychain add-certificates
-          xcode-project use-profiles
-          
       - name: Install CocoaPods dependencies
         script: |
-          cd ios
+          cd $CM_BUILD_DIR/ios
           pod install --clean-install
-          
       - name: Build iOS app for App Store
         script: |
           xcode-project build-ipa \
-            --workspace "ios/$XCODE_WORKSPACE" \
+            --workspace "$CM_BUILD_DIR/ios/$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME" \
             --config "Release"
-            
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
-      
     publishing:
-      email:
-        recipients:
-          - jesper@lifeguidancewithjesper.com
-        notify:
-          success: true
-          failure: true
       app_store_connect:
         auth: integration
-        
-  android:
-    name: Pound Drop Android Build
-    max_build_duration: 120
-    instance_type: linux_x2
-    environment:
-      android_signing:
-        - keystore_reference
-      vars:
-        CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
-      groups:
-        - google_play_credentials
-    scripts:
-      - name: Install Node dependencies
-        script: |
-          cd mobile-app/pound-drop-fresh
-          npm ci
-          
-      - name: Build Android APK/AAB
-        script: |
-          cd mobile-app/pound-drop-fresh
-          npx expo build:android --type app-bundle
-          
-    artifacts:
-      - mobile-app/pound-drop-fresh/build/**/*.aab
-      - mobile-app/pound-drop-fresh/build/**/*.apk
+        submit_to_app_store: false
