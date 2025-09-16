@@ -1,13 +1,31 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 export default function App() {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' }}>
+    <View style={styles.container}>
       <StatusBar style="dark" />
-      <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Pound Drop</Text>
-      <Text style={{ fontSize: 16, marginTop: 10 }}>Build Success Test</Text>
+      <Text style={styles.title}>Pound Drop</Text>
+      <Text style={styles.subtitle}>iOS Build Success Test</Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+});
