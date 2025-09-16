@@ -36,10 +36,14 @@ workflows:
           
       - name: Fetch/create signing files automatically
         script: |
+          echo "Bundle ID: $BUNDLE_ID"
+          echo "Team ID: $APPLE_TEAM_ID"
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
             --create \
-            --team-id "$APPLE_TEAM_ID"
+            --team-id "$APPLE_TEAM_ID" \
+            --verbose \
+            --log-api-calls
       - name: Set up code signing settings on Xcode project
         script: |
           cd mobile-app/pound-drop-fresh
