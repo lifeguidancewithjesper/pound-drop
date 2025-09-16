@@ -14,24 +14,25 @@ workflows:
         APPLE_TEAM_ID: "8VKM26D99V"
         XCODE_WORKSPACE: "PoundDrop.xcworkspace"
         XCODE_SCHEME: "PoundDrop"
+        # Force Xcode 16.4 for iOS 18 SDK compliance
         XCODE_VERSION: "16.4"
+        # Expo app directory
         CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
     scripts:
       - name: Install Node dependencies
         script: |
-          cd mobile-app/pound-drop-fresh
+          pwd
+          ls -la
           npm install -g @expo/cli@latest
           npm ci
           
       - name: Fix Expo dependencies  
         script: |
-          cd mobile-app/pound-drop-fresh
           npx expo install --fix
           npx expo doctor --fix
           
       - name: Prebuild iOS project
         script: |
-          cd mobile-app/pound-drop-fresh
           npx expo prebuild --platform ios --clear
           
       - name: Fetch/create signing files automatically
@@ -46,17 +47,15 @@ workflows:
             --log-api-calls
       - name: Set up code signing settings on Xcode project
         script: |
-          cd mobile-app/pound-drop-fresh
           xcode-project use-profiles
           
       - name: Install CocoaPods dependencies
         script: |
-          cd mobile-app/pound-drop-fresh/ios
+          cd ios
           pod install --clean-install
           
       - name: Build iOS app for App Store
         script: |
-          cd mobile-app/pound-drop-fresh
           xcode-project build-ipa \
             --workspace "ios/$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME" \
@@ -65,7 +64,7 @@ workflows:
             --verbose
             
     artifacts:
-      - mobile-app/pound-drop-fresh/build/ios/ipa/*.ipa
+      - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
       
     publishing:
@@ -77,3 +76,29 @@ workflows:
           failure: true
       app_store_connect:
         auth: integration
+        
+  android:
+    name: Pound Drop Android Build
+    max_build_duration: 120
+    instance_type: linux_x2
+    environment:
+      android_signing:
+        - keystore_reference
+      vars:
+        CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
+      groups:
+        - google_play_credentials
+    scripts:
+      - name: Install Node dependencies
+        script: |
+          cd mobile-app/pound-drop-fresh
+          npm ci
+          
+      - name: Build Android APK/AAB
+        script: |
+          cd mobile-app/pound-drop-fresh
+          npx expo build:android --type app-bundle
+          
+    artifacts:
+      - mobile-app/pound-drop-fresh/build/**/*.aab
+      - mobile-app/pound-drop-fresh/build/**/*.apk
