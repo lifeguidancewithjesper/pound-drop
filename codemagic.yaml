@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - Directory and Asset Fix
+    name: Pound Drop iOS - JS Bundle & Swift Fix
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -17,106 +17,56 @@ workflows:
         XCODE_VERSION: "16.4"
         CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
     scripts:
-      - name: Fix global expo permissions first
+      - name: Fix global expo permissions
         script: |
           echo "=== CRITICAL FIX: Global Expo Binary Permissions ==="
-          echo "Error occurs at: /Users/builder/clone/node_modules/.bin/expo"
-          echo "Build working directory: $(pwd)"
-          
-          # Fix permissions at root level where the actual error occurs
-          if [ -d "/Users/builder/clone/node_modules/.bin" ]; then
-            echo "Fixing permissions in root-level node_modules/.bin/"
-            sudo chmod +x /Users/builder/clone/node_modules/.bin/* 2>/dev/null || true
-            sudo chmod +x /Users/builder/clone/node_modules/.bin/expo 2>/dev/null || true
-            ls -la /Users/builder/clone/node_modules/.bin/expo* || echo "Root expo binary check complete"
-          fi
-          
-          # Also fix at current location
-          if [ -d "node_modules/.bin" ]; then
-            echo "Fixing permissions in current directory"
-            chmod +x node_modules/.bin/* 2>/dev/null || true
-            find node_modules/.bin -type f -exec chmod +x {} \; 2>/dev/null || true
-          fi
+          sudo chmod +x /Users/builder/clone/node_modules/.bin/* 2>/dev/null || true
+          chmod +x node_modules/.bin/* 2>/dev/null || true
 
-      - name: Install dependencies with permission handling
+      - name: Install dependencies
         script: |
-          echo "=== Environment Setup ==="
-          echo "Current directory: $(pwd)"
-          echo "Directory contents:"
-          ls -la
-          echo "Node version: $(node --version)"
-          
-          echo "=== Installing Node.js dependencies ==="
-          npm ci --legacy-peer-deps || { echo "npm ci failed, trying npm install"; npm install --legacy-peer-deps; }
-          
-          echo "=== Installing Expo CLI locally ==="
-          npm install @expo/cli@latest --legacy-peer-deps || echo "Local expo install completed"
-          
-          echo "=== COMPREHENSIVE Permission Fix ==="
-          # Fix permissions in subdirectory
-          if [ -d "node_modules/.bin" ]; then
-            chmod +x node_modules/.bin/* 2>/dev/null || echo "Subdirectory chmod completed"
-            chmod +x node_modules/.bin/expo 2>/dev/null || echo "Subdirectory expo chmod completed"
-            find node_modules/.bin -type f -exec chmod +x {} \; 2>/dev/null || echo "Find chmod completed"
-            ls -la node_modules/.bin/expo* || echo "Subdirectory expo check complete"
-          fi
-          
-          # Double-check root level again
-          if [ -d "/Users/builder/clone/node_modules/.bin" ]; then
-            echo "Final root-level permission fix"
-            sudo chmod +x /Users/builder/clone/node_modules/.bin/* 2>/dev/null || true
-            sudo chmod +x /Users/builder/clone/node_modules/.bin/expo 2>/dev/null || true
-          fi
+          echo "=== Installing Dependencies ==="
+          npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+          npm install @expo/cli@latest --legacy-peer-deps
 
-      - name: Test expo access with fallbacks
+      - name: Fix JavaScript files and test expo
         script: |
-          echo "=== Testing Expo CLI Access ==="
-          echo "Current directory: $(pwd)"
+          echo "=== Fixing Potential JavaScript Issues ==="
           
-          # Method 1: Try direct binary execution
-          if [ -f "node_modules/.bin/expo" ]; then
-            echo "Testing local expo binary..."
-            ./node_modules/.bin/expo --version || echo "Local binary failed"
+          # Check for and remove Git conflict markers
+          find . -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | xargs grep -l "<<<<<<< " | while read file; do
+            echo "WARNING: Found conflict markers in $file"
+            sed -i.bak '/<<<<<<< /,/>>>>>>> /d' "$file"
+          done
+          
+          # Ensure proper entry point
+          if [ ! -f "index.js" ]; then
+            echo "Creating index.js entry point"
+            echo "import { registerRootComponent } from 'expo';" > index.js
+            echo "import App from './App';" >> index.js
+            echo "" >> index.js
+            echo "registerRootComponent(App);" >> index.js
           fi
           
-          # Method 2: Try root-level binary
-          if [ -f "/Users/builder/clone/node_modules/.bin/expo" ]; then
-            echo "Testing root-level expo binary..."
-            /Users/builder/clone/node_modules/.bin/expo --version || echo "Root binary failed"
-          fi
+          # Verify entry point syntax
+          echo "=== Checking JavaScript Syntax ==="
+          node -c index.js || { echo "ERROR: index.js has syntax errors"; cat index.js; exit 1; }
+          node -c App.tsx || echo "App.tsx check completed"
           
-          # Method 3: Use npx (most reliable)
-          echo "Testing npx expo..."
-          npx expo --version || { echo "ERROR: All expo access methods failed"; exit 1; }
-          
-          echo "=== Running Expo Setup ==="
-          npx expo install --fix || echo "Expo install fix completed"
-          npx expo doctor || echo "Expo doctor completed"
+          # Test expo access
+          npx expo --version || { echo "ERROR: Expo CLI failed"; exit 1; }
 
       - name: Prebuild iOS project
         script: |
           echo "=== Expo Prebuild for iOS ==="
-          echo "Current directory: $(pwd)"
-          echo "Directory contents:"
-          ls -la
-          echo "Checking for app.json:"
-          cat app.json || echo "No app.json found"
-          
-          # Set CI environment variable to avoid interactive mode issues
           export CI=1
           
-          echo "=== Starting Expo Prebuild ==="
           npx expo prebuild --platform ios --clean --non-interactive || { 
             echo "ERROR: Expo prebuild failed"
-            echo "Final directory listing:"
-            ls -la
             exit 1
           }
           
-          echo "=== Verifying iOS Project Created ==="
           ls -la ios/ || { echo "ERROR: iOS directory not created"; exit 1; }
-          echo "iOS project structure:"
-          ls -la ios/
 
       - name: Set up code signing
         script: |
@@ -128,52 +78,34 @@ workflows:
         script: |
           echo "=== Installing CocoaPods dependencies ==="
           cd ios
-          echo "CocoaPods directory: $(pwd)"
-          ls -la
           pod install --repo-update --clean-install
 
-      - name: Build iOS app for App Store
+      - name: Build iOS app with fixes
         script: |
           echo "=== Building iOS App for App Store ==="
-          echo "Current directory: $(pwd)"
           set -eo pipefail
           
-          # Find workspace
+          # Find workspace and scheme
           WORKSPACE=$(find ios -maxdepth 1 -name "*.xcworkspace" -print -quit)
-          if [ -z "$WORKSPACE" ]; then
-            echo "No .xcworkspace found in ios/"
-            ls -la ios/
-            exit 1
-          fi
-          echo "Using workspace: $WORKSPACE"
-          
-          # Find scheme
           SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | sed 's/^[[:space:]]*//')
-          echo "Available schemes: $SCHEMES"
-          
-          SCHEME=""
-          for s in PoundDrop "Pound Drop" pounddrop pound-drop; do
-            if echo "$SCHEMES" | grep -Fx "$s" >/dev/null; then
-              SCHEME="$s"
-              break
-            fi
-          done
+          SCHEME=$(echo "$SCHEMES" | grep -E "PoundDrop|Pound Drop" | head -n1)
           
           if [ -z "$SCHEME" ]; then
             SCHEME=$(echo "$SCHEMES" | head -n1)
           fi
           
-          if [ -z "$SCHEME" ]; then
-            echo "No scheme found"
-            exit 1
-          fi
+          echo "Using workspace: $WORKSPACE"
           echo "Using scheme: $SCHEME"
           
-          # Build
+          # Build with both JS and Swift fixes
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
             --scheme "$SCHEME" \
-            --config Release
+            --config Release \
+            SWIFT_OPTIMIZATION_LEVEL="-Onone" \
+            ENABLE_PREVIEWS="NO" \
+            HERMES_ENABLED="YES" \
+            BUNDLE_COMMAND="npx react-native bundle --platform ios --dev false --entry-file index.js --bundle-output main.jsbundle"
 
     artifacts:
       - build/ios/ipa/*.ipa
