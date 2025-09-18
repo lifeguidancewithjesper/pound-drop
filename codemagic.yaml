@@ -1,13 +1,15 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - WORKING BUILD
+    name: Pound Drop iOS - ROOT DIRECTORY BUILD
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
       app_store_connect: codemagic
     cache:
       cache_paths:
+        - $CM_BUILD_DIR/node_modules
         - ~/.npm
+        - $CM_BUILD_DIR/ios/Pods
         - ~/Library/Caches/CocoaPods
         - ~/Library/Developer/Xcode/DerivedData
     environment:
@@ -22,107 +24,107 @@ workflows:
         XCODE_VERSION: "16.1"
         NODE_VERSION: "18"
     scripts:
-      - name: Find and setup mobile app
+      - name: Setup mobile app in root directory
         script: |
-          echo "=== Repository structure ==="
+          echo "=== Current directory: $(pwd) ==="
           ls -la
-          echo "=== Mobile app directories ==="
-          ls -la mobile-app/
           
-          echo "=== Finding complete app directory ==="
-          if [ -d "mobile-app/pound-drop-fresh" ] && [ -f "mobile-app/pound-drop-fresh/App.tsx" ]; then
-            APP_DIR="mobile-app/pound-drop-fresh"
-          elif [ -d "mobile-app/pound-drop-mobile" ] && [ -f "mobile-app/pound-drop-mobile/App.tsx" ]; then
-            APP_DIR="mobile-app/pound-drop-mobile"
-          elif [ -d "mobile-app/fresh-pound-drop" ] && [ -f "mobile-app/fresh-pound-drop/App.tsx" ]; then
-            APP_DIR="mobile-app/fresh-pound-drop"
-          else
-            echo "ERROR: No valid mobile app directory found"
-            exit 1
-          fi
-          
-          echo "=== Using directory: $APP_DIR ==="
-          cd "$APP_DIR"
-          echo "Current directory: $(pwd)"
-          ls -la
+          echo "=== Verifying mobile app files ==="
+          test -f App.tsx || { echo "ERROR: App.tsx missing"; exit 1; }
+          test -f package.json || { echo "ERROR: package.json missing"; exit 1; }
+          test -f index.js || { echo "ERROR: index.js missing"; exit 1; }
+          test -d src || { echo "ERROR: src directory missing"; exit 1; }
+          echo "✓ All mobile app files verified in root directory"
           
           echo "=== Setting up Node.js 18 ==="
           nvm install 18 && nvm use 18
           node --version
           npm --version
           
-          echo "=== Verifying files ==="
-          test -f App.tsx || { echo "ERROR: App.tsx missing"; exit 1; }
-          test -f package.json || { echo "ERROR: package.json missing"; exit 1; }
-          echo "✓ Core files verified"
-          
           echo "=== Installing dependencies ==="
-          npm install --legacy-peer-deps
+          npm install --legacy-peer-deps || { echo "ERROR: npm install failed"; exit 1; }
           
-          echo "=== Installing Expo CLI globally ==="
+          echo "=== Installing Expo CLI ==="
           npm install -g @expo/cli@latest
           
-          echo "=== Saving app directory for next steps ==="
-          echo "$APP_DIR" > /tmp/app_directory
+          echo "=== Verifying app.json ==="
+          cat app.json
 
-      - name: Prebuild iOS
+      - name: Prebuild iOS project
         script: |
-          APP_DIR=$(cat /tmp/app_directory)
-          cd "$APP_DIR"
-          echo "=== Building in: $(pwd) ==="
+          echo "=== Current directory: $(pwd) ==="
           
           export CI=1
           export NODE_ENV=production
           export EXPO_NO_TELEMETRY=1
           
-          echo "=== Cleaning iOS ==="
+          echo "=== Cleaning old iOS build ==="
           rm -rf ios/
           
-          echo "=== Expo prebuild ==="
+          echo "=== Running Expo prebuild for iOS ==="
           expo prebuild --platform ios --clean --non-interactive || {
-            echo "ERROR: Prebuild failed"
+            echo "ERROR: Expo prebuild failed"
+            echo "App.json content:"
             cat app.json
+            echo "Package.json content:"
+            cat package.json
             exit 1
           }
           
-          echo "=== iOS project created ==="
+          echo "=== Verifying iOS project created ==="
           ls -la ios/
+          find ios -name "*.xcworkspace" || { echo "ERROR: No workspace found"; exit 1; }
+          echo "iOS project created successfully ✓"
 
-      - name: Code signing
+      - name: Set up code signing
         script: |
+          echo "=== Setting up code signing ==="
           keychain add-certificates
           xcode-project use-profiles
 
-      - name: CocoaPods
+      - name: Install CocoaPods dependencies
         script: |
-          APP_DIR=$(cat /tmp/app_directory)
-          cd "$APP_DIR/ios"
+          echo "=== Installing CocoaPods in: $(pwd)/ios ==="
+          cd ios
           
-          rm -rf Pods/ Podfile.lock
-          pod install --repo-update
+          rm -rf Pods/ Podfile.lock || true
+          
+          pod install --repo-update || {
+            echo "ERROR: CocoaPods installation failed"
+            cat Podfile
+            exit 1
+          }
+          
+          echo "CocoaPods installation completed ✓"
 
-      - name: Build iOS
+      - name: Build iOS app for App Store
         script: |
-          APP_DIR=$(cat /tmp/app_directory)
-          cd "$APP_DIR"
+          echo "=== Building iOS app from: $(pwd) ==="
           
           WORKSPACE=$(find ios -name "*.xcworkspace" | head -1)
-          echo "Workspace: $WORKSPACE"
+          echo "Using workspace: $WORKSPACE"
           
-          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | grep -v "Pods" | head -1 | xargs)
-          echo "Scheme: $SCHEME"
+          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | grep -v "^Pods-" | head -1 | xargs)
+          echo "Building scheme: $SCHEME"
           
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
             --scheme "$SCHEME" \
             --config Release \
-            --archive-xcargs "DEVELOPMENT_TEAM=$APPLE_TEAM_ID"
+            --archive-xcargs "DEVELOPMENT_TEAM=$APPLE_TEAM_ID CODE_SIGN_IDENTITY='iPhone Distribution' CODE_SIGN_STYLE=Manual" \
+            --archive-flags "-destination 'generic/platform=iOS'" || {
+              echo "ERROR: Build failed"
+              exit 1
+            }
           
-          echo "=== SUCCESS! ==="
+          echo "=== BUILD SUCCESS! ==="
+          echo "IPA file created with complete Pound Drop app:"
           ls -la build/ios/ipa/
+          echo "Your complete app is ready for TestFlight! 🎉"
 
     artifacts:
-      - "*/build/ios/ipa/*.ipa"
+      - build/ios/ipa/*.ipa
+      - ios/build/logs/*.log
 
     publishing:
       app_store_connect:
