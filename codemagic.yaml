@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - Root Permission Fix
+    name: Pound Drop iOS - Directory and Asset Fix
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -42,10 +42,10 @@ workflows:
         script: |
           echo "=== Environment Setup ==="
           echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
           echo "Node version: $(node --version)"
           
-          # Navigate to mobile app directory
-          cd mobile-app/pound-drop-fresh
           echo "=== Installing Node.js dependencies ==="
           npm ci --legacy-peer-deps || { echo "npm ci failed, trying npm install"; npm install --legacy-peer-deps; }
           
@@ -70,8 +70,8 @@ workflows:
 
       - name: Test expo access with fallbacks
         script: |
-          cd mobile-app/pound-drop-fresh
           echo "=== Testing Expo CLI Access ==="
+          echo "Current directory: $(pwd)"
           
           # Method 1: Try direct binary execution
           if [ -f "node_modules/.bin/expo" ]; then
@@ -95,50 +95,89 @@ workflows:
 
       - name: Prebuild iOS project
         script: |
-          cd mobile-app/pound-drop-fresh
           echo "=== Expo Prebuild for iOS ==="
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          echo "Checking for app.json:"
+          cat app.json || echo "No app.json found"
+          
+          # Set CI environment variable to avoid interactive mode issues
+          export CI=1
+          
+          echo "=== Starting Expo Prebuild ==="
           npx expo prebuild --platform ios --clean --non-interactive || { 
             echo "ERROR: Expo prebuild failed"
+            echo "Final directory listing:"
+            ls -la
             exit 1
           }
+          
+          echo "=== Verifying iOS Project Created ==="
           ls -la ios/ || { echo "ERROR: iOS directory not created"; exit 1; }
+          echo "iOS project structure:"
+          ls -la ios/
 
       - name: Set up code signing
         script: |
+          echo "=== Setting up code signing ==="
           keychain add-certificates
           xcode-project use-profiles
 
       - name: Install CocoaPods dependencies
         script: |
-          cd mobile-app/pound-drop-fresh/ios
+          echo "=== Installing CocoaPods dependencies ==="
+          cd ios
+          echo "CocoaPods directory: $(pwd)"
+          ls -la
           pod install --repo-update --clean-install
 
       - name: Build iOS app for App Store
         script: |
-          cd mobile-app/pound-drop-fresh
+          echo "=== Building iOS App for App Store ==="
+          echo "Current directory: $(pwd)"
           set -eo pipefail
           
+          # Find workspace
           WORKSPACE=$(find ios -maxdepth 1 -name "*.xcworkspace" -print -quit)
           if [ -z "$WORKSPACE" ]; then
             echo "No .xcworkspace found in ios/"
+            ls -la ios/
             exit 1
           fi
+          echo "Using workspace: $WORKSPACE"
           
+          # Find scheme
           SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | sed 's/^[[:space:]]*//')
-          SCHEME=$(echo "$SCHEMES" | head -n1)
+          echo "Available schemes: $SCHEMES"
+          
+          SCHEME=""
+          for s in PoundDrop "Pound Drop" pounddrop pound-drop; do
+            if echo "$SCHEMES" | grep -Fx "$s" >/dev/null; then
+              SCHEME="$s"
+              break
+            fi
+          done
+          
+          if [ -z "$SCHEME" ]; then
+            SCHEME=$(echo "$SCHEMES" | head -n1)
+          fi
           
           if [ -z "$SCHEME" ]; then
             echo "No scheme found"
             exit 1
           fi
+          echo "Using scheme: $SCHEME"
           
+          # Build
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
             --scheme "$SCHEME" \
             --config Release
 
     artifacts:
-      - mobile-app/pound-drop-fresh/build/ios/ipa/*.ipa
+      - build/ios/ipa/*.ipa
+      - ios/build/logs/*.log
 
     publishing:
       app_store_connect:
