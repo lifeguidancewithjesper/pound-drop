@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - JS Bundle & Swift Fix
+    name: Pound Drop iOS - Complete Fix
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -34,7 +34,7 @@ workflows:
           echo "=== Fixing Potential JavaScript Issues ==="
           
           # Check for and remove Git conflict markers
-          find . -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | xargs grep -l "<<<<<<< " | while read file; do
+          find . -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | xargs grep -l "<<<<<<< " 2>/dev/null | while read file; do
             echo "WARNING: Found conflict markers in $file"
             sed -i.bak '/<<<<<<< /,/>>>>>>> /d' "$file"
           done
@@ -51,7 +51,6 @@ workflows:
           # Verify entry point syntax
           echo "=== Checking JavaScript Syntax ==="
           node -c index.js || { echo "ERROR: index.js has syntax errors"; cat index.js; exit 1; }
-          node -c App.tsx || echo "App.tsx check completed"
           
           # Test expo access
           npx expo --version || { echo "ERROR: Expo CLI failed"; exit 1; }
@@ -80,32 +79,55 @@ workflows:
           cd ios
           pod install --repo-update --clean-install
 
-      - name: Build iOS app with fixes
+      - name: Build iOS app with all fixes
         script: |
           echo "=== Building iOS App for App Store ==="
           set -eo pipefail
           
-          # Find workspace and scheme
+          # Find workspace
           WORKSPACE=$(find ios -maxdepth 1 -name "*.xcworkspace" -print -quit)
-          SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | sed 's/^[[:space:]]*//')
-          SCHEME=$(echo "$SCHEMES" | grep -E "PoundDrop|Pound Drop" | head -n1)
+          if [ -z "$WORKSPACE" ]; then
+            echo "No .xcworkspace found in ios/"
+            ls -la ios/
+            exit 1
+          fi
+          echo "Using workspace: $WORKSPACE"
           
+          # Find the correct scheme (exclude Pods-* schemes)
+          SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | sed 's/^[[:space:]]*//')
+          echo "Available schemes:"
+          echo "$SCHEMES"
+          
+          # Select the main app scheme (exclude Pods-* schemes)
+          SCHEME=""
+          for s in PoundDrop "Pound Drop" pounddrop pound-drop; do
+            if echo "$SCHEMES" | grep -Fx "$s" >/dev/null; then
+              SCHEME="$s"
+              break
+            fi
+          done
+          
+          # If still not found, get first non-Pods scheme
           if [ -z "$SCHEME" ]; then
-            SCHEME=$(echo "$SCHEMES" | head -n1)
+            SCHEME=$(echo "$SCHEMES" | grep -v "^Pods-" | head -n1)
           fi
           
-          echo "Using workspace: $WORKSPACE"
+          if [ -z "$SCHEME" ]; then
+            echo "ERROR: No suitable app scheme found"
+            echo "Available schemes were:"
+            echo "$SCHEMES"
+            exit 1
+          fi
+          
           echo "Using scheme: $SCHEME"
           
-          # Build with both JS and Swift fixes
+          # Build with correct syntax for build settings and Swift optimization fix
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
             --scheme "$SCHEME" \
             --config Release \
-            SWIFT_OPTIMIZATION_LEVEL="-Onone" \
-            ENABLE_PREVIEWS="NO" \
-            HERMES_ENABLED="YES" \
-            BUNDLE_COMMAND="npx react-native bundle --platform ios --dev false --entry-file index.js --bundle-output main.jsbundle"
+            --archive-xcargs "SWIFT_OPTIMIZATION_LEVEL=-Onone ENABLE_PREVIEWS=NO DEVELOPMENT_TEAM=$APPLE_TEAM_ID CODE_SIGN_IDENTITY='iPhone Distribution' CODE_SIGN_STYLE=Manual COMPILER_INDEX_STORE_ENABLE=NO" \
+            --archive-flags "-destination 'generic/platform=iOS'"
 
     artifacts:
       - build/ios/ipa/*.ipa
