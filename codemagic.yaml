@@ -50,39 +50,35 @@ workflows:
           done
           
           echo "=== Creating Metro config locked to mobile app directory ==="
-          cat > metro.config.js << 'EOF'
+          cat > metro.config.js << 'METRO_EOF'
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
-// Force Metro to treat THIS directory as project root (not repo root)
 config.projectRoot = __dirname;
 config.watchFolders = [];
-
-// Only look for node_modules in the mobile app directory
 config.resolver.nodeModulesPaths = [path.join(__dirname, 'node_modules')];
 
-// Block Metro from looking at parent directories  
 const exclusionList = require('metro-config/src/defaults/exclusionList');
 config.resolver.blockList = exclusionList([
-  /\.\.\//,  // Block parent directory access
-  /\.\.\/node_modules\/.*/,  // Block parent node_modules
-  /\.\.\/.+\/node_modules\/.*/  // Block any ancestor node_modules
+  /\.\.\//,
+  /\.\.\/node_modules\/.*/,
+  /\.\.\/.+\/node_modules\/.*/
 ]);
 
 module.exports = config;
-EOF
+METRO_EOF
           
           echo "=== Creating proper Babel config for Expo ==="
-          cat > babel.config.js << 'EOF'
+          cat > babel.config.js << 'BABEL_EOF'
 module.exports = function(api) {
   api.cache(true);
   return {
     presets: ['babel-preset-expo'],
   };
 };
-EOF
+BABEL_EOF
           
           echo "=== Verifying app.json has complete configuration ==="
           cat app.json || echo "Using existing app.json"
@@ -104,7 +100,6 @@ EOF
           export NODE_ENV=production
           export EXPO_NO_TELEMETRY=1
           
-          # Clean any existing iOS build
           rm -rf ios/ 2>/dev/null || true
           
           npx expo prebuild --platform ios --clean --non-interactive || { 
@@ -132,7 +127,6 @@ EOF
           echo "=== Installing CocoaPods dependencies ==="
           cd ios
           
-          # Clean install for reliability
           rm -rf Pods/ Podfile.lock 2>/dev/null || true
           
           pod install --repo-update || { 
@@ -153,12 +147,10 @@ EOF
           
           set -eo pipefail
           
-          # Set environment for React Native bundler
           export NODE_ENV=production
           export REACT_NATIVE_VERBOSE=1
           export ENTRY_FILE=index.js
           
-          # Find workspace
           WORKSPACE=$(find ios -maxdepth 1 -name "*.xcworkspace" -print -quit)
           if [ -z "$WORKSPACE" ]; then
             echo "ERROR: No .xcworkspace found"
@@ -167,12 +159,10 @@ EOF
           fi
           echo "Using workspace: $WORKSPACE"
           
-          # Find app scheme (comprehensive fallback)
           SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE" 2>/dev/null | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | sed 's/^[[:space:]]*//')
           echo "Available schemes:"
           echo "$SCHEMES"
           
-          # Try multiple scheme variations for your app
           SCHEME=""
           for s in "PoundDrop" "Pound Drop" "pounddrop" "pound-drop" "pounddrop-2024"; do
             if echo "$SCHEMES" | grep -Fx "$s" >/dev/null 2>&1; then
@@ -181,7 +171,6 @@ EOF
             fi
           done
           
-          # Fallback to first non-Pods scheme
           if [ -z "$SCHEME" ]; then
             SCHEME=$(echo "$SCHEMES" | grep -v "^Pods-" | head -n1)
           fi
@@ -194,7 +183,6 @@ EOF
           
           echo "Building scheme: $SCHEME"
           
-          # Build the complete app with all fixes
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
             --scheme "$SCHEME" \
