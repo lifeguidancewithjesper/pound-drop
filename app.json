@@ -17,12 +17,8 @@
       "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
       "buildNumber": "1",
       "infoPlist": {
-        "UIBackgroundModes": ["background-fetch"]
-      },
-      "buildSettings": {
-        "SWIFT_OPTIMIZATION_LEVEL": "-Onone",
-        "ENABLE_PREVIEWS": "NO",
-        "DEBUG_INFORMATION_FORMAT": "dwarf-with-dsym"
+        "UIBackgroundModes": ["background-fetch"],
+        "CFBundleAllowMixedLocalizations": true
       }
     },
     "android": {
@@ -32,16 +28,7 @@
     "plugins": [
       "expo-notifications",
       "expo-camera", 
-      "expo-image-picker",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "enableSwiftPackageManager": false,
-            "ccacheEnabled": false
-          }
-        }
-      ]
+      "expo-image-picker"
     ]
   }
 }
