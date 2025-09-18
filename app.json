@@ -1,94 +1,42 @@
 {
   "expo": {
-<<<<<<< HEAD
     "name": "Pound Drop",
-    "owner": "lifeguidancewithjesper",
-    "slug": "pounddrop-2024",
+    "slug": "pound-drop",
     "version": "1.0.0",
-    "sdkVersion": "52.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
-    "description": "Your personal weight loss tracking companion with meal logging, habit tracking, and progress insights.",
-    "keywords": [
-      "weight loss",
-      "health", 
-      "fitness",
-      "meal tracking",
-      "diet",
-      "wellness"
-    ],
-    "assetBundlePatterns": [
-      "**/*"
-    ],
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
-      "buildNumber": "17",
+      "buildNumber": "1",
       "infoPlist": {
-        "NSCameraUsageDescription": "Take photos of your meals for tracking",
-        "NSPhotoLibraryUsageDescription": "Select photos from your library for meal logging",
-        "NSUserNotificationUsageDescription": "Send reminders for meal logging and habit tracking",
-        "ITSAppUsesNonExemptEncryption": false
+        "UIBackgroundModes": ["background-fetch"]
       }
     },
     "android": {
-      "package": "com.lifeguidancewithjesper.pounddrop",
-      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "NOTIFICATIONS"
-      ]
+      "package": "com.lifeguidancewithjesper.pounddrop",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "extra": {
-      "eas": {
-        "projectId": "f952f40e-baa9-4bfa-bd48-8be72c614fd7"
-      }
-    },
     "plugins": [
-      "expo-secure-store"
+      "expo-notifications",
+      "expo-camera",
+      "expo-image-picker"
     ]
   }
 }
-=======
-    "name": "PoundDrop", 
-    "slug": "pound-drop",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": ["**/*"],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
-      "buildNumber": "2"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./adaptive-icon.png",
-        "backgroundColor": "#FFFFFF"
-      }
-    }
-  }
-}
->>>>>>> b071341a0df3807704a99d711ac06b6de3345bd5
