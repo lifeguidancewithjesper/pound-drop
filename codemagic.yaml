@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - ROOT DIRECTORY BUILD
+    name: Pound Drop iOS - FIXED ENTRY POINT
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -24,17 +24,21 @@ workflows:
         XCODE_VERSION: "16.1"
         NODE_VERSION: "18"
     scripts:
-      - name: Setup mobile app in root directory
+      - name: Setup mobile app with correct entry point
         script: |
           echo "=== Current directory: $(pwd) ==="
           ls -la
           
+          echo "=== Fixing package.json entry point ==="
+          cp package-mobile-build.json package.json
+          echo "✓ Using correct package.json with index.js entry point"
+          
           echo "=== Verifying mobile app files ==="
           test -f App.tsx || { echo "ERROR: App.tsx missing"; exit 1; }
-          test -f package.json || { echo "ERROR: package.json missing"; exit 1; }
           test -f index.js || { echo "ERROR: index.js missing"; exit 1; }
           test -d src || { echo "ERROR: src directory missing"; exit 1; }
-          echo "✓ All mobile app files verified in root directory"
+          test -f app.json || { echo "ERROR: app.json missing"; exit 1; }
+          echo "✓ All mobile app files verified"
           
           echo "=== Setting up Node.js 18 ==="
           nvm install 18 && nvm use 18
@@ -47,8 +51,11 @@ workflows:
           echo "=== Installing Expo CLI ==="
           npm install -g @expo/cli@latest
           
-          echo "=== Verifying app.json ==="
-          cat app.json
+          echo "=== Verifying final configuration ==="
+          echo "Package.json main entry:"
+          cat package.json | grep '"main"'
+          echo "App.json plugins:"
+          cat app.json | grep -A 10 '"plugins"'
 
       - name: Prebuild iOS project
         script: |
@@ -64,10 +71,10 @@ workflows:
           echo "=== Running Expo prebuild for iOS ==="
           expo prebuild --platform ios --clean --non-interactive || {
             echo "ERROR: Expo prebuild failed"
-            echo "App.json content:"
-            cat app.json
             echo "Package.json content:"
             cat package.json
+            echo "App.json content:"
+            cat app.json
             exit 1
           }
           
