@@ -1,15 +1,16 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - Complete App Build Fix
-    max_build_duration: 60
+    name: Pound Drop iOS - Optimized Fast Build
+    max_build_duration: 120
     instance_type: mac_mini_m2
+    working_directory: mobile-app/pound-drop-fresh
     integrations:
       app_store_connect: codemagic
     cache:
       cache_paths:
-        - $CM_BUILD_DIR/node_modules
+        - node_modules
         - ~/.npm
-        - $CM_BUILD_DIR/ios/Pods
+        - ios/Pods
         - ~/Library/Caches/CocoaPods
         - ~/Library/Developer/Xcode/DerivedData
     environment:
@@ -22,20 +23,17 @@ workflows:
         BUNDLE_ID: "com.lifeguidancewithjesper.pounddrop"
         APPLE_TEAM_ID: "8VKM26D99V"
         XCODE_VERSION: "16.1"
-        CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
         NODE_VERSION: "18"
     scripts:
       - name: Setup build environment and dependencies
         script: |
+          echo "=== Current directory (should be mobile app): $(pwd) ==="
           echo "=== Setting up Node.js 18 LTS ==="
           nvm install 18 && nvm use 18
           node --version
           npm --version
           
-          echo "=== Clean root environment to prevent Metro conflicts ==="
-          rm -rf /Users/builder/clone/node_modules 2>/dev/null || true
-          
-          echo "=== Installing dependencies in mobile app directory ONLY ==="
+          echo "=== Installing dependencies in mobile app directory ==="
           npm ci --legacy-peer-deps || npm install --legacy-peer-deps
           npm install @expo/cli@latest --legacy-peer-deps
           
@@ -118,11 +116,12 @@ workflows:
           keychain add-certificates
           xcode-project use-profiles
 
-      - name: Install CocoaPods dependencies
+      - name: Install CocoaPods dependencies  
         script: |
           echo "=== Installing CocoaPods dependencies ==="
-          cd ios
+          echo "Current directory: $(pwd)"
           
+          cd ios
           rm -rf Pods/ Podfile.lock 2>/dev/null || true
           
           pod install --repo-update || { 
