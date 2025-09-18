@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - Final Verified Build
+    name: Pound Drop iOS - Fixed YAML Parse Error
     max_build_duration: 60
     instance_type: mac_mini_m2
     integrations:
@@ -38,72 +38,63 @@ workflows:
           npm install react-native-screens@~4.8.0 --legacy-peer-deps
           npm install react-native-safe-area-context@~5.1.0 --legacy-peer-deps
           
-          echo "=== COMPREHENSIVE Git Conflict and Asset Cleanup ==="
-          # Remove ALL possible conflict markers from JavaScript/TypeScript files
+          echo "=== COMPREHENSIVE Git Conflict Cleanup ==="
           find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" -o -name "*.json" \) -print0 | while IFS= read -r -d '' file; do
-            if grep -q "<<<<<<< \|======= \|>>>>>>> " "$file" 2>/dev/null; then
+            if grep -q "<<<<<<< \\|======= \\|>>>>>>> " "$file" 2>/dev/null; then
               echo "Cleaning conflicts from: $file"
-              # Remove conflict sections entirely
               sed -i.bak '/<<<<<<< /,/>>>>>>> /d' "$file"
-              # Remove any remaining conflict markers
               sed -i.bak '/=======/d' "$file"
               sed -i.bak '/<<<<<<< /d' "$file"
               sed -i.bak '/>>>>>>> /d' "$file"
             fi
           done
           
-          echo "=== Creating Simplified app.json (Asset-Free) ==="
-          cat > app.json << 'EOF'
-{
-  "expo": {
-    "name": "Pound Drop",
-    "slug": "pound-drop",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
-    "splash": {
-      "backgroundColor": "#4F46E5",
-      "resizeMode": "contain"
-    },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
-      "buildNumber": "18",
-      "infoPlist": {
-        "NSCameraUsageDescription": "Take photos of your meals for tracking",
-        "NSPhotoLibraryUsageDescription": "Select photos from your library for meal logging",
-        "NSUserNotificationUsageDescription": "Send reminders for meal logging and habit tracking",
-        "ITSAppUsesNonExemptEncryption": false
-      }
-    },
-    "android": {
-      "package": "com.lifeguidancewithjesper.pounddrop",
-      "versionCode": 1
-    },
-    "plugins": [
-      "expo-notifications",
-      "expo-camera",
-      "expo-image-picker",
-      "expo-secure-store"
-    ]
-  }
-}
-EOF
+          echo "=== Creating Simplified app.json ==="
+          echo '{
+            "expo": {
+              "name": "Pound Drop",
+              "slug": "pound-drop", 
+              "version": "1.0.0",
+              "orientation": "portrait",
+              "userInterfaceStyle": "automatic",
+              "splash": {
+                "backgroundColor": "#4F46E5",
+                "resizeMode": "contain"
+              },
+              "ios": {
+                "supportsTablet": true,
+                "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
+                "buildNumber": "18",
+                "infoPlist": {
+                  "NSCameraUsageDescription": "Take photos of your meals for tracking",
+                  "NSPhotoLibraryUsageDescription": "Select photos from your library for meal logging", 
+                  "NSUserNotificationUsageDescription": "Send reminders for meal logging and habit tracking",
+                  "ITSAppUsesNonExemptEncryption": false
+                }
+              },
+              "android": {
+                "package": "com.lifeguidancewithjesper.pounddrop",
+                "versionCode": 1
+              },
+              "plugins": [
+                "expo-notifications",
+                "expo-camera",
+                "expo-image-picker", 
+                "expo-secure-store"
+              ]
+            }
+          }' > app.json
           
           echo "=== Creating Clean index.js ==="
-          cat > index.js << 'EOF'
-import { registerRootComponent } from 'expo';
-import App from './App';
-
-registerRootComponent(App);
-EOF
+          echo 'import { registerRootComponent } from "expo";
+          import App from "./App";
+          
+          registerRootComponent(App);' > index.js
           
           echo "=== Creating Clean Metro Config ==="
-          cat > metro.config.js << 'EOF'
-const { getDefaultConfig } = require('expo/metro-config');
-const config = getDefaultConfig(__dirname);
-module.exports = config;
-EOF
+          echo 'const { getDefaultConfig } = require("expo/metro-config");
+          const config = getDefaultConfig(__dirname);
+          module.exports = config;' > metro.config.js
           
           echo "=== Verifying JavaScript Syntax ==="
           node -c index.js || { 
@@ -122,7 +113,6 @@ EOF
           echo "Current directory: $(pwd)"
           export CI=1
           
-          # Clean any existing iOS directory
           rm -rf ios/ 2>/dev/null || true
           
           npx expo prebuild --platform ios --non-interactive || { 
@@ -150,7 +140,6 @@ EOF
           cd ios
           echo "CocoaPods directory: $(pwd)"
           
-          # Clean pod installation for faster builds
           rm -rf Pods/ Podfile.lock 2>/dev/null || true
           
           pod install --repo-update || { 
@@ -170,7 +159,6 @@ EOF
           echo "Current directory: $(pwd)"
           set -eo pipefail
           
-          # Find workspace with error handling
           WORKSPACE=$(find ios -maxdepth 1 -name "*.xcworkspace" -print -quit)
           if [ -z "$WORKSPACE" ]; then
             echo "ERROR: No .xcworkspace found in ios/"
@@ -179,13 +167,11 @@ EOF
           fi
           echo "Using workspace: $WORKSPACE"
           
-          # Find correct scheme with comprehensive fallback
           echo "=== Finding App Scheme ==="
           SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE" 2>/dev/null | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | sed 's/^[[:space:]]*//')
           echo "Available schemes:"
           echo "$SCHEMES"
           
-          # Try multiple scheme name variations
           SCHEME=""
           for s in "PoundDrop" "Pound Drop" "pounddrop" "pound-drop" "pounddrop-2024"; do
             if echo "$SCHEMES" | grep -Fx "$s" >/dev/null 2>&1; then
@@ -194,7 +180,6 @@ EOF
             fi
           done
           
-          # If still not found, get first non-Pods scheme
           if [ -z "$SCHEME" ]; then
             SCHEME=$(echo "$SCHEMES" | grep -v "^Pods-" | head -n1)
           fi
@@ -208,7 +193,6 @@ EOF
           
           echo "Using scheme: $SCHEME"
           
-          # Build with ALL compatibility fixes
           echo "=== Starting iOS Archive Build ==="
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
