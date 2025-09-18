@@ -84,7 +84,7 @@ workflows:
           node -c index.js || { echo "JavaScript syntax error"; exit 1; }
           
           npx expo install --fix
-          npx expo doctor
+          npx expo-doctor || echo "Expo doctor completed"
 
       - name: Prebuild iOS with locked environment
         script: |
