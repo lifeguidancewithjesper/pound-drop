@@ -50,35 +50,31 @@ workflows:
           done
           
           echo "=== Creating Metro config locked to mobile app directory ==="
-          cat > metro.config.js << 'METRO_EOF'
-const { getDefaultConfig } = require('expo/metro-config');
-const path = require('path');
-
-const config = getDefaultConfig(__dirname);
-
-config.projectRoot = __dirname;
-config.watchFolders = [];
-config.resolver.nodeModulesPaths = [path.join(__dirname, 'node_modules')];
-
-const exclusionList = require('metro-config/src/defaults/exclusionList');
-config.resolver.blockList = exclusionList([
-  /\.\.\//,
-  /\.\.\/node_modules\/.*/,
-  /\.\.\/.+\/node_modules\/.*/
-]);
-
-module.exports = config;
-METRO_EOF
+          echo "const { getDefaultConfig } = require('expo/metro-config');" > metro.config.js
+          echo "const path = require('path');" >> metro.config.js
+          echo "" >> metro.config.js
+          echo "const config = getDefaultConfig(__dirname);" >> metro.config.js
+          echo "" >> metro.config.js
+          echo "config.projectRoot = __dirname;" >> metro.config.js
+          echo "config.watchFolders = [];" >> metro.config.js
+          echo "config.resolver.nodeModulesPaths = [path.join(__dirname, 'node_modules')];" >> metro.config.js
+          echo "" >> metro.config.js
+          echo "const exclusionList = require('metro-config/src/defaults/exclusionList');" >> metro.config.js
+          echo "config.resolver.blockList = exclusionList([" >> metro.config.js
+          echo "  /\.\.\//," >> metro.config.js
+          echo "  /\.\.\/node_modules\/.*\/," >> metro.config.js
+          echo "  /\.\.\/.+\/node_modules\/.*\/" >> metro.config.js
+          echo "]);" >> metro.config.js
+          echo "" >> metro.config.js
+          echo "module.exports = config;" >> metro.config.js
           
           echo "=== Creating proper Babel config for Expo ==="
-          cat > babel.config.js << 'BABEL_EOF'
-module.exports = function(api) {
-  api.cache(true);
-  return {
-    presets: ['babel-preset-expo'],
-  };
-};
-BABEL_EOF
+          echo "module.exports = function(api) {" > babel.config.js
+          echo "  api.cache(true);" >> babel.config.js
+          echo "  return {" >> babel.config.js
+          echo "    presets: ['babel-preset-expo']," >> babel.config.js
+          echo "  };" >> babel.config.js
+          echo "};" >> babel.config.js
           
           echo "=== Verifying app.json has complete configuration ==="
           cat app.json || echo "Using existing app.json"
