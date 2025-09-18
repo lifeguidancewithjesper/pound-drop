@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - Fixed YAML Parse Error
+    name: Pound Drop iOS - Flow Syntax Fix
     max_build_duration: 60
     instance_type: mac_mini_m2
     integrations:
@@ -24,7 +24,7 @@ workflows:
         XCODE_VERSION: "16.1"
         CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
     scripts:
-      - name: Install dependencies and comprehensive cleanup
+      - name: Install dependencies and fix Flow syntax
         script: |
           echo "=== Current directory and structure ==="
           pwd
@@ -34,20 +34,48 @@ workflows:
           npm ci --legacy-peer-deps || npm install --legacy-peer-deps
           npm install @expo/cli@latest --legacy-peer-deps
           
+          echo "=== Install Flow Support ==="
+          npm install @babel/preset-flow --legacy-peer-deps
+          npm install @babel/plugin-syntax-flow --legacy-peer-deps
+          
           echo "=== Update to Compatible Package Versions ==="
           npm install react-native-screens@~4.8.0 --legacy-peer-deps
           npm install react-native-safe-area-context@~5.1.0 --legacy-peer-deps
           
-          echo "=== COMPREHENSIVE Git Conflict Cleanup ==="
+          echo "=== Git Conflict Cleanup ==="
           find . -type f \( -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" -o -name "*.json" \) -print0 | while IFS= read -r -d '' file; do
             if grep -q "<<<<<<< \\|======= \\|>>>>>>> " "$file" 2>/dev/null; then
               echo "Cleaning conflicts from: $file"
               sed -i.bak '/<<<<<<< /,/>>>>>>> /d' "$file"
               sed -i.bak '/=======/d' "$file"
-              sed -i.bak '/<<<<<<< /d' "$file"
-              sed -i.bak '/>>>>>>> /d' "$file"
             fi
           done
+          
+          echo "=== Creating Babel Config with Flow Support ==="
+          echo '{
+            "presets": [
+              ["babel-preset-expo", {"jsxImportSource": "react"}],
+              "@babel/preset-flow"
+            ],
+            "plugins": [
+              "@babel/plugin-syntax-flow",
+              ["@babel/plugin-transform-flow-strip-types", {"all": true}]
+            ]
+          }' > babel.config.js
+          
+          echo "=== Creating Flow-Compatible Metro Config ==="
+          echo 'const { getDefaultConfig } = require("expo/metro-config");
+          const config = getDefaultConfig(__dirname);
+          
+          config.transformer.babelTransformerPath = require.resolve("metro-react-native-babel-transformer");
+          config.transformer.minifierConfig = {
+            keep_fnames: true,
+            mangle: { keep_fnames: true }
+          };
+          
+          config.resolver.sourceExts = [...config.resolver.sourceExts, "jsx", "js", "ts", "tsx"];
+          
+          module.exports = config;' > metro.config.js
           
           echo "=== Creating Simplified app.json ==="
           echo '{
@@ -64,7 +92,7 @@ workflows:
               "ios": {
                 "supportsTablet": true,
                 "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
-                "buildNumber": "18",
+                "buildNumber": "19",
                 "infoPlist": {
                   "NSCameraUsageDescription": "Take photos of your meals for tracking",
                   "NSPhotoLibraryUsageDescription": "Select photos from your library for meal logging", 
@@ -91,14 +119,9 @@ workflows:
           
           registerRootComponent(App);' > index.js
           
-          echo "=== Creating Clean Metro Config ==="
-          echo 'const { getDefaultConfig } = require("expo/metro-config");
-          const config = getDefaultConfig(__dirname);
-          module.exports = config;' > metro.config.js
-          
           echo "=== Verifying JavaScript Syntax ==="
           node -c index.js || { 
-            echo "ERROR: index.js still has syntax errors"
+            echo "ERROR: index.js has syntax errors"
             cat index.js
             exit 1
           }
@@ -107,11 +130,13 @@ workflows:
           npx expo install --fix || echo "Expo install fix completed"
           npx expo doctor || echo "Expo doctor completed"
 
-      - name: Prebuild iOS project with error handling
+      - name: Prebuild iOS project with Flow compatibility
         script: |
           echo "=== Expo Prebuild for iOS ==="
           echo "Current directory: $(pwd)"
           export CI=1
+          export BABEL_ENV=production
+          export NODE_ENV=production
           
           rm -rf ios/ 2>/dev/null || true
           
@@ -121,6 +146,8 @@ workflows:
             ls -la
             echo "App.json contents:"
             cat app.json
+            echo "Babel config:"
+            cat babel.config.js
             exit 1
           }
           
@@ -152,12 +179,15 @@ workflows:
           echo "=== Verifying Pods Installation ==="
           ls -la Pods/ || { echo "ERROR: Pods directory not created"; exit 1; }
 
-      - name: Build iOS app with comprehensive fixes
+      - name: Build iOS app with Flow and Swift fixes
         script: |
           echo "=== Building iOS App for App Store ==="
           echo "Using Xcode version: $(xcodebuild -version)"
           echo "Current directory: $(pwd)"
           set -eo pipefail
+          
+          export BABEL_ENV=production
+          export NODE_ENV=production
           
           WORKSPACE=$(find ios -maxdepth 1 -name "*.xcworkspace" -print -quit)
           if [ -z "$WORKSPACE" ]; then
