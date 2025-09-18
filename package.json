@@ -1,7 +1,13 @@
 {
+<<<<<<< HEAD
   "name": "pound-drop-mobile",
   "version": "1.0.0",
   "main": "index.ts",
+=======
+  "name": "pound-drop",
+  "version": "1.0.0",
+  "main": "index.js",
+>>>>>>> b071341a0df3807704a99d711ac06b6de3345bd5
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -9,6 +15,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@expo/metro-runtime": "~5.0.4",
     "@react-navigation/bottom-tabs": "^7.4.7",
     "@react-navigation/native": "^7.1.17",
@@ -32,6 +39,15 @@
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
     "typescript": "~5.8.3"
+=======
+    "expo": "~51.0.0",
+    "expo-status-bar": "~1.12.1",
+    "react": "18.2.0",
+    "react-native": "0.74.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0"
+>>>>>>> b071341a0df3807704a99d711ac06b6de3345bd5
   },
   "private": true
 }

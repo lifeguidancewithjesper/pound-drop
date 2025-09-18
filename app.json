@@ -1,5 +1,6 @@
 {
   "expo": {
+<<<<<<< HEAD
     "name": "Pound Drop",
     "owner": "lifeguidancewithjesper",
     "slug": "pounddrop-2024",
@@ -64,3 +65,30 @@
     ]
   }
 }
+=======
+    "name": "PoundDrop", 
+    "slug": "pound-drop",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
+      "buildNumber": "2"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}
+>>>>>>> b071341a0df3807704a99d711ac06b6de3345bd5
