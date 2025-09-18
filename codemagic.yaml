@@ -2,7 +2,7 @@ workflows:
   react-native-ios:
     name: Pound Drop iOS - Optimized Build
     max_build_duration: 60
-    instance_type: mac_mini_m2_pro
+    instance_type: mac_mini_m2
     integrations:
       app_store_connect: codemagic
     cache:
@@ -25,33 +25,57 @@ workflows:
     scripts:
       - name: Install dependencies (cached)
         script: |
+          echo "=== Installing Dependencies with Caching ==="
           npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+          npm install @expo/cli@latest --legacy-peer-deps
           npx expo install --fix
 
-      - name: Prebuild iOS (no clean)
+      - name: Prebuild iOS (no clean flags)
         script: |
+          echo "=== Expo Prebuild for iOS (Optimized) ==="
           export CI=1
           npx expo prebuild --platform ios --non-interactive
+          ls -la ios/ || { echo "ERROR: iOS directory not created"; exit 1; }
 
       - name: Set up code signing
         script: |
+          echo "=== Setting up code signing ==="
           keychain add-certificates
           xcode-project use-profiles
 
       - name: Install CocoaPods (optimized)
         script: |
+          echo "=== Installing CocoaPods (Optimized) ==="
           cd ios
           pod install
 
       - name: Build iOS app
         script: |
-          WORKSPACE=$(find ios -name "*.xcworkspace" -print -quit)
-          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" | grep -v "Pods-" | grep "PoundDrop" | head -n1)
+          echo "=== Building iOS App for App Store ==="
+          set -eo pipefail
+          
+          WORKSPACE=$(find ios -maxdepth 1 -name "*.xcworkspace" -print -quit)
+          if [ -z "$WORKSPACE" ]; then
+            echo "No .xcworkspace found in ios/"
+            ls -la ios/
+            exit 1
+          fi
+          echo "Using workspace: $WORKSPACE"
+          
+          SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | sed 's/^[[:space:]]*//')
+          SCHEME=$(echo "$SCHEMES" | grep -v "^Pods-" | grep -E "PoundDrop|Pound Drop" | head -n1)
+          
+          if [ -z "$SCHEME" ]; then
+            SCHEME=$(echo "$SCHEMES" | grep -v "^Pods-" | head -n1)
+          fi
+          
+          echo "Using scheme: $SCHEME"
           
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
             --scheme "$SCHEME" \
-            --config Release
+            --config Release \
+            --archive-xcargs "DEVELOPMENT_TEAM=$APPLE_TEAM_ID CODE_SIGN_IDENTITY='iPhone Distribution' CODE_SIGN_STYLE=Manual"
 
     artifacts:
       - build/ios/ipa/*.ipa
