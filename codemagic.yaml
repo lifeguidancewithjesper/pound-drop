@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - React Native Screens Fix
+    name: Pound Drop iOS - Xcode Compatibility Fix
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -14,7 +14,7 @@ workflows:
       vars:
         BUNDLE_ID: "com.lifeguidancewithjesper.pounddrop"
         APPLE_TEAM_ID: "8VKM26D99V"
-        XCODE_VERSION: "16.4"
+        XCODE_VERSION: "16.2"
         CM_BUILD_DIR: "./mobile-app/pound-drop-fresh"
     scripts:
       - name: Fix global expo permissions
@@ -23,16 +23,11 @@ workflows:
           sudo chmod +x /Users/builder/clone/node_modules/.bin/* 2>/dev/null || true
           chmod +x node_modules/.bin/* 2>/dev/null || true
 
-      - name: Install dependencies with version fixes
+      - name: Install dependencies
         script: |
-          echo "=== Installing Dependencies with Compatible Versions ==="
+          echo "=== Installing Dependencies ==="
           npm ci --legacy-peer-deps || npm install --legacy-peer-deps
           npm install @expo/cli@latest --legacy-peer-deps
-          
-          echo "=== Fixing React Native Screens Version Compatibility ==="
-          # Install compatible version of react-native-screens
-          npm install react-native-screens@3.29.0 --legacy-peer-deps
-          npm install react-native-safe-area-context@4.8.2 --legacy-peer-deps
 
       - name: Fix JavaScript files and test expo
         script: |
@@ -60,13 +55,10 @@ workflows:
           # Test expo access
           npx expo --version || { echo "ERROR: Expo CLI failed"; exit 1; }
 
-      - name: Prebuild iOS project with compatibility fixes
+      - name: Prebuild iOS project
         script: |
           echo "=== Expo Prebuild for iOS ==="
           export CI=1
-          
-          # Clean any existing builds
-          rm -rf ios/ 2>/dev/null || true
           
           npx expo prebuild --platform ios --clean --non-interactive || { 
             echo "ERROR: Expo prebuild failed"
@@ -81,17 +73,16 @@ workflows:
           keychain add-certificates
           xcode-project use-profiles
 
-      - name: Install CocoaPods with clean install
+      - name: Install CocoaPods dependencies
         script: |
           echo "=== Installing CocoaPods dependencies ==="
           cd ios
-          # Clean CocoaPods cache to avoid version conflicts
-          rm -rf Pods/ Podfile.lock 2>/dev/null || true
           pod install --repo-update --clean-install
 
-      - name: Build iOS app with C++ compatibility fixes
+      - name: Build iOS app with Xcode 16.2 compatibility
         script: |
           echo "=== Building iOS App for App Store ==="
+          echo "Using Xcode version: $(xcodebuild -version)"
           set -eo pipefail
           
           # Find workspace
@@ -131,12 +122,12 @@ workflows:
           
           echo "Using scheme: $SCHEME"
           
-          # Build with C++ standard library fix and Swift optimization fix
+          # Build with Xcode 16.2 compatible settings
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
             --scheme "$SCHEME" \
             --config Release \
-            --archive-xcargs "SWIFT_OPTIMIZATION_LEVEL=-Onone ENABLE_PREVIEWS=NO DEVELOPMENT_TEAM=$APPLE_TEAM_ID CODE_SIGN_IDENTITY='iPhone Distribution' CODE_SIGN_STYLE=Manual COMPILER_INDEX_STORE_ENABLE=NO CLANG_CXX_LIBRARY=libc++ CLANG_CXX_LANGUAGE_STANDARD=c++17" \
+            --archive-xcargs "SWIFT_OPTIMIZATION_LEVEL=-Onone ENABLE_PREVIEWS=NO DEVELOPMENT_TEAM=$APPLE_TEAM_ID CODE_SIGN_IDENTITY='iPhone Distribution' CODE_SIGN_STYLE=Manual COMPILER_INDEX_STORE_ENABLE=NO" \
             --archive-flags "-destination 'generic/platform=iOS'"
 
     artifacts:
