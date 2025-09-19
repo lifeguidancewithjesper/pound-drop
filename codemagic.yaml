@@ -1,10 +1,16 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - Final Fix
+    name: Pound Drop iOS - DEPENDENCIES FIXED
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
       app_store_connect: codemagic
+    cache:
+      cache_paths:
+        - ~/.npm
+        - $CM_BUILD_DIR/ios/Pods
+        - ~/Library/Caches/CocoaPods
+        - ~/Library/Developer/Xcode/DerivedData
     environment:
       ios_signing:
         certificates:
@@ -14,70 +20,127 @@ workflows:
       vars:
         BUNDLE_ID: "com.lifeguidancewithjesper.pounddrop"
         APPLE_TEAM_ID: "8VKM26D99V"
-        XCODE_VERSION: "16.4"
+        XCODE_VERSION: "16.1"
+        NODE_VERSION: "20"
     scripts:
-      - name: Install dependencies
+      - name: Setup mobile app with correct entry point
         script: |
-          npm install
-          npx expo install --fix
+          echo "=== Current directory: $(pwd) ==="
+          ls -la
           
-      - name: Prebuild iOS
+          echo "=== Fixing package.json entry point ==="
+          cp package-mobile-build.json package.json
+          echo "✓ Using correct package.json with index.js entry point"
+          
+          echo "=== Verifying mobile app files ==="
+          test -f App.tsx || { echo "ERROR: App.tsx missing"; exit 1; }
+          test -f index.js || { echo "ERROR: index.js missing"; exit 1; }
+          test -d src || { echo "ERROR: src directory missing"; exit 1; }
+          test -f app.json || { echo "ERROR: app.json missing"; exit 1; }
+          echo "✓ All mobile app files verified"
+          
+          echo "=== Installing Expo CLI ==="
+          npm install -g @expo/cli@latest
+          
+          echo "=== Installing base dependencies ==="
+          export CI=1
+          npm install --legacy-peer-deps || { echo "ERROR: npm install failed"; exit 1; }
+          
+          echo "=== Fixing dependencies with Expo ==="
+          npx expo install --fix || { echo "ERROR: expo install failed"; exit 1; }
+          
+          echo "=== Verifying final configuration ==="
+          echo "Package.json main entry:"
+          cat package.json | grep '"main"'
+          echo "App.json SDK version:"
+          cat app.json | grep '"sdkVersion"'
+
+      - name: Prebuild iOS project
         script: |
-          npx expo prebuild --platform ios --clean
+          echo "=== Current directory: $(pwd) ==="
           
-      - name: Build iOS app for App Store
-        script: |
-          set -eo pipefail
+          export CI=1
+          export NODE_ENV=production
+          export EXPO_NO_TELEMETRY=1
           
-          # Ensure pods are properly installed
-          if [ ! -d ios ]; then echo "ios/ not found"; exit 1; fi
-          (cd ios && pod install --repo-update)
+          echo "=== Verifying Pound Drop logo files ==="
+          ls -la assets/
+          test -f assets/icon.png || { echo "ERROR: Main icon missing"; exit 1; }
+          test -f assets/adaptive-icon.png || { echo "ERROR: Adaptive icon missing"; exit 1; }
+          echo "✓ All Pound Drop logo files verified"
           
-          # Find ONLY top-level .xcworkspace directories in ios/
-          WORKSPACE=$(find ios -maxdepth 1 -type d -name "*.xcworkspace" -print -quit)
-          if [ -z "$WORKSPACE" ]; then 
-            echo "No top-level .xcworkspace in ios/ after pod install"
-            ls -la ios
+          echo "=== Cleaning old iOS build ==="
+          rm -rf ios/
+          
+          echo "=== Running Expo prebuild for iOS ==="
+          expo prebuild --platform ios --clean --log-level debug || {
+            echo "ERROR: Expo prebuild failed"
+            echo "Package.json content:"
+            cat package.json
+            echo "App.json content:"
+            cat app.json
             exit 1
-          fi
-          echo "Using workspace: $WORKSPACE"
+          }
           
-          # Enumerate schemes and pick the best match
-          SCHEMES=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | sed 's/^[[:space:]]*//')
-          echo "Available schemes:"
-          echo "$SCHEMES"
+          echo "=== Verifying iOS project created ==="
+          ls -la ios/
+          find ios -name "*.xcworkspace" || { echo "ERROR: No workspace found"; exit 1; }
           
-          # Try to find a good scheme match, fallback to first scheme
-          SCHEME=""
-          for s in PoundDrop "Pound Drop" pounddrop pound-drop; do
-            if echo "$SCHEMES" | grep -Fx "$s" >/dev/null; then 
-              SCHEME="$s"
-              break
-            fi
-          done
-          
-          # If no match found, use first available scheme
-          if [ -z "$SCHEME" ]; then 
-            SCHEME=$(echo "$SCHEMES" | head -n1)
-          fi
-          
-          if [ -z "$SCHEME" ]; then 
-            echo "No scheme found in $WORKSPACE"
-            exit 1
-          fi
-          echo "Using scheme: $SCHEME"
-          
-          # Code signing and build
+          echo "=== Verifying app icon integration ==="
+          find ios -name "*Assets.xcassets*" -type d | head -5
+          find ios -name "AppIcon*" | head -5
+          echo "iOS project with Pound Drop logo created successfully ✓"
+
+      - name: Set up code signing
+        script: |
+          echo "=== Setting up code signing ==="
           keychain add-certificates
           xcode-project use-profiles
+
+      - name: Install CocoaPods dependencies
+        script: |
+          echo "=== Installing CocoaPods in: $(pwd)/ios ==="
+          cd ios
+          
+          rm -rf Pods/ Podfile.lock || true
+          
+          pod install --repo-update || {
+            echo "ERROR: CocoaPods installation failed"
+            cat Podfile
+            exit 1
+          }
+          
+          echo "CocoaPods installation completed ✓"
+
+      - name: Build iOS app for App Store
+        script: |
+          echo "=== Building iOS app from: $(pwd) ==="
+          
+          WORKSPACE=$(find ios -name "*.xcworkspace" | head -1)
+          echo "Using workspace: $WORKSPACE"
+          
+          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | grep -v "^Pods-" | head -1 | xargs)
+          echo "Building scheme: $SCHEME"
+          
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
             --scheme "$SCHEME" \
-            --config Release
-            
+            --config Release \
+            --archive-xcargs "DEVELOPMENT_TEAM=$APPLE_TEAM_ID CODE_SIGN_IDENTITY='iPhone Distribution' CODE_SIGN_STYLE=Manual" \
+            --archive-flags "-destination 'generic/platform=iOS'" || {
+              echo "ERROR: Build failed"
+              exit 1
+            }
+          
+          echo "=== BUILD SUCCESS! ==="
+          echo "IPA file created with complete Pound Drop app:"
+          ls -la build/ios/ipa/
+          echo "Your complete app is ready for TestFlight! 🎉"
+
     artifacts:
       - build/ios/ipa/*.ipa
-      
+      - ios/build/logs/*.log
+
     publishing:
       app_store_connect:
         auth: integration

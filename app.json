@@ -1,11 +1,10 @@
 {
   "expo": {
-<<<<<<< HEAD
     "name": "Pound Drop",
     "owner": "lifeguidancewithjesper",
     "slug": "pounddrop-2024",
     "version": "1.0.0",
-    "sdkVersion": "52.0.0",
+    "sdkVersion": "53.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +12,7 @@
     "description": "Your personal weight loss tracking companion with meal logging, habit tracking, and progress insights.",
     "keywords": [
       "weight loss",
-      "health", 
+      "health",
       "fitness",
       "meal tracking",
       "diet",
@@ -30,7 +29,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
-      "buildNumber": "17",
+      "buildNumber": "19",
+      "icon": "./assets/icon.png",
       "infoPlist": {
         "NSCameraUsageDescription": "Take photos of your meals for tracking",
         "NSPhotoLibraryUsageDescription": "Select photos from your library for meal logging",
@@ -40,9 +40,10 @@
     },
     "android": {
       "package": "com.lifeguidancewithjesper.pounddrop",
-      "versionCode": 1,
+      "versionCode": 2,
+      "icon": "./assets/icon.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -60,35 +61,6 @@
         "projectId": "f952f40e-baa9-4bfa-bd48-8be72c614fd7"
       }
     },
-    "plugins": [
-      "expo-secure-store"
-    ]
+    "plugins": []
   }
 }
-=======
-    "name": "PoundDrop", 
-    "slug": "pound-drop",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": ["**/*"],
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
-      "buildNumber": "2"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./adaptive-icon.png",
-        "backgroundColor": "#FFFFFF"
-      }
-    }
-  }
-}
->>>>>>> b071341a0df3807704a99d711ac06b6de3345bd5
