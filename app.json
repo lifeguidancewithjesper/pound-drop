@@ -1,34 +1,68 @@
 {
   "expo": {
     "name": "Pound Drop",
-    "slug": "pound-drop",
+    "owner": "lifeguidancewithjesper",
+    "slug": "pounddrop-2024",
     "version": "1.0.0",
+    "sdkVersion": "52.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "backgroundColor": "#4F46E5",
-      "resizeMode": "contain"
-    },
+    "newArchEnabled": false,
+    "description": "Your personal weight loss tracking companion with meal logging, habit tracking, and progress insights.",
+    "keywords": [
+      "weight loss",
+      "health",
+      "fitness",
+      "meal tracking",
+      "diet",
+      "wellness"
+    ],
     "assetBundlePatterns": [
       "**/*"
     ],
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
-      "buildNumber": "1",
+      "buildNumber": "19",
+      "icon": "./assets/icon.png",
       "infoPlist": {
-        "UIBackgroundModes": ["background-fetch"],
-        "CFBundleAllowMixedLocalizations": true
+        "NSCameraUsageDescription": "Take photos of your meals for tracking",
+        "NSPhotoLibraryUsageDescription": "Select photos from your library for meal logging",
+        "NSUserNotificationUsageDescription": "Send reminders for meal logging and habit tracking",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.lifeguidancewithjesper.pounddrop",
-      "versionCode": 1
+      "versionCode": 2,
+      "icon": "./assets/icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f952f40e-baa9-4bfa-bd48-8be72c614fd7"
+      }
     },
     "plugins": [
-      "expo-notifications",
-      "expo-camera", 
-      "expo-image-picker"
+      "expo-secure-store"
     ]
   }
 }
