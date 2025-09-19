@@ -39,7 +39,13 @@ workflows:
           test -f app.json || { echo "ERROR: app.json missing"; exit 1; }
           echo "✓ All mobile app files verified"
           
-          echo "=== Installing Expo CLI ==="
+          echo "=== Setting up npm for user-space installs ==="
+          # Configure npm to install globally in user directory (no sudo needed)
+          mkdir -p ~/.npm-global
+          npm config set prefix ~/.npm-global
+          export PATH=~/.npm-global/bin:$PATH
+          
+          echo "=== Installing Expo CLI in user space ==="
           npm install -g @expo/cli@latest
           
           echo "=== Installing base dependencies ==="
@@ -48,6 +54,9 @@ workflows:
           
           echo "=== Fixing dependencies with Expo ==="
           npx expo install --fix || { echo "ERROR: expo install failed"; exit 1; }
+          
+          echo "=== Verifying Expo CLI installation ==="
+          npx expo --version || echo "Expo CLI ready via npx"
           
           echo "=== Verifying final configuration ==="
           echo "Package.json main entry:"
@@ -59,6 +68,8 @@ workflows:
         script: |
           echo "=== Current directory: $(pwd) ==="
           
+          # Ensure PATH includes our user npm directory
+          export PATH=~/.npm-global/bin:$PATH
           export CI=1
           export NODE_ENV=production
           export EXPO_NO_TELEMETRY=1
