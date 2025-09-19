@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - SDK FIXED
+    name: Pound Drop iOS - CLI FIXED
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -39,17 +39,13 @@ workflows:
           test -f app.json || { echo "ERROR: app.json missing"; exit 1; }
           echo "✓ All mobile app files verified"
           
-          echo "=== Setting up Node.js 20 ==="
-          nvm install 20 && nvm use 20
-          node --version
-          npm --version
-          
           echo "=== Installing Expo CLI ==="
           npm install -g @expo/cli@latest
           
           echo "=== Fixing dependencies with Expo ==="
+          export CI=1
           rm -rf node_modules
-          npx expo install --fix --non-interactive || { echo "ERROR: expo install failed"; exit 1; }
+          npx expo install --fix || { echo "ERROR: expo install failed"; exit 1; }
           
           echo "=== Verifying final configuration ==="
           echo "Package.json main entry:"
@@ -75,7 +71,7 @@ workflows:
           rm -rf ios/
           
           echo "=== Running Expo prebuild for iOS ==="
-          expo prebuild --platform ios --clean --non-interactive --log-level debug || {
+          expo prebuild --platform ios --clean --log-level debug || {
             echo "ERROR: Expo prebuild failed"
             echo "Package.json content:"
             cat package.json
