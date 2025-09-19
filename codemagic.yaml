@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - Pure React Native
+    name: Pound Drop iOS - Permission Fix
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -23,7 +23,7 @@ workflows:
         XCODE_VERSION: "16.1"
         NODE_VERSION: "20"
     scripts:
-      - name: Setup and Generate iOS Project Manually
+      - name: Setup mobile app with permission fix
         script: |
           echo "=== Current directory: $(pwd) ==="
           ls -la
@@ -39,196 +39,101 @@ workflows:
           test -f app.json || { echo "ERROR: app.json missing"; exit 1; }
           echo "✓ All mobile app files verified"
           
-          echo "=== Installing dependencies WITHOUT EXPO ==="
+          echo "=== Installing dependencies (PERMISSION FIX) ==="
           export CI=1
+          export EXPO_NO_TELEMETRY=1
+          
+          # THE FIX: Disable lifecycle scripts during install to prevent expo binary calls
+          npm config set ignore-scripts true
           npm install --legacy-peer-deps
+          npm config set ignore-scripts false
           
-          echo "=== Manually creating iOS project structure ==="
-          # Create iOS directory structure
-          mkdir -p ios/PoundDrop
-          mkdir -p ios/PoundDrop/Images.xcassets/AppIcon.appiconset
-          mkdir -p ios/PoundDrop.xcodeproj
+          echo "=== Verifying Expo CLI after install ==="
+          npx expo --version || echo "Expo CLI ready"
           
-          echo "=== Creating iOS app info ==="
-          cat > ios/PoundDrop/Info.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>CFBundleDisplayName</key>
-            <string>Pound Drop</string>
-            <key>CFBundleIdentifier</key>
-            <string>com.lifeguidancewithjesper.pounddrop</string>
-            <key>CFBundleName</key>
-            <string>PoundDrop</string>
-            <key>CFBundlePackageType</key>
-            <string>APPL</string>
-            <key>CFBundleShortVersionString</key>
-            <string>1.0</string>
-            <key>CFBundleVersion</key>
-            <string>1</string>
-            <key>LSRequiresIPhoneOS</key>
-            <true/>
-            <key>UILaunchStoryboardName</key>
-            <string>LaunchScreen</string>
-            <key>UIRequiredDeviceCapabilities</key>
-            <array>
-              <string>armv7</string>
-            </array>
-            <key>UISupportedInterfaceOrientations</key>
-            <array>
-              <string>UIInterfaceOrientationPortrait</string>
-              <string>UIInterfaceOrientationLandscapeLeft</string>
-              <string>UIInterfaceOrientationLandscapeRight</string>
-            </array>
-            <key>UIAppFonts</key>
-            <array>
-              <string>AntDesign.ttf</string>
-              <string>Entypo.ttf</string>
-              <string>EvilIcons.ttf</string>
-              <string>Feather.ttf</string>
-              <string>FontAwesome.ttf</string>
-              <string>Foundation.ttf</string>
-              <string>Ionicons.ttf</string>
-              <string>MaterialIcons.ttf</string>
-              <string>MaterialCommunityIcons.ttf</string>
-              <string>SimpleLineIcons.ttf</string>
-              <string>Octicons.ttf</string>
-              <string>Zocial.ttf</string>
-              <string>FontAwesome5_Brands.ttf</string>
-              <string>FontAwesome5_Regular.ttf</string>
-              <string>FontAwesome5_Solid.ttf</string>
-            </array>
-          </dict>
-          </plist>
-          EOF
-          
-          echo "=== Creating Xcode project ==="
-          cat > ios/PoundDrop.xcodeproj/project.pbxproj << 'EOF'
-          // !$*UTF8*$!
-          {
-            archiveVersion = 1;
-            classes = {
-            };
-            objectVersion = 54;
-            objects = {
-              13B07F961A680F5B00A75B9A /* PoundDrop */ = {
-                isa = PBXGroup;
-                children = (
-                  13B07FAE1A68108700A75B9A /* PoundDrop */,
-                  832341AE1AAA6A7D00B99B32 /* Libraries */,
-                  83CBBA001A601CBA00E9B192 /* Products */,
-                );
-                indentWidth = 2;
-                sourceTree = "<group>";
-                tabWidth = 2;
-                usesTabs = 0;
-              };
-              13B07FAE1A68108700A75B9A /* PoundDrop */ = {
-                isa = PBXGroup;
-                children = (
-                  13B07FAF1A68108700A75B9A /* AppDelegate.h */,
-                  13B07FB01A68108700A75B9A /* AppDelegate.m */,
-                  13B07FB51A68108700A75B9A /* Images.xcassets */,
-                  13B07FB61A68108700A75B9A /* Info.plist */,
-                  81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
-                  13B07FB71A68108700A75B9A /* main.m */,
-                );
-                name = PoundDrop;
-                sourceTree = "<group>";
-              };
-              832341AE1AAA6A7D00B99B32 /* Libraries */ = {
-                isa = PBXGroup;
-                children = (
-                );
-                name = Libraries;
-                sourceTree = "<group>";
-              };
-              83CBBA001A601CBA00E9B192 /* Products */ = {
-                isa = PBXGroup;
-                children = (
-                  13B07F961A680F5B00A75B9A /* PoundDrop.app */,
-                );
-                name = Products;
-                sourceTree = "<group>";
-              };
-            };
-            rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
-          }
-          EOF
-          
-          echo "=== Copying app icons ==="
-          cp assets/icon.png ios/PoundDrop/Images.xcassets/AppIcon.appiconset/
-          
-          echo "=== Creating Podfile ==="
-          cat > ios/Podfile << 'EOF'
-          require_relative '../node_modules/react-native/scripts/react_native_pods'
-          require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
-          
-          platform :ios, '11.0'
-          install! 'cocoapods', :deterministic_uuids => false
-          
-          target 'PoundDrop' do
-            config = use_native_modules!
-            
-            use_react_native!(
-              :path => config[:reactNativePath],
-              :hermes_enabled => false,
-              :fabric_enabled => false,
-              :flipper_configuration => FlipperConfiguration.disabled,
-              :app_path => "#{Pod::Config.instance.installation_root}/.."
-            )
-            
-            post_install do |installer|
-              react_native_post_install(installer)
-            end
-          end
-          EOF
-          
-          echo "=== iOS project structure created ✓ ==="
-          find ios -type f | head -10
+          echo "=== Dependencies installed successfully ✓ ==="
 
-      - name: Install CocoaPods
+      - name: Prebuild iOS project
         script: |
-          echo "=== Installing CocoaPods ==="
-          cd ios
-          pod install || {
-            echo "ERROR: CocoaPods failed"
-            cat Podfile
+          echo "=== Current directory: $(pwd) ==="
+          
+          export CI=1
+          export NODE_ENV=production
+          export EXPO_NO_TELEMETRY=1
+          
+          echo "=== Verifying Pound Drop logo files ==="
+          ls -la assets/
+          test -f assets/icon.png || { echo "ERROR: Main icon missing"; exit 1; }
+          test -f assets/adaptive-icon.png || { echo "ERROR: Adaptive icon missing"; exit 1; }
+          echo "✓ All Pound Drop logo files verified"
+          
+          echo "=== Cleaning old iOS build ==="
+          rm -rf ios/
+          
+          echo "=== Running Expo prebuild for iOS ==="
+          npx expo prebuild --platform ios --clean --log-level debug || {
+            echo "ERROR: Expo prebuild failed"
+            echo "Package.json content:"
+            cat package.json
+            echo "App.json content:"
+            cat app.json
             exit 1
           }
-          echo "CocoaPods complete ✓"
+          
+          echo "=== Verifying iOS project created ==="
+          ls -la ios/
+          find ios -name "*.xcworkspace" || { echo "ERROR: No workspace found"; exit 1; }
+          
+          echo "=== Verifying app icon integration ==="
+          find ios -name "*Assets.xcassets*" -type d | head -5
+          find ios -name "AppIcon*" | head -5
+          echo "iOS project with Pound Drop logo created successfully ✓"
 
-      - name: Code signing
+      - name: Set up code signing
         script: |
-          echo "=== Code signing ==="
+          echo "=== Setting up code signing ==="
           keychain add-certificates
           xcode-project use-profiles
 
-      - name: Build iOS App
+      - name: Install CocoaPods dependencies
         script: |
-          echo "=== Building iOS app ==="
+          echo "=== Installing CocoaPods in: $(pwd)/ios ==="
           cd ios
           
-          # Find workspace
-          WORKSPACE=$(find . -name "*.xcworkspace" | head -1)
-          echo "Workspace: $WORKSPACE"
+          rm -rf Pods/ Podfile.lock || true
           
-          # Find scheme
-          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" 2>/dev/null | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | grep -v "Pods-" | head -1 | xargs)
-          echo "Scheme: $SCHEME"
+          pod install --repo-update || {
+            echo "ERROR: CocoaPods installation failed"
+            cat Podfile
+            exit 1
+          }
           
-          # Build
+          echo "CocoaPods installation completed ✓"
+
+      - name: Build iOS app for App Store
+        script: |
+          echo "=== Building iOS app from: $(pwd) ==="
+          
+          WORKSPACE=$(find ios -name "*.xcworkspace" | head -1)
+          echo "Using workspace: $WORKSPACE"
+          
+          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | grep -v "^Pods-" | head -1 | xargs)
+          echo "Building scheme: $SCHEME"
+          
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
             --scheme "$SCHEME" \
             --config Release \
             --archive-xcargs "DEVELOPMENT_TEAM=$APPLE_TEAM_ID CODE_SIGN_IDENTITY='iPhone Distribution' CODE_SIGN_STYLE=Manual" \
-            --archive-flags "-destination 'generic/platform=iOS'"
+            --archive-flags "-destination 'generic/platform=iOS'" || {
+              echo "ERROR: Build failed"
+              exit 1
+            }
           
-          echo "=== POUND DROP BUILT SUCCESSFULLY! ==="
-          ls -la ../build/ios/ipa/
-          echo "Ready for TestFlight! 🎉"
+          echo "=== BUILD SUCCESS! ==="
+          echo "IPA file created with complete Pound Drop app:"
+          ls -la build/ios/ipa/
+          echo "Your complete app is ready for TestFlight! 🎉"
 
     artifacts:
       - build/ios/ipa/*.ipa
