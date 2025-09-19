@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - DEPENDENCIES FIXED
+    name: Pound Drop iOS - Local CLI Only
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -23,7 +23,7 @@ workflows:
         XCODE_VERSION: "16.1"
         NODE_VERSION: "20"
     scripts:
-      - name: Setup mobile app with correct entry point
+      - name: Setup mobile app - No Global Expo
         script: |
           echo "=== Current directory: $(pwd) ==="
           ls -la
@@ -39,119 +39,100 @@ workflows:
           test -f app.json || { echo "ERROR: app.json missing"; exit 1; }
           echo "✓ All mobile app files verified"
           
-          echo "=== Setting up npm for user-space installs ==="
-          # Configure npm to install globally in user directory (no sudo needed)
-          mkdir -p ~/.npm-global
-          npm config set prefix ~/.npm-global
-          export PATH=~/.npm-global/bin:$PATH
-          
-          echo "=== Installing Expo CLI in user space ==="
-          npm install -g @expo/cli@latest
-          
-          echo "=== Installing base dependencies ==="
+          echo "=== Installing dependencies (LOCAL ONLY - NO GLOBAL EXPO) ==="
           export CI=1
-          npm install --legacy-peer-deps || { echo "ERROR: npm install failed"; exit 1; }
+          export EXPO_NO_TELEMETRY=1
           
-          echo "=== Fixing dependencies with Expo ==="
-          npx expo install --fix || { echo "ERROR: expo install failed"; exit 1; }
+          # Install all dependencies locally - NO global expo install
+          npm install --legacy-peer-deps
           
-          echo "=== Fixing Expo binary permissions (previously working fix) ==="
-          chmod +x node_modules/.bin/* 2>/dev/null || true
-          chmod +x /Users/builder/clone/node_modules/.bin/* 2>/dev/null || true
-          chmod +x /Users/builder/clone/mobile-app/pound-drop-fresh/node_modules/.bin/* 2>/dev/null || true
+          echo "=== Adding local Expo tools ==="
+          npm install expo@latest @expo/cli@latest --save-dev
           
-          echo "=== Verifying Expo CLI installation ==="
-          npx expo --version || expo --version || echo "Expo CLI ready"
+          echo "=== Testing local Expo CLI ==="
+          npx expo --version
           
-          echo "=== Verifying final configuration ==="
-          echo "Package.json main entry:"
+          echo "=== Auto-fixing dependencies ==="
+          npx expo install --fix
+          
+          echo "=== Verifying configuration ==="
+          echo "Package.json main:"
           cat package.json | grep '"main"'
-          echo "App.json SDK version:"
+          echo "App.json SDK:"
           cat app.json | grep '"sdkVersion"'
+          echo "Local Expo CLI ready ✓"
 
-      - name: Prebuild iOS project
+      - name: Prebuild iOS with Local Expo
         script: |
           echo "=== Current directory: $(pwd) ==="
           
-          # Ensure PATH includes our user npm directory
-          export PATH=~/.npm-global/bin:$PATH
           export CI=1
           export NODE_ENV=production
           export EXPO_NO_TELEMETRY=1
           
-          echo "=== Verifying Pound Drop logo files ==="
+          echo "=== Verifying Pound Drop assets ==="
           ls -la assets/
-          test -f assets/icon.png || { echo "ERROR: Main icon missing"; exit 1; }
+          test -f assets/icon.png || { echo "ERROR: Icon missing"; exit 1; }
           test -f assets/adaptive-icon.png || { echo "ERROR: Adaptive icon missing"; exit 1; }
-          echo "✓ All Pound Drop logo files verified"
+          echo "✓ Assets verified"
           
-          echo "=== Cleaning old iOS build ==="
+          echo "=== Cleaning previous builds ==="
           rm -rf ios/
           
-          echo "=== Running Expo prebuild for iOS ==="
-          npx expo prebuild --platform ios --clean --log-level debug || {
-            echo "ERROR: Expo prebuild failed"
-            echo "Package.json content:"
-            cat package.json
-            echo "App.json content:"
-            cat app.json
-            exit 1
+          echo "=== Running LOCAL Expo prebuild ==="
+          npx expo prebuild --platform ios --clear --no-install || {
+            echo "ERROR: Prebuild failed, trying alternative..."
+            npx expo prebuild --platform ios --clean || {
+              echo "DETAILED ERROR INFO:"
+              echo "Package.json:"
+              cat package.json
+              echo "App.json:"
+              cat app.json
+              echo "Node modules expo:"
+              ls -la node_modules/.bin/ | grep expo || echo "No expo binary found"
+              exit 1
+            }
           }
           
-          echo "=== Verifying iOS project created ==="
+          echo "=== iOS project created ✓ ==="
           ls -la ios/
-          find ios -name "*.xcworkspace" || { echo "ERROR: No workspace found"; exit 1; }
-          
-          echo "=== Verifying app icon integration ==="
-          find ios -name "*Assets.xcassets*" -type d | head -5
-          find ios -name "AppIcon*" | head -5
-          echo "iOS project with Pound Drop logo created successfully ✓"
+          find ios -name "*.xcworkspace" | head -1
+          echo "Pound Drop iOS project ready with assets ✓"
 
-      - name: Set up code signing
+      - name: Code signing
         script: |
-          echo "=== Setting up code signing ==="
+          echo "=== Code signing ==="
           keychain add-certificates
           xcode-project use-profiles
 
-      - name: Install CocoaPods dependencies
+      - name: CocoaPods
         script: |
-          echo "=== Installing CocoaPods in: $(pwd)/ios ==="
+          echo "=== CocoaPods in $(pwd)/ios ==="
           cd ios
-          
           rm -rf Pods/ Podfile.lock || true
-          
-          pod install --repo-update || {
-            echo "ERROR: CocoaPods installation failed"
-            cat Podfile
-            exit 1
-          }
-          
-          echo "CocoaPods installation completed ✓"
+          pod install --repo-update
+          echo "CocoaPods complete ✓"
 
-      - name: Build iOS app for App Store
+      - name: Build iOS App
         script: |
-          echo "=== Building iOS app from: $(pwd) ==="
+          echo "=== Building iOS app ==="
           
           WORKSPACE=$(find ios -name "*.xcworkspace" | head -1)
-          echo "Using workspace: $WORKSPACE"
+          echo "Workspace: $WORKSPACE"
           
-          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | grep -v "^Pods-" | head -1 | xargs)
-          echo "Building scheme: $SCHEME"
+          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" | sed -n '/Schemes:/,/^$/p' | sed '1d;$d' | grep -v "Pods-" | head -1 | xargs)
+          echo "Scheme: $SCHEME"
           
           xcode-project build-ipa \
             --workspace "$WORKSPACE" \
             --scheme "$SCHEME" \
             --config Release \
             --archive-xcargs "DEVELOPMENT_TEAM=$APPLE_TEAM_ID CODE_SIGN_IDENTITY='iPhone Distribution' CODE_SIGN_STYLE=Manual" \
-            --archive-flags "-destination 'generic/platform=iOS'" || {
-              echo "ERROR: Build failed"
-              exit 1
-            }
+            --archive-flags "-destination 'generic/platform=iOS'"
           
-          echo "=== BUILD SUCCESS! ==="
-          echo "IPA file created with complete Pound Drop app:"
+          echo "=== POUND DROP iOS APP BUILT SUCCESSFULLY! ==="
           ls -la build/ios/ipa/
-          echo "Your complete app is ready for TestFlight! 🎉"
+          echo "Ready for TestFlight! 🎉"
 
     artifacts:
       - build/ios/ipa/*.ipa
