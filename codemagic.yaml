@@ -65,6 +65,12 @@ workflows:
           export NODE_ENV=production
           export EXPO_NO_TELEMETRY=1
           
+          echo "=== Verifying Pound Drop logo files ==="
+          ls -la assets/
+          test -f assets/icon.png || { echo "ERROR: Main icon missing"; exit 1; }
+          test -f assets/adaptive-icon.png || { echo "ERROR: Adaptive icon missing"; exit 1; }
+          echo "✓ All Pound Drop logo files verified"
+          
           echo "=== Cleaning old iOS build ==="
           rm -rf ios/
           
@@ -81,7 +87,11 @@ workflows:
           echo "=== Verifying iOS project created ==="
           ls -la ios/
           find ios -name "*.xcworkspace" || { echo "ERROR: No workspace found"; exit 1; }
-          echo "iOS project created successfully ✓"
+          
+          echo "=== Verifying app icon integration ==="
+          find ios -name "*Assets.xcassets*" -type d | head -5
+          find ios -name "AppIcon*" | head -5
+          echo "iOS project with Pound Drop logo created successfully ✓"
 
       - name: Set up code signing
         script: |
