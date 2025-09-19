@@ -55,8 +55,13 @@ workflows:
           echo "=== Fixing dependencies with Expo ==="
           npx expo install --fix || { echo "ERROR: expo install failed"; exit 1; }
           
+          echo "=== Fixing Expo binary permissions (previously working fix) ==="
+          chmod +x node_modules/.bin/* 2>/dev/null || true
+          chmod +x /Users/builder/clone/node_modules/.bin/* 2>/dev/null || true
+          chmod +x /Users/builder/clone/mobile-app/pound-drop-fresh/node_modules/.bin/* 2>/dev/null || true
+          
           echo "=== Verifying Expo CLI installation ==="
-          npx expo --version || echo "Expo CLI ready via npx"
+          npx expo --version || expo --version || echo "Expo CLI ready"
           
           echo "=== Verifying final configuration ==="
           echo "Package.json main entry:"
