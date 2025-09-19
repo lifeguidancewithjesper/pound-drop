@@ -73,7 +73,7 @@ workflows:
           rm -rf ios/
           
           echo "=== Running Expo prebuild for iOS ==="
-          expo prebuild --platform ios --clean --log-level debug || {
+          npx expo prebuild --platform ios --clean --log-level debug || {
             echo "ERROR: Expo prebuild failed"
             echo "Package.json content:"
             cat package.json
