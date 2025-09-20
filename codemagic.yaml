@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - Permission Fix
+    name: Pound Drop iOS - Complete App Build
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -8,7 +8,7 @@ workflows:
     cache:
       cache_paths:
         - ~/.npm
-        - $CM_BUILD_DIR/ios/Pods
+        - $CM_BUILD_DIR/mobile-app/pound-drop-fresh/ios/Pods
         - ~/Library/Caches/CocoaPods
         - ~/Library/Developer/Xcode/DerivedData
     environment:
@@ -23,96 +23,106 @@ workflows:
         XCODE_VERSION: "16.1"
         NODE_VERSION: "20"
     scripts:
-      - name: Setup mobile app with permission fix
+      - name: Navigate to complete mobile app
         script: |
-          echo "=== Current directory: $(pwd) ==="
+          echo "=== Moving to complete mobile app directory ==="
+          cd mobile-app/pound-drop-fresh
+          echo "Current directory: $(pwd)"
           ls -la
           
-          echo "=== Fixing package.json entry point ==="
-          cp package-mobile-build.json package.json
-          echo "✓ Using correct package.json with index.js entry point"
-          
-          echo "=== Verifying mobile app files ==="
+          echo "=== Verifying complete mobile app ==="
           test -f App.tsx || { echo "ERROR: App.tsx missing"; exit 1; }
           test -f index.js || { echo "ERROR: index.js missing"; exit 1; }
-          test -d src || { echo "ERROR: src directory missing"; exit 1; }
+          test -f package.json || { echo "ERROR: package.json missing"; exit 1; }
           test -f app.json || { echo "ERROR: app.json missing"; exit 1; }
+          test -d src || { echo "ERROR: src directory missing"; exit 1; }
+          test -d assets || { echo "ERROR: assets directory missing"; exit 1; }
           echo "✓ All mobile app files verified"
           
-          echo "=== Installing dependencies (PERMISSION FIX) ==="
+          echo "=== Configuration Summary ==="
+          echo "Package.json main entry:"
+          cat package.json | grep '"main"'
+          echo "App.json SDK version:"
+          cat app.json | grep '"sdkVersion"'
+          echo "React version:"
+          cat package.json | grep '"react"'
+          echo "Bundle identifier:"
+          cat app.json | grep '"bundleIdentifier"'
+
+      - name: Install dependencies
+        script: |
+          cd mobile-app/pound-drop-fresh
+          echo "=== Installing dependencies ==="
+          
           export CI=1
           export EXPO_NO_TELEMETRY=1
           
-          # THE FIX: Disable lifecycle scripts during install to prevent expo binary calls
-          npm config set ignore-scripts true
           npm install --legacy-peer-deps
-          npm config set ignore-scripts false
           
-          echo "=== Verifying Expo CLI after install ==="
-          npx expo --version || echo "Expo CLI ready"
+          echo "=== CRITICAL: Fixing ALL binary permissions ==="
+          # Fix permissions on ALL binaries in node_modules/.bin/
+          chmod +x node_modules/.bin/* 2>/dev/null || true
           
-          echo "=== Dependencies installed successfully ✓ ==="
+          echo "=== Verifying expo binary permissions ==="
+          ls -la node_modules/.bin/expo
+          
+          echo "=== Testing expo binary directly ==="
+          ./node_modules/.bin/expo --version || npx expo --version || echo "Expo ready"
+          
+          echo "=== Dependencies installed and permissions fixed ==="
 
       - name: Prebuild iOS project
         script: |
-          echo "=== Current directory: $(pwd) ==="
+          cd mobile-app/pound-drop-fresh
+          echo "=== Prebuilding iOS project ==="
           
           export CI=1
           export NODE_ENV=production
           export EXPO_NO_TELEMETRY=1
           
-          echo "=== Verifying Pound Drop logo files ==="
+          echo "=== Verifying Pound Drop assets ==="
           ls -la assets/
           test -f assets/icon.png || { echo "ERROR: Main icon missing"; exit 1; }
-          test -f assets/adaptive-icon.png || { echo "ERROR: Adaptive icon missing"; exit 1; }
-          echo "✓ All Pound Drop logo files verified"
+          echo "✓ App assets verified"
           
-          echo "=== Cleaning old iOS build ==="
+          echo "=== Cleaning previous builds ==="
           rm -rf ios/
           
-          echo "=== Running Expo prebuild for iOS ==="
-          npx expo prebuild --platform ios --clean --log-level debug || {
+          echo "=== Running Expo prebuild ==="
+          npx expo prebuild --platform ios --clean || {
             echo "ERROR: Expo prebuild failed"
-            echo "Package.json content:"
+            echo "Full package.json:"
             cat package.json
-            echo "App.json content:"
+            echo "Full app.json:"
             cat app.json
             exit 1
           }
           
-          echo "=== Verifying iOS project created ==="
+          echo "=== iOS project created successfully ==="
           ls -la ios/
-          find ios -name "*.xcworkspace" || { echo "ERROR: No workspace found"; exit 1; }
-          
-          echo "=== Verifying app icon integration ==="
-          find ios -name "*Assets.xcassets*" -type d | head -5
-          find ios -name "AppIcon*" | head -5
-          echo "iOS project with Pound Drop logo created successfully ✓"
+          find ios -name "*.xcworkspace" | head -3
 
       - name: Set up code signing
         script: |
+          cd mobile-app/pound-drop-fresh
           echo "=== Setting up code signing ==="
           keychain add-certificates
           xcode-project use-profiles
 
       - name: Install CocoaPods dependencies
         script: |
-          echo "=== Installing CocoaPods in: $(pwd)/ios ==="
-          cd ios
+          cd mobile-app/pound-drop-fresh/ios
+          echo "=== Installing CocoaPods dependencies ==="
           
           rm -rf Pods/ Podfile.lock || true
+          pod install --repo-update
           
-          pod install --repo-update || {
-            echo "ERROR: CocoaPods installation failed"
-            cat Podfile
-            exit 1
-          }
-          
-          echo "CocoaPods installation completed ✓"
+          echo "✓ CocoaPods installation completed"
 
-      - name: Build iOS app for App Store
+      - name: Build iOS app
         script: |
-          echo "=== Building iOS app from: $(pwd) ==="
+          cd mobile-app/pound-drop-fresh
+          echo "=== Building iOS app ==="
           
           WORKSPACE=$(find ios -name "*.xcworkspace" | head -1)
           echo "Using workspace: $WORKSPACE"
@@ -125,19 +135,16 @@ workflows:
             --scheme "$SCHEME" \
             --config Release \
             --archive-xcargs "DEVELOPMENT_TEAM=$APPLE_TEAM_ID CODE_SIGN_IDENTITY='iPhone Distribution' CODE_SIGN_STYLE=Manual" \
-            --archive-flags "-destination 'generic/platform=iOS'" || {
-              echo "ERROR: Build failed"
-              exit 1
-            }
+            --archive-flags "-destination 'generic/platform=iOS'"
           
           echo "=== BUILD SUCCESS! ==="
-          echo "IPA file created with complete Pound Drop app:"
+          echo "Your complete Pound Drop app is ready:"
           ls -la build/ios/ipa/
-          echo "Your complete app is ready for TestFlight! 🎉"
+          echo "🎉 Ready for TestFlight submission!"
 
     artifacts:
-      - build/ios/ipa/*.ipa
-      - ios/build/logs/*.log
+      - mobile-app/pound-drop-fresh/build/ios/ipa/*.ipa
+      - mobile-app/pound-drop-fresh/ios/build/logs/*.log
 
     publishing:
       app_store_connect:
