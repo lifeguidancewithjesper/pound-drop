@@ -1,6 +1,6 @@
 workflows:
   react-native-ios:
-    name: Pound Drop iOS - Complete App Build
+    name: Pound Drop iOS - FINAL Permission Fix
     max_build_duration: 120
     instance_type: mac_mini_m2
     integrations:
@@ -38,38 +38,29 @@ workflows:
           test -d src || { echo "ERROR: src directory missing"; exit 1; }
           test -d assets || { echo "ERROR: assets directory missing"; exit 1; }
           echo "✓ All mobile app files verified"
-          
-          echo "=== Configuration Summary ==="
-          echo "Package.json main entry:"
-          cat package.json | grep '"main"'
-          echo "App.json SDK version:"
-          cat app.json | grep '"sdkVersion"'
-          echo "React version:"
-          cat package.json | grep '"react"'
-          echo "Bundle identifier:"
-          cat app.json | grep '"bundleIdentifier"'
 
-      - name: Install dependencies
+      - name: Install dependencies WITHOUT SCRIPTS
         script: |
           cd mobile-app/pound-drop-fresh
-          echo "=== Installing dependencies ==="
+          echo "=== Installing dependencies WITHOUT postinstall scripts ==="
           
           export CI=1
           export EXPO_NO_TELEMETRY=1
           
-          npm install --legacy-peer-deps
+          # CRITICAL: Install expo globally FIRST so it's available in PATH
+          npm install -g @expo/cli@latest
           
-          echo "=== CRITICAL: Fixing ALL binary permissions ==="
-          # Fix permissions on ALL binaries in node_modules/.bin/
-          chmod +x node_modules/.bin/* 2>/dev/null || true
+          # CRITICAL: Install dependencies but SKIP ALL SCRIPTS to prevent expo execution
+          npm install --legacy-peer-deps --ignore-scripts
           
-          echo "=== Verifying expo binary permissions ==="
-          ls -la node_modules/.bin/expo
+          echo "=== Manually fixing ALL binary permissions ==="
+          find node_modules/.bin -type f -exec chmod +x {} \; 2>/dev/null || true
           
-          echo "=== Testing expo binary directly ==="
-          ./node_modules/.bin/expo --version || npx expo --version || echo "Expo ready"
+          echo "=== Verifying expo is available ==="
+          which expo || echo "Using global expo"
+          expo --version || npx expo --version
           
-          echo "=== Dependencies installed and permissions fixed ==="
+          echo "=== Dependencies installed WITHOUT script execution ==="
 
       - name: Prebuild iOS project
         script: |
@@ -88,8 +79,8 @@ workflows:
           echo "=== Cleaning previous builds ==="
           rm -rf ios/
           
-          echo "=== Running Expo prebuild ==="
-          npx expo prebuild --platform ios --clean || {
+          echo "=== Running Expo prebuild with global CLI ==="
+          expo prebuild --platform ios --clean || npx expo prebuild --platform ios --clean || {
             echo "ERROR: Expo prebuild failed"
             echo "Full package.json:"
             cat package.json
@@ -149,3 +140,4 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
+    
