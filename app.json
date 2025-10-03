@@ -31,5 +31,18 @@
     "eas": {
       "projectId": "b48af399-d4ca-406f-aba0-a70d2a0d859b"
     }
+  },
+  "expo": {
+    "ios": {
+      "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b48af399-d4ca-406f-aba0-a70d2a0d859b"
+      }
+    }
   }
 }
