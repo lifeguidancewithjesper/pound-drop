@@ -1,49 +1,60 @@
 {
-  "name": "pounddrop",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
-  },
-  "dependencies": {
-    "@expo/vector-icons": "^15.0.2",
-    "@react-navigation/bottom-tabs": "^7.4.7",
-    "@react-navigation/native": "^7.1.17",
-    "@react-navigation/stack": "^7.4.8",
-    "expo": "~54.0.9",
-    "expo-constants": "~18.0.9",
-    "expo-status-bar": "~3.0.8",
-    "react": "19.1.0",
-    "react-native": "0.81.4",
-    "react-native-gesture-handler": "~2.28.0",
-    "react-native-safe-area-context": "~5.6.0",
-    "react-native-screens": "~4.16.0"
-  },
-  "devDependencies": {
-    "@types/react": "^18.3.11",
-    "typescript": "5.6.3"
-  },
-  "private": true,
-  "extra": {
-    "eas": {
-      "projectId": "b48af399-d4ca-406f-aba0-a70d2ßa0d859b"
-    }
-  },
   "expo": {
+    "name": "Pound Drop",
+    "owner": "lifeguidancewithjesper",
+    "slug": "pound-drop-weight-loss-tracker",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo-pound-drop.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "description": "Your personal weight loss tracking companion with meal logging, habit tracking, and progress insights.",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
-  "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
-  "buildNumber": "20",
-  "infoPlist": {
-    "ITSAppUsesNonExemptEncryption": false
-  }
-},
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
+      "buildNumber": "23",
+      "icon": "./assets/logo-pound-drop.png",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Take photos of your meals for tracking",
+        "NSPhotoLibraryUsageDescription": "Select photos from your library for meal logging",
+        "NSUserNotificationUsageDescription": "Send reminders for meal logging and habit tracking",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.lifeguidancewithjesper.pounddrop",
+      "versionCode": 2,
+      "icon": "./assets/logo-pound-drop.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
     "extra": {
       "eas": {
-        "projectId": "b48af399-d4ca-406f-aba0-a70d2a0d859b"
+        "projectId": "3fd7b70e-3422-4ac6-8fcc-eccd532f6c9d"
       }
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }
