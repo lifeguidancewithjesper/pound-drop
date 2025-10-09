@@ -1,25 +1,61 @@
 {
   "cli": {
-    "version": ">= 13.2.0"
+    "version": ">= 13.0.0"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "node": "20.18.0"
+      "env": {
+        "EXPO_PUBLIC_USE_MOCKS": "true",
+        "EXPO_DEBUG": "1"
+      },
+      "ios": {
+        "image": "latest"
+      }
     },
     "preview": {
       "distribution": "internal",
-      "node": "20.18.0"
+      "env": {
+        "EXPO_PUBLIC_USE_MOCKS": "true",
+        "EXPO_DEBUG": "1"
+      },
+      "ios": {
+        "simulator": false,
+        "image": "latest"
+      }
     },
     "production": {
       "node": "20.18.0",
+      "env": {
+        "BUNDLE_IDENTIFIER": "com.lifeguidancewithjesper.pounddrop",
+        "EXPO_PUBLIC_USE_MOCKS": "false",
+        "EXPO_PUBLIC_API_URL": "https://stubborn-pound-drop.replit.app/api",
+        "EXPO_DEBUG": "1",
+        "NODE_OPTIONS": "--max_old_space_size=4096"
+      },
       "ios": {
+        "autoIncrement": true,
+        "cache": {
+          "key": "production-cache-v17"
+        },
+        "image": "macos-sonoma-14.6-xcode-16.4",
+        "cocoapods": "1.15.2",
+        "resourceClass": "m1-medium",
         "buildConfiguration": "Release"
+      },
+      "android": {
+        "autoIncrement": true
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "jesper@lifeguidancewithjesper.com",
+        "ascAppId": "6752422532",
+        "appleTeamId": "8VKM26D99V"
+      }
+    }
   }
 }

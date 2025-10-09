@@ -72,9 +72,9 @@ export default function WellnessScreen() {
         {/* Pound Drop Method */}
         <View style={styles.methodCard}>
           <Text style={styles.methodTitle}>🎯 Pound Drop Method</Text>
-          <Text style={styles.methodSubtitle}>Get sufficient proteins and wholefoods, eating in a way that doesn't spike blood sugar. Low insulin = weight loss.</Text>
+          <Text style={styles.methodSubtitle}>2-3 meals daily. Get sufficient proteins and wholefoods, eating in a way that doesn't spike blood sugar. Low insulin = weight loss.</Text>
           <View style={styles.methodSteps}>
-            <MethodStep number="1" title="Diet" desc="Breakfast: 20g protein + wholefoods (vegetables, fruits, berries, wholegrains). Lunch: 80% wholefoods (non-starchy vegetables) + 20g protein. Dinner: A lighter version of your lunch meal, here it's ok to add little starchy vegetables. Always eat carbs last to avoid blood sugar spikes." />
+            <MethodStep number="1" title="Diet" desc="It's important to get enough proteins for breakfast - 20g and add fiber rich natural wholefoods like vegetables, nuts, seeds, fruits, berries etc. Be sure to first consume the natural whole foods, proteins and fats before eating any of your carbs. This is to avoid blood sugar and insulin spikes which prevent weight loss. For lunch eat mostly natural whole foods and non-starchy vegetables, get also sufficient proteins and make sure only non-starchy vegetables. Dinner meals should be a lighter version of your lunch meal here it's ok to add a little starchy vegetables." />
             <MethodStep number="2" title="Fasting" desc="Fast between meals and practice 16-hour intermittent fasting daily to lower insulin levels and trigger fat burning." />
             <MethodStep number="3" title="Exercise" desc="Minimum 30 min walk daily. Don't overdo it - too much exercise increases hunger and cravings. Eat less, move less." />
             <MethodStep number="4" title="Track + Celebrate Wins" desc="Log daily: weight, water, steps, meals • Check off Daily Actions • Celebrate non-scale victories • Consistency over perfection!" />
@@ -599,7 +599,7 @@ function MoodTab() {
       <View style={styles.reflectionSection}>
         <View style={styles.reflectionHeader}>
           <Text style={styles.reflectionTitle}>🎯 Daily Reflection</Text>
-          <Text style={styles.reflectionSubtitle}>Step 4: Track + Celebrate Wins</Text>
+          <Text style={styles.reflectionSubtitle}>Track and celebrate wins</Text>
         </View>
 
         <Text style={[styles.sectionLabel, { marginTop: 16 }]}>🏆 Today's Win (NSV - Non-Scale Victory)</Text>
