@@ -71,21 +71,21 @@ export default function DailyLogScreen({ navigation }: any) {
               <View key={dayLog.date} style={styles.daySection}>
                 {/* Date Header */}
                 <View style={styles.dateHeader}>
-                  <Ionicons name="calendar" size={20} color="#8B5CF6" />
+                  <Ionicons name="calendar" size={20} color="#9333EA" />
                   <Text style={styles.dateHeaderText}>{formatDateHeader(dayLog.date)}</Text>
                 </View>
 
                 {/* Meals */}
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
-                    <Ionicons name="restaurant" size={20} color="#8B5CF6" />
+                    <Ionicons name="restaurant" size={20} color="#9333EA" />
                     <Text style={styles.sectionTitle}>Meals</Text>
                   </View>
 
                   {/* Breakfast */}
                   <View style={styles.mealCard}>
                     <View style={styles.mealHeader}>
-                      <Ionicons name="sunny" size={18} color="#F59E0B" />
+                      <Ionicons name="sunny" size={18} color="#FACC15" />
                       <Text style={styles.mealTitle}>Breakfast</Text>
                     </View>
                     {breakfastFoods.length > 0 ? (
@@ -137,7 +137,7 @@ export default function DailyLogScreen({ navigation }: any) {
                   {/* Dinner */}
                   <View style={styles.mealCard}>
                     <View style={styles.mealHeader}>
-                      <Ionicons name="moon" size={18} color="#8B5CF6" />
+                      <Ionicons name="moon" size={18} color="#9333EA" />
                       <Text style={styles.mealTitle}>Dinner</Text>
                     </View>
                     {dinnerFoods.length > 0 ? (
@@ -164,7 +164,7 @@ export default function DailyLogScreen({ navigation }: any) {
                 {/* Activity Summary */}
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
-                    <Ionicons name="fitness" size={20} color="#10B981" />
+                    <Ionicons name="fitness" size={20} color="#16A34A" />
                     <Text style={styles.sectionTitle}>Activity</Text>
                   </View>
 
@@ -176,7 +176,7 @@ export default function DailyLogScreen({ navigation }: any) {
                     </View>
 
                     <View style={styles.summaryCard}>
-                      <Ionicons name="walk" size={28} color="#10B981" />
+                      <Ionicons name="walk" size={28} color="#16A34A" />
                       <Text style={styles.summaryValue}>{parseInt(steps).toLocaleString()}</Text>
                       <Text style={styles.summaryLabel}>Steps</Text>
                     </View>
@@ -232,6 +232,42 @@ export default function DailyLogScreen({ navigation }: any) {
                           </View>
                         </View>
                       )}
+                      {dayLog.moodDetails.notes && (
+                        <View style={styles.notesSection}>
+                          <Text style={styles.notesLabel}>Notes:</Text>
+                          <Text style={styles.notesText}>{dayLog.moodDetails.notes}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
+
+                {/* Daily Reflection */}
+                {dayLog.dailyReflection && (dayLog.dailyReflection.todaysWin || dayLog.dailyReflection.mindsetGratitude || dayLog.dailyReflection.obstaclePlan) && (
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                      <Ionicons name="star" size={20} color="#9333EA" />
+                      <Text style={styles.sectionTitle}>Daily Reflection</Text>
+                    </View>
+                    <View style={styles.reflectionCard}>
+                      {dayLog.dailyReflection.todaysWin && (
+                        <View style={styles.reflectionItem}>
+                          <Text style={styles.reflectionLabel}>🏆 Today's Win</Text>
+                          <Text style={styles.reflectionText}>{dayLog.dailyReflection.todaysWin}</Text>
+                        </View>
+                      )}
+                      {dayLog.dailyReflection.mindsetGratitude && (
+                        <View style={styles.reflectionItem}>
+                          <Text style={styles.reflectionLabel}>💭 Mindset/Gratitude</Text>
+                          <Text style={styles.reflectionText}>{dayLog.dailyReflection.mindsetGratitude}</Text>
+                        </View>
+                      )}
+                      {dayLog.dailyReflection.obstaclePlan && (
+                        <View style={styles.reflectionItem}>
+                          <Text style={styles.reflectionLabel}>🚧 Obstacle + Plan</Text>
+                          <Text style={styles.reflectionText}>{dayLog.dailyReflection.obstaclePlan}</Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                 )}
@@ -240,7 +276,7 @@ export default function DailyLogScreen({ navigation }: any) {
                 {dayLog.fasting && (
                   <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                      <Ionicons name="time" size={20} color="#F59E0B" />
+                      <Ionicons name="time" size={20} color="#FACC15" />
                       <Text style={styles.sectionTitle}>Fasting</Text>
                     </View>
                     <View style={styles.fastingCard}>
@@ -339,7 +375,7 @@ const styles = StyleSheet.create({
   dateHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#9333EA',
     padding: 16,
     marginTop: 16,
   },
@@ -395,7 +431,7 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#9333EA',
     marginRight: 10,
   },
   foodText: {
@@ -568,7 +604,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   symptomChip: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#16A34A',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -577,6 +613,44 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#fff',
     fontWeight: '600',
+  },
+  notesSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  notesLabel: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  notesText: {
+    fontSize: 14,
+    color: '#1F2937',
+    lineHeight: 20,
+  },
+  reflectionCard: {
+    backgroundColor: '#EEF2FF',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#9333EA',
+  },
+  reflectionItem: {
+    marginBottom: 16,
+  },
+  reflectionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#9333EA',
+    marginBottom: 6,
+  },
+  reflectionText: {
+    fontSize: 14,
+    color: '#1F2937',
+    lineHeight: 20,
   },
   bottomPadding: { height: 40 },
 });

@@ -1,19 +1,22 @@
 // Theme configuration for Pound Drop mobile app
-// Beautiful purple/violet color palette for modern look
+// Vibrant purple-to-pink gradient palette matching marketing website
 
 export const colors = {
-  // Primary purple/violet palette
-  primary: '#8B5CF6',        // Beautiful violet (HSL 261, 83%, 66%)
-  primary600: '#7C3AED',     // Darker violet for emphasis (HSL 263, 85%, 67%)
-  primary700: '#6D28D9',     // Darkest violet for strong emphasis (HSL 265, 85%, 60%)
-  secondary: '#A855F7',      // Secondary purple (HSL 283, 89%, 66%)
-  accent: '#EC4899',         // Pink accent color (HSL 332, 82%, 60%)
+  // Primary gradient palette (matches website)
+  primary: '#9333EA',        // Purple-600 for main brand
+  primaryDark: '#7E22CE',    // Purple-700 for darker emphasis
+  secondary: '#DB2777',      // Pink-600 for gradient accent
+  accent: '#EC4899',         // Pink-500 for highlights
   
-  // Status colors (keeping existing)
-  success: '#10B981',        // Green
-  warning: '#F59E0B',        // Amber
-  error: '#EF4444',          // Red
-  info: '#3B82F6',           // Blue
+  // Green-Lime gradient (matches website branding)
+  brandGreen: '#16A34A',     // Green-600
+  brandLime: '#84CC16',      // Lime-500
+  
+  // Status colors (vibrant to match website)
+  success: '#16A34A',        // Green-600
+  warning: '#FACC15',        // Yellow-400
+  error: '#EF4444',          // Red-500
+  info: '#3B82F6',           // Blue-500
   
   // Neutral colors
   textPrimary: '#1F2937',    // Dark gray for primary text
@@ -23,12 +26,16 @@ export const colors = {
   surfaceMuted: '#F9FAFB',   // Light gray background
   border: '#E5E7EB',         // Border color
   
+  // Gradient backgrounds (matching website style)
+  gradientPurplePink: ['#9333EA', '#DB2777'],  // Main brand gradient
+  gradientGreenLime: ['#16A34A', '#84CC16'],   // Accent gradient
+  
   // Activity indicator and loading states
-  loading: '#8B5CF6',        // Use primary violet for loading indicators
+  loading: '#9333EA',        // Use primary purple for loading
   
   // Button states
-  buttonPrimary: '#8B5CF6',
-  buttonSecondary: '#A855F7',
+  buttonPrimary: '#9333EA',
+  buttonSecondary: '#DB2777',
   buttonDisabled: '#9CA3AF',
 };
 

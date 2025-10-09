@@ -12,10 +12,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const USERS = [
-  { id: "1", email: "admin@pounddrop.com", username: "Admin", status: "trial", created: "2025-09-04" },
-  { id: "2", email: "demo@example.com", username: "Demo User", status: "trial", created: "2025-09-05" },
-  { id: "3", email: "test@example.com", username: "Test User", status: "trial", created: "2025-08-26" },
-  { id: "4", email: "user@example.com", username: "Regular User", status: "expired", created: "2025-08-28" },
+  { id: "1", email: "admin@pounddrop.com", username: "Admin", status: "active", created: "2025-09-04" },
+  { id: "2", email: "sarah.j@gmail.com", username: "Sarah J", status: "active", created: "2025-09-05" },
+  { id: "3", email: "mike.smith@yahoo.com", username: "Mike S", status: "active", created: "2025-08-26" },
+  { id: "4", email: "jennifer.wilson@icloud.com", username: "Jennifer W", status: "expired", created: "2025-08-28" },
 ];
 
 export default function AdminScreen({ onLogout }: { onLogout: () => void }) {
@@ -81,7 +81,6 @@ export default function AdminScreen({ onLogout }: { onLogout: () => void }) {
           {
             text: 'Send',
             onPress: () => {
-              // Here you would integrate with your email service
               Alert.alert('Success', `Mass email sent to ${recipientCount} users!`);
               setShowEmailModal(false);
             }
@@ -97,7 +96,6 @@ export default function AdminScreen({ onLogout }: { onLogout: () => void }) {
           {
             text: 'Send',
             onPress: () => {
-              // Here you would integrate with your email service
               Alert.alert('Success', `Email sent to ${selectedUser?.email}!`);
               setShowEmailModal(false);
             }
@@ -128,9 +126,9 @@ export default function AdminScreen({ onLogout }: { onLogout: () => void }) {
           
           <View style={styles.statCard}>
             <Text style={styles.statNumber}>
-              {users.filter(u => u.status === 'trial').length}
+              {users.filter(u => u.status === 'active').length}
             </Text>
-            <Text style={styles.statLabel}>Trial Users</Text>
+            <Text style={styles.statLabel}>Active Users</Text>
           </View>
           
           <View style={styles.statCard}>
@@ -173,7 +171,7 @@ export default function AdminScreen({ onLogout }: { onLogout: () => void }) {
               <Text style={[styles.tableCell, { flex: 2 }]}>{user.email}</Text>
               <Text style={[styles.tableCell, { flex: 2 }]}>{user.username}</Text>
               <Text style={[styles.tableCell, { flex: 1 }, 
-                user.status === 'trial' ? styles.trialStatus : styles.expiredStatus
+                user.status === 'active' ? styles.activeStatus : styles.expiredStatus
               ]}>
                 {user.status}
               </Text>
@@ -384,7 +382,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
   },
-  trialStatus: {
+  activeStatus: {
     color: '#10B981',
     fontWeight: '600',
   },

@@ -57,6 +57,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   const loadUserData = async () => {
     setLoading(true);
     try {
+      // Load user data from secure storage
       const storedUser = await SecureStore.getItemAsync('pounddrop_user');
       
       if (!storedUser) {
@@ -79,6 +80,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
 
       const userData = JSON.parse(storedUser);
       
+      // Get all weight entries from logs
       const weightLogs = logs
         .filter(log => log.weight && log.weight !== '')
         .map(log => ({
@@ -91,6 +93,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
       const currentWeight = weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight : parseFloat(userData.currentWeight || '0');
       const targetWeight = parseFloat(userData.targetWeight || '0');
 
+      // Count total meals logged
       const totalMeals = logs.reduce((count, log) => {
         let mealCount = 0;
         if (log.meals?.breakfast && log.meals.breakfast.length > 0) mealCount++;
@@ -160,7 +163,6 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
       </SafeAreaView>
     );
   }
-
   const handleEditEmail = () => {
     Alert.prompt(
       'Edit Email',
@@ -175,6 +177,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
               return;
             }
             
+            // Basic email validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(newEmail)) {
               Alert.alert('Error', 'Please enter a valid email address');
@@ -188,6 +191,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
                 userData.email = newEmail;
                 await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
                 
+                // Reload user data to reflect changes
                 loadUserData();
                 Alert.alert('Success', 'Email updated successfully!');
               }
@@ -264,6 +268,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
               return;
             }
 
+            // Check if target is realistic
             if (userProfile.currentWeight && weight >= userProfile.currentWeight) {
               Alert.alert(
                 'Notice', 
@@ -293,6 +298,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
         userData.currentWeight = currentWeight.toString();
         await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
         
+        // Reload user data to reflect changes
         loadUserData();
         Alert.alert('Success', `Current weight set to ${currentWeight} lbs!`);
       }
@@ -310,6 +316,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
         userData.targetWeight = targetWeight.toString();
         await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
         
+        // Reload user data to reflect changes
         loadUserData();
         Alert.alert('Success', `Target weight set to ${targetWeight} lbs!`);
       }
@@ -496,7 +503,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
       'Your data is protected using iOS secure storage. Only you have access to your data.\n\n' +
       '5. DATA DELETION\n' +
       'You can delete all your data at any time through the "Delete Account" option in Subscription settings.\n\n' +
-      'For questions, contact: support@pounddrop.com',
+      'For questions, contact: support@pounddropapp.com',
       [{ text: 'I Understand', style: 'default' }],
       { cancelable: true }
     );
@@ -529,22 +536,22 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
 
   const handleMenuItemPress = (index: number) => {
     switch (index) {
-      case 0:
+      case 0: // Change your email
         handlePersonalInfo();
         break;
-      case 1:
+      case 1: // Goals
         handleEditGoals();
         break;
-      case 2:
+      case 2: // Notifications
         handleNotifications();
         break;
-      case 3:
+      case 3: // Subscription
         handleSubscription();
         break;
-      case 4:
-        Alert.alert('Help & Support', 'Need help? Contact us at support@pounddrop.com');
+      case 4: // Help & Support
+        Alert.alert('Help & Support', 'Need help? Contact us at support@pounddropapp.com');
         break;
-      case 5:
+      case 5: // Privacy Policy
         handlePrivacyPolicy();
         break;
       default:
@@ -564,6 +571,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
@@ -575,6 +583,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           <Text style={styles.memberSince}>{formatJoinDate(userProfile.joinDate)}</Text>
         </View>
 
+        {/* Subscription Status Banner */}
         {isTrialActive && (
           <TouchableOpacity 
             style={styles.trialBanner}
@@ -616,6 +625,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           </TouchableOpacity>
         )}
 
+        {/* Stats Overview */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{userStats.daysActive}</Text>
@@ -633,6 +643,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           </View>
         </View>
 
+        {/* Current Goals */}
         <View style={styles.goalsSection}>
           <Text style={styles.sectionTitle}>Current Goals</Text>
           <View style={styles.goalCard}>
@@ -657,6 +668,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           </View>
         </View>
 
+        {/* Menu Items */}
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>Settings</Text>
           {menuItems.map((item, index) => (
@@ -677,20 +689,24 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           ))}
         </View>
 
+        {/* Logout Button */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={24} color="#EF4444" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 
+        {/* App Version */}
         <Text style={styles.versionText}>Pound Drop v1.0.0</Text>
       </ScrollView>
 
+      {/* Subscription Modal */}
       {showSubscriptionModal && (
         <SubscriptionScreen onClose={() => setShowSubscriptionModal(false)} />
       )}
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

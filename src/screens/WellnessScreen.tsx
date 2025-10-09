@@ -1,18 +1,27 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useState, useEffect } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStorage } from '../context/StorageContext';
 import { searchFoods } from '../data/foodDatabase';
+import CelebrationModal from '../components/CelebrationModal';
 
 type Tab = 'weight' | 'steps' | 'water' | 'meals' | 'mood' | 'measurements' | 'workout' | 'fasting';
 
 export default function WellnessScreen() {
   const navigation = useNavigation();
+  const route = useRoute();
   const { getTodayLog, updateTodayLog } = useStorage();
   const todayLog = getTodayLog();
   
-  const [activeTab, setActiveTab] = useState<Tab>('weight');
+  const params = route.params as { tab?: Tab } | undefined;
+  const [activeTab, setActiveTab] = useState<Tab>(params?.tab || 'weight');
+  
+  useEffect(() => {
+    if (params?.tab) {
+      setActiveTab(params.tab);
+    }
+  }, [params?.tab]);
   const [searchQuery, setSearchQuery] = useState('');
   
   //  Check what's completed today
@@ -41,7 +50,7 @@ export default function WellnessScreen() {
         {/* Daily Actions Checklist */}
         <View style={styles.checklistCard}>
           <View style={styles.checklistHeader}>
-            <Ionicons name="checkbox" size={24} color="#8B5CF6" />
+            <Ionicons name="checkbox" size={24} color="#9333EA" />
             <Text style={styles.checklistTitle}>Daily Actions</Text>
             <View style={styles.progressBadge}>
               <Text style={styles.progressText}>{completedCount}/9</Text>
@@ -65,7 +74,7 @@ export default function WellnessScreen() {
           <Text style={styles.methodTitle}>🎯 Pound Drop Method</Text>
           <Text style={styles.methodSubtitle}>Get sufficient proteins and wholefoods, eating in a way that doesn't spike blood sugar. Low insulin = weight loss.</Text>
           <View style={styles.methodSteps}>
-            <MethodStep number="1" title="Diet" desc="Breakfast: 20g protein + wholefoods (berries, wholegrains). Lunch: 80% wholefoods + 20g protein. Dinner: Light meal. Always eat carbs last to avoid blood sugar spikes." />
+            <MethodStep number="1" title="Diet" desc="Breakfast: 20g protein + wholefoods (vegetables, fruits, berries, wholegrains). Lunch: 80% wholefoods (non-starchy vegetables) + 20g protein. Dinner: A lighter version of your lunch meal, here it's ok to add little starchy vegetables. Always eat carbs last to avoid blood sugar spikes." />
             <MethodStep number="2" title="Fasting" desc="Fast between meals and practice 16-hour intermittent fasting daily to lower insulin levels and trigger fat burning." />
             <MethodStep number="3" title="Exercise" desc="Minimum 30 min walk daily. Don't overdo it - too much exercise increases hunger and cravings. Eat less, move less." />
             <MethodStep number="4" title="Track + Celebrate Wins" desc="Log daily: weight, water, steps, meals • Check off Daily Actions • Celebrate non-scale victories • Consistency over perfection!" />
@@ -118,7 +127,7 @@ function CheckItem({ label, completed }: { label: string; completed: boolean }) 
       <Ionicons 
         name={completed ? "checkmark-circle" : "ellipse-outline"} 
         size={20} 
-        color={completed ? "#10B981" : "#D1D5DB"} 
+        color={completed ? "#16A34A" : "#D1D5DB"} 
       />
       <Text style={[styles.checkLabel, completed && styles.checkLabelDone]}>{label}</Text>
     </View>
@@ -146,7 +155,7 @@ function TabButton({ label, icon, active, onPress }: { label: string; icon: any;
       onPress={onPress}
       data-testid={`button-tab-${label.toLowerCase()}`}
     >
-      <Ionicons name={icon} size={20} color={active ? "#8B5CF6" : "#6B7280"} />
+      <Ionicons name={icon} size={20} color={active ? "#9333EA" : "#6B7280"} />
       <Text style={[styles.tabButtonText, active && styles.tabButtonTextActive]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -154,24 +163,62 @@ function TabButton({ label, icon, active, onPress }: { label: string; icon: any;
 
 // Tab Components
 function WeightTab() {
-  const { getTodayLog, updateTodayLog } = useStorage();
+  const { getTodayLog, updateTodayLog, weightUnit, setWeightUnit, getStartingWeight, setStartingWeight, getWeightLoss, getMilestone, getHighestMilestone, updateHighestMilestone } = useStorage();
   const [weight, setWeight] = useState(getTodayLog()?.weight || '');
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationMilestone, setCelebrationMilestone] = useState(0);
+
+  const toggleUnit = () => {
+    const newUnit = weightUnit === 'lbs' ? 'kg' : 'lbs';
+    setWeightUnit(newUnit);
+  };
 
   const handleSave = () => {
     if (!weight || isNaN(parseFloat(weight))) {
       Alert.alert('Error', 'Please enter a valid weight');
       return;
     }
+
+    const currentWeight = parseFloat(weight);
+    const startingWeight = getStartingWeight();
+
+    // If no starting weight, set this as the starting weight
+    if (!startingWeight) {
+      setStartingWeight(currentWeight);
+      updateTodayLog({ weight });
+      Alert.alert('Success', `Weight logged as ${weight} ${weightUnit}! This is your starting weight.`);
+      return;
+    }
+
+    // Calculate weight loss and check for milestones
+    const weightLoss = getWeightLoss(currentWeight);
+    const newMilestone = getMilestone(weightLoss);
+    const highestMilestone = getHighestMilestone();
+
     updateTodayLog({ weight });
-    Alert.alert('Success', 'Weight logged!');
+
+    // Trigger celebration only if this is a NEW higher milestone
+    if (newMilestone > 0 && newMilestone > highestMilestone) {
+      updateHighestMilestone(newMilestone);
+      setCelebrationMilestone(newMilestone);
+      setShowCelebration(true);
+    } else {
+      Alert.alert('Success', `Weight logged as ${weight} ${weightUnit}!`);
+    }
   };
 
   return (
     <View style={styles.tabCard}>
-      <Text style={styles.tabTitle}>Log Your Weight</Text>
+      <View style={styles.weightHeaderRow}>
+        <Text style={styles.tabTitle}>Log Your Weight</Text>
+        <TouchableOpacity style={styles.unitToggle} onPress={toggleUnit} data-testid="button-toggle-unit">
+          <Text style={styles.unitToggleText}>{weightUnit === 'lbs' ? 'lbs' : 'kg'}</Text>
+          <Ionicons name="swap-horizontal" size={20} color="#9333EA" />
+        </TouchableOpacity>
+      </View>
       <TextInput
         style={styles.input}
-        placeholder="Enter weight (lbs)"
+        placeholder={`Enter weight (${weightUnit})`}
         value={weight}
         onChangeText={setWeight}
         keyboardType="numeric"
@@ -180,6 +227,13 @@ function WeightTab() {
       <TouchableOpacity style={styles.saveButton} onPress={handleSave} data-testid="button-save-weight">
         <Text style={styles.saveButtonText}>Save Weight</Text>
       </TouchableOpacity>
+
+      <CelebrationModal
+        visible={showCelebration}
+        milestone={celebrationMilestone}
+        unit={weightUnit}
+        onClose={() => setShowCelebration(false)}
+      />
     </View>
   );
 }
@@ -251,7 +305,7 @@ function WaterTab() {
           <Ionicons name="remove-circle" size={40} color="#EF4444" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.waterButton} onPress={addWater} data-testid="button-add-water">
-          <Ionicons name="add-circle" size={40} color="#10B981" />
+          <Ionicons name="add-circle" size={40} color="#16A34A" />
         </TouchableOpacity>
       </View>
     </View>
@@ -348,7 +402,7 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
             data-testid="input-custom-food"
           />
           <TouchableOpacity style={styles.addButton} onPress={addCustomFood} data-testid="button-add-custom-food">
-            <Ionicons name="add-circle" size={32} color="#10B981" />
+            <Ionicons name="add-circle" size={32} color="#16A34A" />
           </TouchableOpacity>
         </View>
       </View>
@@ -381,6 +435,12 @@ function MoodTab() {
   const [energyLevel, setEnergyLevel] = useState(todayLog?.moodDetails?.energyLevel || 5);
   const [sleepQuality, setSleepQuality] = useState(todayLog?.moodDetails?.sleepQuality || 5);
   const [symptoms, setSymptoms] = useState<string[]>(todayLog?.moodDetails?.symptoms || []);
+  const [notes, setNotes] = useState(todayLog?.moodDetails?.notes || '');
+  
+  // Daily Reflection states
+  const [todaysWin, setTodaysWin] = useState(todayLog?.dailyReflection?.todaysWin || '');
+  const [mindsetGratitude, setMindsetGratitude] = useState(todayLog?.dailyReflection?.mindsetGratitude || '');
+  const [obstaclePlan, setObstaclePlan] = useState(todayLog?.dailyReflection?.obstaclePlan || '');
   
   const moods = ['😢', '😕', '😐', '🙂', '😄'];
   const moodLabels = ['Very Sad', 'Down', 'Neutral', 'Good', 'Great'];
@@ -408,11 +468,17 @@ function MoodTab() {
         stressLevel,
         energyLevel,
         sleepQuality,
-        symptoms
+        symptoms,
+        notes
+      },
+      dailyReflection: {
+        todaysWin,
+        mindsetGratitude,
+        obstaclePlan
       }
     });
     
-    Alert.alert('Success', 'Mood and wellness logged!');
+    Alert.alert('Success', 'Mood, wellness, and reflections logged!');
   };
 
   return (
@@ -516,9 +582,66 @@ function MoodTab() {
         ))}
       </View>
 
+      {/* Notes Section */}
+      <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Additional Notes</Text>
+      <TextInput
+        style={[styles.input, styles.notesInput]}
+        placeholder="Write any additional notes about how you're feeling..."
+        value={notes}
+        onChangeText={setNotes}
+        multiline
+        numberOfLines={4}
+        textAlignVertical="top"
+        data-testid="input-mood-notes"
+      />
+
+      {/* Daily Reflection Section */}
+      <View style={styles.reflectionSection}>
+        <View style={styles.reflectionHeader}>
+          <Text style={styles.reflectionTitle}>🎯 Daily Reflection</Text>
+          <Text style={styles.reflectionSubtitle}>Step 4: Track + Celebrate Wins</Text>
+        </View>
+
+        <Text style={[styles.sectionLabel, { marginTop: 16 }]}>🏆 Today's Win (NSV - Non-Scale Victory)</Text>
+        <TextInput
+          style={[styles.input, styles.notesInput]}
+          placeholder="I chose water over soda, walked 30 min, said no to dessert..."
+          value={todaysWin}
+          onChangeText={setTodaysWin}
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+          data-testid="input-todays-win"
+        />
+
+        <Text style={[styles.sectionLabel, { marginTop: 12 }]}>💭 Mindset/Gratitude</Text>
+        <TextInput
+          style={[styles.input, styles.notesInput]}
+          placeholder="Grateful my body can move, realized I don't need dessert to feel satisfied..."
+          value={mindsetGratitude}
+          onChangeText={setMindsetGratitude}
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+          data-testid="input-mindset-gratitude"
+        />
+
+        <Text style={[styles.sectionLabel, { marginTop: 12 }]}>🚧 Obstacle + Plan</Text>
+        <TextInput
+          style={[styles.input, styles.notesInput]}
+          placeholder="Craved sugar at 3pm → will prep fruit snacks, skipped workout → will set alarm for tomorrow..."
+          value={obstaclePlan}
+          onChangeText={setObstaclePlan}
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+          data-testid="input-obstacle-plan"
+        />
+      </View>
+
       {/* Save Button */}
       <TouchableOpacity style={styles.saveButton} onPress={handleSave} data-testid="button-save-mood">
-        <Text style={styles.saveButtonText}>Save Mood & Wellness</Text>
+        <Text style={styles.saveButtonText}>Save Mood, Wellness & Reflections</Text>
       </TouchableOpacity>
       
       <View style={{ height: 20 }} />
@@ -550,7 +673,9 @@ function MeasurementsTab() {
       <TextInput style={styles.input} placeholder="Hips (inches)" value={hips} onChangeText={setHips} keyboardType="numeric" data-testid="input-hips" />
       <TextInput style={styles.input} placeholder="Chest (inches)" value={chest} onChangeText={setChest} keyboardType="numeric" data-testid="input-chest" />
       <TextInput style={styles.input} placeholder="Arms (inches)" value={arms} onChangeText={setArms} keyboardType="numeric" data-testid="input-arms" />
-      <TextInput style={styles.input} placeholder="Thighs (inches)" value={thighs} onChangeText={setThighs} keyboardType="numeric" data-testid="input-thighs" />
+      <TextInput style={styles.input} placeholder="Thighs (inches)" value={thighs} onChangeText=
+
+{setThighs} keyboardType="numeric" data-testid="input-thighs" />
       <TouchableOpacity style={styles.saveButton} onPress={handleSave} data-testid="button-save-measurements">
         <Text style={styles.saveButtonText}>Save Measurements</Text>
       </TouchableOpacity>
@@ -693,7 +818,7 @@ function FastingTab() {
 
       {todayLog?.fasting && (
         <View style={styles.fastingInfo}>
-          <Ionicons name="time" size={24} color="#F59E0B" />
+          <Ionicons name="time" size={24} color="#FACC15" />
           <Text style={styles.fastingInfoText}>
             Fasting from {todayLog.fasting.startTime} to {todayLog.fasting.endTime} ({todayLog.fasting.duration}h)
           </Text>
@@ -719,32 +844,40 @@ const styles = StyleSheet.create({
   checklistCard: { margin: 16, padding: 20, backgroundColor: '#fff', borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
   checklistHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   checklistTitle: { fontSize: 18, fontWeight: 'bold', color: '#1F2937', marginLeft: 12, flex: 1 },
-  progressBadge: { backgroundColor: '#8B5CF6', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  progressBadge: { backgroundColor: '#9333EA', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
   progressText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   checklistGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   checkItem: { flexDirection: 'row', alignItems: 'center', width: '48%', marginBottom: 8 },
   checkLabel: { fontSize: 14, color: '#6B7280', marginLeft: 8 },
-  checkLabelDone: { color: '#10B981', fontWeight: '600' },
+  checkLabelDone: { color: '#16A34A', fontWeight: '600' },
   methodCard: { margin: 16, marginTop: 0, padding: 20, backgroundColor: '#EEF2FF', borderRadius: 16 },
   methodTitle: { fontSize: 20, fontWeight: 'bold', color: '#4338CA', marginBottom: 8, textAlign: 'center' },
   methodSubtitle: { fontSize: 13, color: '#6B7280', marginBottom: 16, textAlign: 'center', fontStyle: 'italic' },
   methodSteps: { gap: 12 },
   methodStep: { flexDirection: 'row', alignItems: 'flex-start' },
-  methodNumber: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#8B5CF6', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  methodNumber: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#9333EA', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   methodNumberText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   methodContent: { flex: 1 },
   methodStepTitle: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 4 },
   methodStepDesc: { fontSize: 14, color: '#6B7280' },
   tabBar: { paddingHorizontal: 16, marginVertical: 16 },
   tabButton: { paddingHorizontal: 16, paddingVertical: 10, marginRight: 8, borderRadius: 12, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', gap: 6 },
-  tabButtonActive: { backgroundColor: '#EEF2FF', borderWidth: 2, borderColor: '#8B5CF6' },
+  tabButtonActive: { backgroundColor: '#EEF2FF', borderWidth: 2, borderColor: '#9333EA' },
   tabButtonText: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
-  tabButtonTextActive: { color: '#8B5CF6', fontWeight: '600' },
+  tabButtonTextActive: { color: '#9333EA', fontWeight: '600' },
   tabContent: { marginHorizontal: 16 },
   tabCard: { backgroundColor: '#fff', padding: 20, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
   tabTitle: { fontSize: 20, fontWeight: 'bold', color: '#1F2937', marginBottom: 16 },
+  weightHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  unitToggle: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EEF2FF', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, gap: 8 },
+  unitToggleText: { fontSize: 16, fontWeight: '600', color: '#9333EA' },
   input: { backgroundColor: '#F3F4F6', padding: 16, borderRadius: 12, fontSize: 16, marginBottom: 12 },
-  saveButton: { backgroundColor: '#8B5CF6', padding: 16, borderRadius: 12, alignItems: 'center' },
+  notesInput: { minHeight: 100, paddingTop: 16 },
+  reflectionSection: { marginTop: 24, paddingTop: 24, borderTopWidth: 2, borderTopColor: '#9333EA' },
+  reflectionHeader: { marginBottom: 8 },
+  reflectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#9333EA' },
+  reflectionSubtitle: { fontSize: 14, color: '#DB2777', fontWeight: '600', marginTop: 4 },
+  saveButton: { backgroundColor: '#9333EA', padding: 16, borderRadius: 12, alignItems: 'center' },
   saveButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   waterDisplay: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginVertical: 20 },
   waterStat: { alignItems: 'center' },
@@ -779,21 +912,21 @@ const styles = StyleSheet.create({
   sliderContainer: { marginBottom: 16 },
   sliderLabels: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sliderMinMax: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
-  sliderValue: { fontSize: 18, color: '#8B5CF6', fontWeight: 'bold' },
+  sliderValue: { fontSize: 18, color: '#9333EA', fontWeight: 'bold' },
   numberButtons: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap' },
   numberButton: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  numberButtonActive: { backgroundColor: '#8B5CF6' },
+  numberButtonActive: { backgroundColor: '#9333EA' },
   numberButtonText: { fontSize: 14, color: '#6B7280', fontWeight: '600' },
   numberButtonTextActive: { color: '#fff' },
   symptomsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   symptomButton: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB' },
-  symptomButtonActive: { backgroundColor: '#10B981', borderColor: '#10B981' },
+  symptomButtonActive: { backgroundColor: '#16A34A', borderColor: '#16A34A' },
   symptomText: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
   symptomTextActive: { color: '#fff', fontWeight: '600' },
   fastingSubtitle: { fontSize: 14, color: '#6B7280', marginBottom: 16 },
   fastingButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
   fastingButton: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, backgroundColor: '#F3F4F6' },
-  fastingButtonActive: { backgroundColor: '#F59E0B' },
+  fastingButtonActive: { backgroundColor: '#FACC15' },
   fastingButtonText: { fontSize: 16, fontWeight: '600', color: '#6B7280' },
   fastingButtonTextActive: { color: '#fff' },
   fastingInfo: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#FEF3C7', borderRadius: 12, gap: 12 },
@@ -808,7 +941,7 @@ const styles = StyleSheet.create({
   fastingPreviewText: { fontSize: 16, fontWeight: '600', color: '#4338CA' },
   foodLogButtonContainer: { marginHorizontal: 16, marginTop: 16 },
   foodLogButton: { 
-    backgroundColor: '#8B5CF6', 
+    backgroundColor: '#9333EA', 
     paddingVertical: 18, 
     paddingHorizontal: 24, 
     borderRadius: 16, 

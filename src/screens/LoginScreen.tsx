@@ -83,6 +83,7 @@ export default function LoginScreen({
     
     setResetPasswordLoading(true);
     try {
+      // Since we're using mocks, simulate the forgot password functionality
       Alert.alert(
         'Password Reset Sent', 
         'If an account with that email exists, we\'ve sent you a password reset link.'
@@ -96,6 +97,7 @@ export default function LoginScreen({
   };
   
   const handleSignUp = () => {
+    // Navigate to sign up screen or call prop if provided
     if (navigation && navigation.navigate) {
       navigation.navigate('SignUp');
     }
@@ -274,7 +276,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#9333EA',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
 import { useStorage } from '../context/StorageContext';
+import { useSubscription } from '../context/SubscriptionContext';
 import theme from '../utils/theme';
 import logo from '../../assets/logo-pound-drop.png';
 
@@ -24,6 +25,7 @@ export default function SignUpScreen({
   onSignUpSuccess?: () => void;
 }) {
   const { setUserInfo } = useStorage();
+  const { startTrial } = useSubscription();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -60,6 +62,9 @@ export default function SignUpScreen({
         return;
       }
 
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 3);
+
       const userData = {
         username: formData.username,
         email: formData.email,
@@ -68,19 +73,26 @@ export default function SignUpScreen({
         targetWeight: formData.targetWeight || '0',
         startWeight: formData.startWeight || formData.currentWeight || '0',
         createdAt: new Date().toISOString(),
+        subscriptionStatus: 'trial',
+        trialEndsAt: trialEndDate.toISOString(),
       };
 
       await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
       await setUserInfo(formData.username, true);
+      await startTrial();
       
-      Alert.alert('Welcome!', `Welcome, ${formData.username}! Let's start your weight loss journey together! 🎯`, [
-        {
-          text: 'OK',
-          onPress: () => {
-            onSignUpSuccess?.();
+      Alert.alert(
+        'Welcome!', 
+        `Welcome, ${formData.username}! Your 3-day free trial has started. Enjoy full access to Pound Drop! 🎯`,
+        [
+          {
+            text: 'Get Started',
+            onPress: () => {
+              onSignUpSuccess?.();
+            }
           }
-        }
-      ]);
+        ]
+      );
     } catch (error) {
       console.error('Registration error:', error);
       Alert.alert('Error', 'Failed to create account. Please try again.');
@@ -320,7 +332,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#9333EA',
     alignItems: 'center',
     justifyContent: 'center',
   },
