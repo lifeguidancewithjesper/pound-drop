@@ -437,7 +437,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
       'Choose an option:',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'One-Time Purchase ($27)', onPress: handleOneTimePurchase },
+        { text: 'One-Time Purchase ($47)', onPress: handleOneTimePurchase },
         { text: 'Delete Account', onPress: handleDeleteAccount, style: 'destructive' },
       ]
     );
@@ -446,11 +446,11 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   const handleOneTimePurchase = () => {
     Alert.alert(
       'One-Time Purchase',
-      'Get lifetime access to Pound Drop for just $27 USD (one-time payment)!\n\nThis includes:\n• Unlimited food logging\n• Advanced tracking features\n• Lifetime updates\n• No monthly fees',
+      'Get lifetime access to Pound Drop for just $47 USD (one-time payment)!\n\nThis includes:\n• Unlimited food logging\n• Advanced tracking features\n• Lifetime updates\n• No monthly fees',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Purchase for $27',
+          text: 'Purchase for $47',
           onPress: () => {
             Alert.alert('Coming Soon', 'One-time purchase will be available soon! This will be processed through the App Store.');
           }

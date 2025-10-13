@@ -25,6 +25,14 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
     setIsPurchasing(true);
     
     try {
+      // TODO: When building on Mac, add Apple In-App Purchase code here:
+      // 1. Import react-native-iap or expo-in-app-purchases
+      // 2. Request purchase for product ID "pounddrop_monthly_4_95"
+      // 3. Verify receipt with Apple
+      // 4. Call activateSubscription() on success
+      
+      // For now, show instructions to user
+      // Activate subscription immediately for testing
       await activateSubscription();
       Alert.alert(
         'Subscription Activated',
@@ -48,6 +56,13 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
     setIsRestoring(true);
     
     try {
+      // TODO: When building on Mac, add restore purchases code here:
+      // 1. Import react-native-iap or expo-in-app-purchases
+      // 2. Call getAvailablePurchases() or restorePurchases()
+      // 3. Verify existing subscription
+      // 4. Call activateSubscription() if valid subscription found
+      
+      // Activate subscription for restore
       await activateSubscription();
       Alert.alert(
         'Purchases Restored',
