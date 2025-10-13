@@ -1,5 +1,16 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { foodDatabase } from '../data/foodDatabase';
+
+interface FoodWithNutrition {
+  name: string;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  fiber?: number;
+  isEstimated?: boolean; // Flag to indicate if nutrition was estimated by AI
+}
 
 interface DailyLog {
   date: string;
@@ -7,9 +18,16 @@ interface DailyLog {
   steps?: string;
   water: number;
   meals: {
-    breakfast?: string[];
-    lunch?: string[];
-    dinner?: string[];
+    breakfast?: (string | FoodWithNutrition)[];
+    lunch?: (string | FoodWithNutrition)[];
+    dinner?: (string | FoodWithNutrition)[];
+  };
+  snacks?: (string | FoodWithNutrition)[]; // Track snacks between meals
+  snackTimes?: string[]; // Timestamps for each snack
+  mealTimes?: {
+    breakfast?: string;
+    lunch?: string;
+    dinner?: string;
   };
   mealFeelings?: {
     breakfast?: number;
@@ -25,10 +43,16 @@ interface DailyLog {
     symptoms?: string[];
     notes?: string;
   };
+  cravings?: {
+    sugarCraving?: number;
+    emotionalEating?: number;
+    cravingTriggers?: string[];
+  };
   dailyReflection?: {
     todaysWin?: string;
     mindsetGratitude?: string;
     obstaclePlan?: string;
+    emotionalAwareness?: string;
   };
   measurements?: {
     waist?: string;
@@ -62,11 +86,24 @@ interface StorageContextType {
   weightUnit: 'lbs' | 'kg';
   setWeightUnit: (unit: 'lbs' | 'kg') => Promise<void>;
   getStartingWeight: () => number | null;
+  getStartingWeightUnit: () => 'lbs' | 'kg';
   setStartingWeight: (weight: number) => Promise<void>;
   getWeightLoss: (currentWeight: number) => number;
   getMilestone: (weightLoss: number) => number;
   getHighestMilestone: () => number;
   updateHighestMilestone: (milestone: number) => Promise<void>;
+  calculateCalories: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => { total: number; breakfast: number; lunch: number; dinner: number; snacks: number };
+  calculateMacros: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => { 
+    total: { protein: number; carbs: number; fat: number }; 
+    breakfast: { protein: number; carbs: number; fat: number }; 
+    lunch: { protein: number; carbs: number; fat: number }; 
+    dinner: { protein: number; carbs: number; fat: number };
+    snacks: { protein: number; carbs: number; fat: number };
+  };
+  getChallengeStartDate: () => string | null;
+  startChallenge: () => Promise<void>;
+  getCurrentChallengeDay: () => number | null;
+  reloadAllData: () => Promise<void>;
 }
 
 const StorageContext = createContext<StorageContextType | undefined>(undefined);
@@ -77,6 +114,7 @@ const WEIGHT_UNIT_KEY = 'pounddrop_weight_unit';
 const STARTING_WEIGHT_KEY = 'pounddrop_starting_weight';
 const STARTING_WEIGHT_UNIT_KEY = 'pounddrop_starting_weight_unit';
 const HIGHEST_MILESTONE_KEY = 'pounddrop_highest_milestone';
+const CHALLENGE_START_DATE_KEY = 'pounddrop_challenge_start_date';
 
 // Deep merge helper for nested objects
 function deepMerge(target: any, source: any): any {
@@ -102,6 +140,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const [startingWeight, setStartingWeightState] = useState<number | null>(null);
   const [startingWeightUnit, setStartingWeightUnitState] = useState<'lbs' | 'kg'>('lbs');
   const [highestMilestone, setHighestMilestoneState] = useState<number>(0);
+  const [challengeStartDate, setChallengeStartDateState] = useState<string | null>(null);
 
   // Load data on mount
   useEffect(() => {
@@ -110,6 +149,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     loadWeightUnit();
     loadStartingWeight();
     loadHighestMilestone();
+    loadChallengeStartDate();
   }, []);
 
   // Save data whenever logs change
@@ -217,6 +257,10 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     return startingWeight;
   };
 
+  const getStartingWeightUnit = () => {
+    return startingWeightUnit;
+  };
+
   const setStartingWeight = async (weight: number) => {
     try {
       await SecureStore.setItemAsync(STARTING_WEIGHT_KEY, weight.toString());
@@ -243,11 +287,14 @@ export function StorageProvider({ children }: { children: ReactNode }) {
       }
     }
     
+    // Return weight loss in starting weight's unit
     return Math.max(0, startingWeight - adjustedCurrentWeight);
   };
 
   const getMilestone = (weightLoss: number) => {
+    // Milestones are in the starting weight's unit (same for both kg and lbs: 2, 5, 10, 15, 20)
     const milestones = [20, 15, 10, 5, 2];
+    
     for (const milestone of milestones) {
       if (weightLoss >= milestone) {
         return milestone;
@@ -278,6 +325,45 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error saving highest milestone:', error);
     }
+  };
+
+  const loadChallengeStartDate = async () => {
+    try {
+      const startDate = await SecureStore.getItemAsync(CHALLENGE_START_DATE_KEY);
+      setChallengeStartDateState(startDate);
+    } catch (error) {
+      console.error('Error loading challenge start date:', error);
+    }
+  };
+
+  const getChallengeStartDate = () => {
+    return challengeStartDate;
+  };
+
+  const startChallenge = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      await SecureStore.setItemAsync(CHALLENGE_START_DATE_KEY, today);
+      setChallengeStartDateState(today);
+    } catch (error) {
+      console.error('Error starting challenge:', error);
+    }
+  };
+
+  const getCurrentChallengeDay = () => {
+    if (!challengeStartDate) return null;
+    
+    const start = new Date(challengeStartDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    start.setHours(0, 0, 0, 0);
+    
+    const diffTime = today.getTime() - start.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 because day 1 is the start date
+    
+    if (diffDays > 28) return 28; // Cap at 28 days
+    if (diffDays < 1) return 1; // Minimum day 1
+    return diffDays;
   };
 
   const getTodayLog = () => {
@@ -317,6 +403,85 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const calculateCalories = (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => {
+    const getCaloriesForMeal = (mealItems: (string | FoodWithNutrition)[] | undefined) => {
+      if (!mealItems || mealItems.length === 0) return 0;
+      return mealItems.reduce((total, foodItem) => {
+        // If it's a FoodWithNutrition object, use its calories
+        if (typeof foodItem === 'object' && foodItem.calories !== undefined) {
+          return total + foodItem.calories;
+        }
+        // Otherwise it's a string, look it up in the database
+        const food = foodDatabase.find(f => f.name === foodItem);
+        return total + (food?.calories || 0);
+      }, 0);
+    };
+
+    const breakfastCals = getCaloriesForMeal(meals.breakfast);
+    const lunchCals = getCaloriesForMeal(meals.lunch);
+    const dinnerCals = getCaloriesForMeal(meals.dinner);
+    const snackCals = getCaloriesForMeal(snacks);
+
+    return {
+      total: breakfastCals + lunchCals + dinnerCals + snackCals,
+      breakfast: breakfastCals,
+      lunch: lunchCals,
+      dinner: dinnerCals,
+      snacks: snackCals
+    };
+  };
+
+  const calculateMacros = (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => {
+    const getMacrosForMeal = (mealItems: (string | FoodWithNutrition)[] | undefined) => {
+      if (!mealItems || mealItems.length === 0) {
+        return { protein: 0, carbs: 0, fat: 0 };
+      }
+      return mealItems.reduce((totals, foodItem) => {
+        // If it's a FoodWithNutrition object, use its macros
+        if (typeof foodItem === 'object') {
+          return {
+            protein: totals.protein + (foodItem.protein || 0),
+            carbs: totals.carbs + (foodItem.carbs || 0),
+            fat: totals.fat + (foodItem.fat || 0)
+          };
+        }
+        // Otherwise it's a string, look it up in the database
+        const food = foodDatabase.find(f => f.name === foodItem);
+        return {
+          protein: totals.protein + (food?.protein || 0),
+          carbs: totals.carbs + (food?.carbs || 0),
+          fat: totals.fat + (food?.fat || 0)
+        };
+      }, { protein: 0, carbs: 0, fat: 0 });
+    };
+
+    const breakfastMacros = getMacrosForMeal(meals.breakfast);
+    const lunchMacros = getMacrosForMeal(meals.lunch);
+    const dinnerMacros = getMacrosForMeal(meals.dinner);
+    const snackMacros = getMacrosForMeal(snacks);
+
+    return {
+      total: {
+        protein: breakfastMacros.protein + lunchMacros.protein + dinnerMacros.protein + snackMacros.protein,
+        carbs: breakfastMacros.carbs + lunchMacros.carbs + dinnerMacros.carbs + snackMacros.carbs,
+        fat: breakfastMacros.fat + lunchMacros.fat + dinnerMacros.fat + snackMacros.fat
+      },
+      breakfast: breakfastMacros,
+      lunch: lunchMacros,
+      dinner: dinnerMacros,
+      snacks: snackMacros
+    };
+  };
+
+  const reloadAllData = async () => {
+    await loadData();
+    await loadUserInfo();
+    await loadWeightUnit();
+    await loadStartingWeight();
+    await loadHighestMilestone();
+    await loadChallengeStartDate();
+  };
+
   return (
     <StorageContext.Provider value={{ 
       logs, 
@@ -331,11 +496,18 @@ export function StorageProvider({ children }: { children: ReactNode }) {
       weightUnit,
       setWeightUnit,
       getStartingWeight,
+      getStartingWeightUnit,
       setStartingWeight,
       getWeightLoss,
       getMilestone,
       getHighestMilestone,
-      updateHighestMilestone
+      updateHighestMilestone,
+      calculateCalories,
+      calculateMacros,
+      getChallengeStartDate,
+      startChallenge,
+      getCurrentChallengeDay,
+      reloadAllData
     }}>
       {children}
     </StorageContext.Provider>

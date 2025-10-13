@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useStorage } from '../context/StorageContext';
 
 export default function DailyLogScreen({ navigation }: any) {
-  const { logs } = useStorage();
+  const { logs, calculateCalories, calculateMacros } = useStorage();
 
   // Sort logs by date descending (newest first)
   const sortedLogs = [...logs].sort((a, b) => {
@@ -63,9 +63,84 @@ export default function DailyLogScreen({ navigation }: any) {
             const breakfastFoods = dayLog.meals?.breakfast || [];
             const lunchFoods = dayLog.meals?.lunch || [];
             const dinnerFoods = dayLog.meals?.dinner || [];
+            const snackFoods = dayLog.snacks || [];
             const workouts = dayLog.workouts || [];
             const waterGlasses = dayLog.water || 0;
             const steps = dayLog.steps || '0';
+            
+            const calorieData = dayLog.meals ? calculateCalories(dayLog.meals, dayLog.snacks) : { total: 0, breakfast: 0, lunch: 0, dinner: 0, snacks: 0 };
+            const macroData = dayLog.meals ? calculateMacros(dayLog.meals, dayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 }, snacks: { protein: 0, carbs: 0, fat: 0 } };
+
+            // Create array of all meal entries with timestamps for chronological sorting
+            const mealEntries: Array<{
+              type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+              time: string;
+              timeValue: number;
+              foods: any[];
+              calories?: number;
+              macros?: { protein: number; carbs: number; fat: number };
+              feeling?: number;
+              snackIndex?: number;
+            }> = [];
+
+            // Add breakfast if exists
+            if (breakfastFoods.length > 0 && dayLog.mealTimes?.breakfast) {
+              const [hours, minutes] = dayLog.mealTimes.breakfast.split(':').map(Number);
+              mealEntries.push({
+                type: 'breakfast',
+                time: dayLog.mealTimes.breakfast,
+                timeValue: hours * 60 + minutes,
+                foods: breakfastFoods,
+                calories: calorieData.breakfast,
+                macros: macroData.breakfast,
+                feeling: dayLog.mealFeelings?.breakfast,
+              });
+            }
+
+            // Add lunch if exists
+            if (lunchFoods.length > 0 && dayLog.mealTimes?.lunch) {
+              const [hours, minutes] = dayLog.mealTimes.lunch.split(':').map(Number);
+              mealEntries.push({
+                type: 'lunch',
+                time: dayLog.mealTimes.lunch,
+                timeValue: hours * 60 + minutes,
+                foods: lunchFoods,
+                calories: calorieData.lunch,
+                macros: macroData.lunch,
+                feeling: dayLog.mealFeelings?.lunch,
+              });
+            }
+
+            // Add dinner if exists
+            if (dinnerFoods.length > 0 && dayLog.mealTimes?.dinner) {
+              const [hours, minutes] = dayLog.mealTimes.dinner.split(':').map(Number);
+              mealEntries.push({
+                type: 'dinner',
+                time: dayLog.mealTimes.dinner,
+                timeValue: hours * 60 + minutes,
+                foods: dinnerFoods,
+                calories: calorieData.dinner,
+                macros: macroData.dinner,
+                feeling: dayLog.mealFeelings?.dinner,
+              });
+            }
+
+            // Add snacks if exist
+            snackFoods.forEach((snack, index) => {
+              if (dayLog.snackTimes && dayLog.snackTimes[index]) {
+                const [hours, minutes] = dayLog.snackTimes[index].split(':').map(Number);
+                mealEntries.push({
+                  type: 'snack',
+                  time: dayLog.snackTimes[index],
+                  timeValue: hours * 60 + minutes,
+                  foods: [snack],
+                  snackIndex: index,
+                });
+              }
+            });
+
+            // Sort meal entries chronologically by time
+            mealEntries.sort((a, b) => a.timeValue - b.timeValue);
 
             return (
               <View key={dayLog.date} style={styles.daySection}>
@@ -75,90 +150,92 @@ export default function DailyLogScreen({ navigation }: any) {
                   <Text style={styles.dateHeaderText}>{formatDateHeader(dayLog.date)}</Text>
                 </View>
 
-                {/* Meals */}
+                {/* Meals & Snacks Chronologically */}
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
                     <Ionicons name="restaurant" size={20} color="#9333EA" />
-                    <Text style={styles.sectionTitle}>Meals</Text>
+                    <Text style={styles.sectionTitle}>Meals & Snacks (Chronological)</Text>
                   </View>
 
-                  {/* Breakfast */}
-                  <View style={styles.mealCard}>
-                    <View style={styles.mealHeader}>
-                      <Ionicons name="sunny" size={18} color="#FACC15" />
-                      <Text style={styles.mealTitle}>Breakfast</Text>
-                    </View>
-                    {breakfastFoods.length > 0 ? (
-                      <>
-                        {breakfastFoods.map((food, index) => (
-                          <View key={index} style={styles.foodItem}>
+                  {/* Display all meals and snacks in chronological order */}
+                  {mealEntries.map((entry, entryIndex) => {
+                    const isSnack = entry.type === 'snack';
+                    const cardStyle = isSnack ? styles.snackCard : styles.mealCard;
+                    
+                    // Get icon and label based on meal type
+                    const getMealIcon = () => {
+                      switch(entry.type) {
+                        case 'breakfast': return { name: 'sunny', color: '#FACC15', label: 'Breakfast' };
+                        case 'lunch': return { name: 'partly-sunny', color: '#06B6D4', label: 'Lunch' };
+                        case 'dinner': return { name: 'moon', color: '#9333EA', label: 'Dinner' };
+                        case 'snack': return { name: 'warning', color: '#F59E0B', label: 'Snack' };
+                      }
+                    };
+                    
+                    const mealIcon = getMealIcon();
+                    
+                    return (
+                      <View key={`${entry.type}-${entryIndex}`} style={cardStyle}>
+                        <View style={styles.mealHeader}>
+                          <Ionicons name={mealIcon.name as any} size={18} color={mealIcon.color} />
+                          <Text style={[styles.mealTitle, isSnack && { color: '#F59E0B' }]}>{mealIcon.label}</Text>
+                          <Text style={styles.mealTime}>{entry.time}</Text>
+                        </View>
+                        
+                        {/* Display foods */}
+                        {entry.foods.map((food, foodIndex) => (
+                          <View key={foodIndex} style={styles.foodItem}>
                             <View style={styles.foodBullet} />
-                            <Text style={styles.foodText}>{food}</Text>
+                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
                           </View>
                         ))}
-                        {dayLog.mealFeelings?.breakfast && (
+                        
+                        {/* Display calories and macros */}
+                        {entry.calories && entry.calories > 0 && (
+                          <>
+                            <View style={styles.calorieRow}>
+                              <Ionicons name="flame" size={16} color="#F97316" />
+                              <Text style={styles.calorieText}>{entry.calories} calories</Text>
+                            </View>
+                            {entry.macros && (
+                              <View style={styles.macroRow}>
+                                <Text style={styles.macroText}>
+                                  P: {entry.macros.protein}g | C: {entry.macros.carbs}g | F: {entry.macros.fat}g
+                                </Text>
+                              </View>
+                            )}
+                          </>
+                        )}
+                        
+                        {/* Display snack calories if available */}
+                        {isSnack && entry.foods[0] && typeof entry.foods[0] !== 'string' && entry.foods[0].calories && (
+                          <>
+                            <View style={styles.calorieRow}>
+                              <Ionicons name="flame" size={16} color="#F97316" />
+                              <Text style={styles.calorieText}>{entry.foods[0].calories} calories</Text>
+                            </View>
+                            <View style={styles.macroRow}>
+                              <Text style={styles.macroText}>
+                                P: {entry.foods[0].protein || 0}g | C: {entry.foods[0].carbs || 0}g | F: {entry.foods[0].fat || 0}g
+                              </Text>
+                            </View>
+                          </>
+                        )}
+                        
+                        {/* Display feeling if available */}
+                        {entry.feeling && (
                           <View style={styles.feelingRow}>
                             <Ionicons name="heart" size={16} color="#EF4444" />
-                            <Text style={styles.feelingText}>Feeling: {dayLog.mealFeelings.breakfast}/10</Text>
+                            <Text style={styles.feelingText}>Feeling: {entry.feeling}/10</Text>
                           </View>
                         )}
-                      </>
-                    ) : (
-                      <Text style={styles.emptyText}>Not logged</Text>
-                    )}
-                  </View>
+                      </View>
+                    );
+                  })}
 
-                  {/* Lunch */}
-                  <View style={styles.mealCard}>
-                    <View style={styles.mealHeader}>
-                      <Ionicons name="partly-sunny" size={18} color="#06B6D4" />
-                      <Text style={styles.mealTitle}>Lunch</Text>
-                    </View>
-                    {lunchFoods.length > 0 ? (
-                      <>
-                        {lunchFoods.map((food, index) => (
-                          <View key={index} style={styles.foodItem}>
-                            <View style={styles.foodBullet} />
-                            <Text style={styles.foodText}>{food}</Text>
-                          </View>
-                        ))}
-                        {dayLog.mealFeelings?.lunch && (
-                          <View style={styles.feelingRow}>
-                            <Ionicons name="heart" size={16} color="#EF4444" />
-                            <Text style={styles.feelingText}>Feeling: {dayLog.mealFeelings.lunch}/10</Text>
-                          </View>
-                        )}
-                      </>
-                    ) : (
-                      <Text style={styles.emptyText}>Not logged</Text>
-                    )}
-                  </View>
-
-                  {/* Dinner */}
-                  <View style={styles.mealCard}>
-                    <View style={styles.mealHeader}>
-                      <Ionicons name="moon" size={18} color="#9333EA" />
-                      <Text style={styles.mealTitle}>Dinner</Text>
-                    </View>
-                    {dinnerFoods.length > 0 ? (
-                      <>
-                        {dinnerFoods.map((food, index) => (
-                          <View key={index} style={styles.foodItem}>
-                            <View style={styles.foodBullet} />
-                            <Text style={styles.foodText}>{food}</Text>
-                          </View>
-                        ))}
-                        {dayLog.mealFeelings?.dinner && (
-                          <View style={styles.feelingRow}>
-                            <Ionicons name="heart" size={16} color="#EF4444" />
-                            <Text style={styles.feelingText}>Feeling: {dayLog.mealFeelings.dinner}/10</Text>
-                          </View>
-                        )}
-                      </>
-                    ) : (
-                      <Text style={styles.emptyText}>Not logged</Text>
-                    )}
-                  </View>
+                  {mealEntries.length === 0 && (
+                    <Text style={styles.emptyText}>No meals or snacks logged</Text>
+                  )}
                 </View>
 
                 {/* Activity Summary */}
@@ -242,8 +319,46 @@ export default function DailyLogScreen({ navigation }: any) {
                   </View>
                 )}
 
+                {/* Cravings & Emotional Eating */}
+                {dayLog.cravings && (dayLog.cravings.sugarCraving !== undefined || dayLog.cravings.emotionalEating !== undefined) && (
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                      <Ionicons name="candy" size={20} color="#DB2777" />
+                      <Text style={styles.sectionTitle}>Cravings & Emotional Eating</Text>
+                    </View>
+                    <View style={styles.cravingsCard}>
+                      <View style={styles.moodDetailsGrid}>
+                        {dayLog.cravings.sugarCraving !== undefined && (
+                          <View style={styles.moodDetailItem}>
+                            <Text style={styles.moodDetailLabel}>🍬 Sugar Craving</Text>
+                            <Text style={styles.moodDetailValue}>{dayLog.cravings.sugarCraving}/10</Text>
+                          </View>
+                        )}
+                        {dayLog.cravings.emotionalEating !== undefined && (
+                          <View style={styles.moodDetailItem}>
+                            <Text style={styles.moodDetailLabel}>🧠 Emotional Eating</Text>
+                            <Text style={styles.moodDetailValue}>{dayLog.cravings.emotionalEating}/10</Text>
+                          </View>
+                        )}
+                      </View>
+                      {dayLog.cravings.cravingTriggers && dayLog.cravings.cravingTriggers.length > 0 && (
+                        <View style={styles.symptomsSection}>
+                          <Text style={styles.symptomsLabel}>Craving Triggers:</Text>
+                          <View style={styles.symptomsChips}>
+                            {dayLog.cravings.cravingTriggers.map((trigger, index) => (
+                              <View key={index} style={[styles.symptomChip, styles.triggerChip]}>
+                                <Text style={styles.symptomChipText}>{trigger}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
+
                 {/* Daily Reflection */}
-                {dayLog.dailyReflection && (dayLog.dailyReflection.todaysWin || dayLog.dailyReflection.mindsetGratitude || dayLog.dailyReflection.obstaclePlan) && (
+                {dayLog.dailyReflection && (dayLog.dailyReflection.todaysWin || dayLog.dailyReflection.mindsetGratitude || dayLog.dailyReflection.obstaclePlan || dayLog.dailyReflection.emotionalAwareness) && (
                   <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                       <Ionicons name="star" size={20} color="#9333EA" />
@@ -266,6 +381,12 @@ export default function DailyLogScreen({ navigation }: any) {
                         <View style={styles.reflectionItem}>
                           <Text style={styles.reflectionLabel}>🚧 Obstacle + Plan</Text>
                           <Text style={styles.reflectionText}>{dayLog.dailyReflection.obstaclePlan}</Text>
+                        </View>
+                      )}
+                      {dayLog.dailyReflection.emotionalAwareness && (
+                        <View style={styles.reflectionItem}>
+                          <Text style={styles.reflectionLabel}>🧠 Emotional Eating Awareness</Text>
+                          <Text style={styles.reflectionText}>{dayLog.dailyReflection.emotionalAwareness}</Text>
                         </View>
                       )}
                     </View>
@@ -408,6 +529,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  snackCard: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   mealHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -421,6 +555,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1F2937',
     marginLeft: 8,
+    flex: 1,
+  },
+  mealTime: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '500',
   },
   foodItem: {
     flexDirection: 'row',
@@ -552,6 +692,28 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontWeight: '600',
   },
+  calorieRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    gap: 6,
+  },
+  calorieText: {
+    fontSize: 14,
+    color: '#F97316',
+    fontWeight: '600',
+  },
+  macroRow: {
+    marginTop: 6,
+  },
+  macroText: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
   moodDetailsCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -561,6 +723,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+  },
+  cravingsCard: {
+    backgroundColor: '#FFF7ED',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#DB2777',
+  },
+  triggerChip: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#EF4444',
   },
   moodDetailsGrid: {
     flexDirection: 'row',

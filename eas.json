@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 13.0.0"
+    "version": ">= 13.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -39,7 +40,7 @@
         "cache": {
           "key": "production-cache-v17"
         },
-        "image": "macos-sonoma-14.6-xcode-16.4",
+        "image": "latest",
         "cocoapods": "1.15.2",
         "resourceClass": "m1-medium",
         "buildConfiguration": "Release"

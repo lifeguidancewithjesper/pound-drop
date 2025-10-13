@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
+import { useNavigation } from '@react-navigation/native';
 import { useStorage } from '../context/StorageContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import SubscriptionScreen from './SubscriptionScreen';
@@ -32,10 +34,12 @@ type UserStats = {
 };
 
 export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
-  const { logs } = useStorage();
+  const navigation = useNavigation();
+  const { logs, reloadAllData, getChallengeStartDate, startChallenge, updateTodayLog, weightUnit, setWeightUnit, getStartingWeight, setStartingWeight } = useStorage();
   const { subscriptionStatus, daysRemainingInTrial, isTrialActive, isSubscriptionActive } = useSubscription();
   const [loading, setLoading] = useState(true);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [isChallengeActive, setIsChallengeActive] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: 'Loading...',
     email: 'Loading...',
@@ -52,6 +56,9 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
 
   useEffect(() => {
     loadUserData();
+    // Also update challenge state whenever we load data
+    const challengeStartDate = getChallengeStartDate();
+    setIsChallengeActive(challengeStartDate !== null);
   }, [logs]);
 
   const loadUserData = async () => {
@@ -220,87 +227,209 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   };
 
   const handleSetCurrentWeight = () => {
-    Alert.prompt(
+    // Ask which unit to use
+    Alert.alert(
       'Set Current Weight',
-      'Enter your current weight (in lbs):',
+      'Which unit would you like to use?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Save',
-          onPress: async (currentWeight) => {
-            if (!currentWeight || currentWeight.trim() === '') {
-              Alert.alert('Error', 'Weight cannot be empty');
-              return;
-            }
-            
-            const weight = parseFloat(currentWeight);
-            if (isNaN(weight) || weight <= 0) {
-              Alert.alert('Error', 'Please enter a valid weight');
-              return;
-            }
+          text: 'Pounds (lbs)',
+          onPress: () => {
+            Alert.prompt(
+              'Set Current Weight',
+              'Enter your current weight in lbs:',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Save',
+                  onPress: async (value) => {
+                    if (!value || value.trim() === '') {
+                      Alert.alert('Error', 'Weight cannot be empty');
+                      return;
+                    }
+                    
+                    const weight = parseFloat(value);
+                    if (isNaN(weight) || weight <= 0) {
+                      Alert.alert('Error', 'Please enter a valid weight');
+                      return;
+                    }
 
-            await saveCurrentWeight(weight);
+                    await saveCurrentWeight(weight, 'lbs');
+                  }
+                }
+              ],
+              'plain-text',
+              userProfile.currentWeight ? userProfile.currentWeight.toString() : ''
+            );
+          }
+        },
+        {
+          text: 'Kilograms (kg)',
+          onPress: () => {
+            Alert.prompt(
+              'Set Current Weight',
+              'Enter your current weight in kg:',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Save',
+                  onPress: async (value) => {
+                    if (!value || value.trim() === '') {
+                      Alert.alert('Error', 'Weight cannot be empty');
+                      return;
+                    }
+                    
+                    const weight = parseFloat(value);
+                    if (isNaN(weight) || weight <= 0) {
+                      Alert.alert('Error', 'Please enter a valid weight');
+                      return;
+                    }
+
+                    // Pass the kg value directly, saveCurrentWeight will handle conversion
+                    await saveCurrentWeight(weight, 'kg');
+                  }
+                }
+              ],
+              'plain-text',
+              userProfile.currentWeight ? (userProfile.currentWeight * 0.453592).toFixed(1) : ''
+            );
           }
         }
-      ],
-      'plain-text',
-      userProfile.currentWeight ? userProfile.currentWeight.toString() : ''
+      ]
     );
   };
 
   const handleSetTargetWeight = () => {
-    Alert.prompt(
+    // Ask which unit to use
+    Alert.alert(
       'Set Target Weight',
-      'Enter your target weight (in lbs):',
+      'Which unit would you like to use?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Save',
-          onPress: async (targetWeight) => {
-            if (!targetWeight || targetWeight.trim() === '') {
-              Alert.alert('Error', 'Target weight cannot be empty');
-              return;
-            }
-            
-            const weight = parseFloat(targetWeight);
-            if (isNaN(weight) || weight <= 0) {
-              Alert.alert('Error', 'Please enter a valid weight');
-              return;
-            }
+          text: 'Pounds (lbs)',
+          onPress: () => {
+            Alert.prompt(
+              'Set Target Weight',
+              'Enter your target weight in lbs:',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Save',
+                  onPress: async (value) => {
+                    if (!value || value.trim() === '') {
+                      Alert.alert('Error', 'Target weight cannot be empty');
+                      return;
+                    }
+                    
+                    const weight = parseFloat(value);
+                    if (isNaN(weight) || weight <= 0) {
+                      Alert.alert('Error', 'Please enter a valid weight');
+                      return;
+                    }
 
-            // Check if target is realistic
-            if (userProfile.currentWeight && weight >= userProfile.currentWeight) {
-              Alert.alert(
-                'Notice', 
-                'Your target weight should be less than your current weight. Are you sure?',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Yes, Save It', onPress: () => saveTargetWeight(weight) }
-                ]
-              );
-              return;
-            }
+                    // Check if target is realistic
+                    if (userProfile.currentWeight && weight >= userProfile.currentWeight) {
+                      Alert.alert(
+                        'Notice', 
+                        'Your target weight should be less than your current weight. Are you sure?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Yes, Save It', onPress: () => saveTargetWeight(weight) }
+                        ]
+                      );
+                      return;
+                    }
 
-            await saveTargetWeight(weight);
+                    await saveTargetWeight(weight);
+                  }
+                }
+              ],
+              'plain-text',
+              userProfile.targetWeight ? userProfile.targetWeight.toString() : ''
+            );
+          }
+        },
+        {
+          text: 'Kilograms (kg)',
+          onPress: () => {
+            Alert.prompt(
+              'Set Target Weight',
+              'Enter your target weight in kg:',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Save',
+                  onPress: async (value) => {
+                    if (!value || value.trim() === '') {
+                      Alert.alert('Error', 'Target weight cannot be empty');
+                      return;
+                    }
+                    
+                    const weight = parseFloat(value);
+                    if (isNaN(weight) || weight <= 0) {
+                      Alert.alert('Error', 'Please enter a valid weight');
+                      return;
+                    }
+
+                    // Convert kg to lbs for storage
+                    const weightInLbs = weight * 2.20462;
+                    
+                    // Check if target is realistic
+                    if (userProfile.currentWeight && weightInLbs >= userProfile.currentWeight) {
+                      Alert.alert(
+                        'Notice', 
+                        'Your target weight should be less than your current weight. Are you sure?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Yes, Save It', onPress: () => saveTargetWeight(weightInLbs) }
+                        ]
+                      );
+                      return;
+                    }
+
+                    await saveTargetWeight(weightInLbs);
+                  }
+                }
+              ],
+              'plain-text',
+              userProfile.targetWeight ? (userProfile.targetWeight * 0.453592).toFixed(1) : ''
+            );
           }
         }
-      ],
-      'plain-text',
-      userProfile.targetWeight ? userProfile.targetWeight.toString() : ''
+      ]
     );
   };
 
-  const saveCurrentWeight = async (currentWeight: number) => {
+  const saveCurrentWeight = async (currentWeight: number, unitUsed: 'lbs' | 'kg') => {
     try {
       const storedUser = await SecureStore.getItemAsync('pounddrop_user');
       if (storedUser) {
         const userData = JSON.parse(storedUser);
-        userData.currentWeight = currentWeight.toString();
+        
+        // Convert to lbs for storage in userData
+        const weightInLbs = unitUsed === 'kg' ? currentWeight * 2.20462 : currentWeight;
+        userData.currentWeight = weightInLbs.toString();
         await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
+        
+        // CRITICAL: Also update today's log so Wellness screen shows the correct weight
+        updateTodayLog({ weight: weightInLbs.toString() });
+        console.log('✅ Updated today\'s log with weight:', weightInLbs, 'lbs');
+        
+        // ALWAYS update starting weight when setting current weight
+        // This gives users a fresh baseline for milestone tracking
+        await setWeightUnit(unitUsed);
+        await setStartingWeight(currentWeight);
+        console.log('🏁 Set starting weight for milestone tracking:', currentWeight, unitUsed);
+        
+        // Reset highest milestone when setting new starting weight
+        await SecureStore.setItemAsync('pounddrop_highest_milestone', '0');
+        console.log('🔄 Reset milestone tracker for new starting weight');
         
         // Reload user data to reflect changes
         loadUserData();
-        Alert.alert('Success', `Current weight set to ${currentWeight} lbs!`);
+        Alert.alert('Success', `Current weight set to ${currentWeight.toFixed(1)} ${unitUsed}!`);
       }
     } catch (error) {
       console.error('Error updating current weight:', error);
@@ -318,7 +447,8 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
         
         // Reload user data to reflect changes
         loadUserData();
-        Alert.alert('Success', `Target weight set to ${targetWeight} lbs!`);
+        const displayWeight = weightUnit === 'kg' ? (targetWeight * 0.453592).toFixed(1) : targetWeight.toFixed(1);
+        Alert.alert('Success', `Target weight set to ${displayWeight} ${weightUnit}!`);
       }
     } catch (error) {
       console.error('Error updating target weight:', error);
@@ -430,7 +560,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
       'Choose an option:',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'One-Time Purchase ($27)', onPress: handleOneTimePurchase },
+        { text: 'One-Time Purchase ($47)', onPress: handleOneTimePurchase },
         { text: 'Delete Account', onPress: handleDeleteAccount, style: 'destructive' },
       ]
     );
@@ -439,11 +569,11 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   const handleOneTimePurchase = () => {
     Alert.alert(
       'One-Time Purchase',
-      'Get lifetime access to Pound Drop for just $27 USD (one-time payment)!\n\nThis includes:\n• Unlimited food logging\n• Advanced tracking features\n• Lifetime updates\n• No monthly fees',
+      'Get lifetime access to Pound Drop for just $47 USD (one-time payment)!\n\nThis includes:\n• Unlimited food logging\n• Advanced tracking features\n• Lifetime updates\n• No monthly fees',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Purchase for $27',
+          text: 'Purchase for $47',
           onPress: () => {
             Alert.alert('Coming Soon', 'One-time purchase will be available soon! This will be processed through the App Store.');
           }
@@ -489,6 +619,91 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
     );
   };
 
+  const handleResetData = () => {
+    Alert.alert(
+      'Reset Progress',
+      'This will reset your progress and start fresh. Your account will remain active.\n\nYou will lose:\n• Challenge progress\n• Starting weight & milestones\n• Weight loss tracking\n\nYour food logs and history will be preserved so you can see what you did before.\n\nYour account email and settings will be kept.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset Progress',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Delete challenge start date
+              await SecureStore.deleteItemAsync('pounddrop_challenge_start_date');
+              
+              // Delete starting weight
+              await SecureStore.deleteItemAsync('pounddrop_starting_weight');
+              
+              // Delete highest milestone
+              await SecureStore.deleteItemAsync('pounddrop_highest_milestone');
+              
+              // Reset user progress data but keep account info and logs
+              const storedUser = await SecureStore.getItemAsync('pounddrop_user');
+              if (storedUser) {
+                const userData = JSON.parse(storedUser);
+                // Keep: username, email, password, createdAt
+                // Reset: weights, milestones, challenge
+                userData.startWeight = '';
+                userData.currentWeight = '';
+                userData.targetWeight = '';
+                userData.highestMilestone = 0;
+                userData.challengeStartDate = null;
+                await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
+              }
+              
+              // Clear today's log data (meals, weight, etc.) while preserving history
+              updateTodayLog({
+                weight: undefined,
+                steps: undefined,
+                water: 0,
+                meals: { breakfast: [], lunch: [], dinner: [] },
+                mealTimes: {},
+                mealFeelings: {},
+                mood: undefined,
+                moodDetails: {},
+                cravings: {},
+                dailyReflection: {},
+                measurements: {},
+                workouts: [],
+                fasting: undefined,
+              });
+              
+              // Reload all data from storage context
+              await reloadAllData();
+              
+              // Reload local user data
+              loadUserData();
+              
+              Alert.alert('Progress Reset', 'Your progress has been reset. Food logs are preserved!');
+            } catch (error) {
+              console.error('Error resetting progress:', error);
+              Alert.alert('Error', 'Failed to reset progress. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDisclaimer = () => {
+    Alert.alert(
+      'Disclaimer - Pound Drop',
+      'MEDICAL DISCLAIMER\n\n' +
+      'The information and guidance provided in this app are based on the publisher\'s own experience and understanding. The publisher does not represent that the content is accurate due to the changing nature of health and wellness information.\n\n' +
+      'IMPORTANT NOTICES:\n\n' +
+      '• This app is not a substitute for professional medical advice, diagnosis, or treatment. Always consult your doctor or qualified healthcare provider before making any changes to your diet, exercise routine, or lifestyle.\n\n' +
+      '• Your decision to use any or all of the information provided in this app is at your own risk. The publisher assumes no responsibility for any harm that may result from following the guidance in this app.\n\n' +
+      '• The publisher is not liable for any errors, omissions, or alternative interpretations of the content provided.\n\n' +
+      '• Individual results may vary. Weight loss outcomes depend on many personal factors.\n\n' +
+      'COPYRIGHT:\n' +
+      'All content and features in this app are protected by copyright. No part of this app may be reproduced, distributed, or transmitted in any form without prior written permission from the copyright holder.\n\n' +
+      'By using this app, you acknowledge that you have read and understood this disclaimer.',
+      [{ text: 'I Understand' }]
+    );
+  };
+
   const handlePrivacyPolicy = () => {
     Alert.alert(
       'Privacy Policy - Pound Drop',
@@ -509,6 +724,26 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
     );
   };
 
+  const handleToggleChallenge = async () => {
+    try {
+      if (isChallengeActive) {
+        // Turn challenge OFF
+        await SecureStore.deleteItemAsync('pounddrop_challenge_start_date');
+        await reloadAllData();
+        setIsChallengeActive(false);
+        Alert.alert('Challenge Deactivated', 'The 28-Day Challenge has been turned off.');
+      } else {
+        // Turn challenge ON
+        await startChallenge();
+        setIsChallengeActive(true);
+        Alert.alert('Challenge Started!', 'The 28-Day Challenge is now active. Track your progress daily!');
+      }
+    } catch (error) {
+      console.error('Error toggling challenge:', error);
+      Alert.alert('Error', 'Failed to toggle challenge. Please try again.');
+    }
+  };
+
   const handleLogout = () => {
     Alert.alert(
       'Logout',
@@ -520,7 +755,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           style: 'destructive', 
           onPress: () => {
             try {
-              // Just logout - don't delete account data
+              // Just logout - keep account data safe
               if (onLogout) {
                 onLogout();
               }
@@ -536,23 +771,29 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
 
   const handleMenuItemPress = (index: number) => {
     switch (index) {
-      case 0: // Change your email
+      case 0: // Nutrition Education
+        navigation.navigate('NutritionEducation' as never);
+        break;
+      case 1: // Change your email
         handlePersonalInfo();
         break;
-      case 1: // Goals
+      case 2: // Goals
         handleEditGoals();
         break;
-      case 2: // Notifications
+      case 3: // Notifications
         handleNotifications();
         break;
-      case 3: // Subscription
+      case 4: // Subscription
         handleSubscription();
         break;
-      case 4: // Help & Support
+      case 5: // Help & Support
         Alert.alert('Help & Support', 'Need help? Contact us at support@pounddropapp.com');
         break;
-      case 5: // Privacy Policy
+      case 6: // Privacy Policy
         handlePrivacyPolicy();
+        break;
+      case 7: // Disclaimer
+        handleDisclaimer();
         break;
       default:
         break;
@@ -560,12 +801,14 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   };
 
   const menuItems = [
+    { icon: 'school-outline', title: 'Nutrition Education', subtitle: 'Learn what foods work best for you' },
     { icon: 'person-outline', title: 'Change your email', subtitle: 'Update your email address' },
     { icon: 'flag-outline', title: 'Goals', subtitle: 'Set your weight and weight loss goals' },
     { icon: 'notifications-outline', title: 'Notifications', subtitle: 'Manage your alerts' },
     { icon: 'card-outline', title: 'Subscription', subtitle: 'Manage your premium plan' },
     { icon: 'help-circle-outline', title: 'Help & Support', subtitle: 'Get help and contact us' },
     { icon: 'document-text-outline', title: 'Privacy Policy', subtitle: 'Read our privacy policy' },
+    { icon: 'alert-circle-outline', title: 'Disclaimer', subtitle: 'Important medical & legal information' },
   ];
 
   return (
@@ -625,6 +868,28 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           </TouchableOpacity>
         )}
 
+        {/* Challenge Toggle */}
+        <View style={styles.challengeToggleCard}>
+          <View style={styles.challengeToggleContent}>
+            <View style={styles.challengeToggleLeft}>
+              <Ionicons name="trophy" size={28} color="#9333EA" />
+              <View style={styles.challengeToggleText}>
+                <Text style={styles.challengeToggleTitle}>28-Day Challenge</Text>
+                <Text style={styles.challengeToggleSubtitle}>
+                  {isChallengeActive ? 'Challenge is active' : 'Turn on to start tracking'}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={isChallengeActive}
+              onValueChange={handleToggleChallenge}
+              trackColor={{ false: '#D1D5DB', true: '#9333EA' }}
+              thumbColor={isChallengeActive ? '#fff' : '#f4f3f4'}
+              ios_backgroundColor="#D1D5DB"
+            />
+          </View>
+        </View>
+
         {/* Stats Overview */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
@@ -637,15 +902,27 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>
-              {userStats.weightLoss > 0 ? `-${userStats.weightLoss.toFixed(1)}` : '0'}
+              {userStats.weightLoss > 0 
+                ? `-${weightUnit === 'kg' ? (userStats.weightLoss * 0.453592).toFixed(1) : userStats.weightLoss.toFixed(1)}` 
+                : '0'}
             </Text>
-            <Text style={styles.statLabel}>lbs Lost</Text>
+            <Text style={styles.statLabel}>{weightUnit} Lost</Text>
           </View>
         </View>
 
         {/* Current Goals */}
         <View style={styles.goalsSection}>
-          <Text style={styles.sectionTitle}>Current Goals</Text>
+          <View style={styles.goalsSectionHeader}>
+            <Text style={styles.sectionTitle}>Current Goals</Text>
+            <TouchableOpacity 
+              onPress={() => setWeightUnit(weightUnit === 'lbs' ? 'kg' : 'lbs')}
+              style={styles.unitToggle}
+              data-testid="button-toggle-unit"
+            >
+              <Ionicons name="swap-horizontal" size={16} color="#8B5CF6" />
+              <Text style={styles.unitToggleText}>{weightUnit === 'lbs' ? 'kg' : 'lbs'}</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
               <Ionicons name="flag" size={24} color="#8B5CF6" />
@@ -653,7 +930,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
                 <Text style={styles.goalTitle}>Target Weight</Text>
                 <Text style={styles.goalSubtitle}>
                   {userProfile.targetWeight ? 
-                    `${userProfile.targetWeight} lbs (${goalProgress.remaining.toFixed(1)} lbs to go)` : 
+                    `${weightUnit === 'kg' ? (userProfile.targetWeight * 0.453592).toFixed(1) : userProfile.targetWeight.toFixed(1)} ${weightUnit} (${weightUnit === 'kg' ? (goalProgress.remaining * 0.453592).toFixed(1) : goalProgress.remaining.toFixed(1)} ${weightUnit} to go)` : 
                     'Set your weight goal'
                   }
                 </Text>
@@ -772,14 +1049,69 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 4,
   },
+  challengeToggleCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  challengeToggleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  challengeToggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  challengeToggleText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  challengeToggleTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  challengeToggleSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
+  },
   goalsSection: {
     marginBottom: 24,
+  },
+  goalsSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 16,
+    marginBottom: 0,
+  },
+  unitToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    gap: 4,
+  },
+  unitToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8B5CF6',
   },
   goalCard: {
     backgroundColor: '#FFFFFF',

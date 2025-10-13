@@ -39,20 +39,20 @@ export default function CelebrationModal({ visible, milestone, unit, onClose }: 
   }, [visible]);
 
   const getMessage = () => {
-    if (milestone >= 20) return "You're absolutely crushing it! 20+ lbs down! 🔥";
-    if (milestone >= 15) return "Incredible progress! 15 lbs milestone reached! 💎";
-    if (milestone >= 10) return "Double digits! You lost 10 lbs! 🚀";
-    if (milestone >= 5) return "Amazing! 5 lbs down! Keep going! 💪";
-    if (milestone >= 2) return "You lost 2 lbs! Great start! 🎯";
+    if (milestone >= 20) return "You're absolutely crushing it! Major milestone! 🔥";
+    if (milestone >= 15) return "Incredible progress! Big milestone reached! 💎";
+    if (milestone >= 10) return "Amazing! You're making serious progress! 🚀";
+    if (milestone >= 5) return "Fantastic! Keep going strong! 💪";
+    if (milestone >= 2) return "Great start! You're on your way! 🎯";
     return "You're making progress! 🌟";
   };
 
   const getSubMessage = () => {
     if (milestone >= 20) return "This is a major achievement! You're transforming your life!";
     if (milestone >= 15) return "Your dedication is paying off in a big way!";
-    if (milestone >= 10) return "You've entered the double digits - what an accomplishment!";
+    if (milestone >= 10) return "You've reached an incredible milestone - what an accomplishment!";
     if (milestone >= 5) return "You're proving you can do this!";
-    if (milestone >= 2) return "Every pound counts - celebrate this win!";
+    if (milestone >= 2) return "Every step counts - celebrate this win!";
     return "Keep tracking and celebrating your progress!";
   };
 

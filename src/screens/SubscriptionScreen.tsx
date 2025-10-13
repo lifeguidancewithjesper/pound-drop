@@ -106,7 +106,7 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
             <Text style={styles.period}>/month</Text>
           </View>
           <Text style={styles.pricingSubtitle}>
-            or get lifetime access for $27 one-time payment
+            or get lifetime access for $47 one-time payment
           </Text>
           <View style={styles.trialBadge}>
             <Ionicons name="gift-outline" size={20} color="#10B981" />

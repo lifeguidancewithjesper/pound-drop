@@ -1,6 +1,11 @@
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+// Simple, Clean API Service for Pound Drop Weight Loss Tracker
+// IMPORTANT FOR MOBILE: localhost won't work on your phone!
+// Mac IP Address: 192.168.0.58
+// You can also set EXPO_PUBLIC_API_URL environment variable to override this
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.58:5000';
 
 export class ApiService {
+  // Make API requests with proper error handling
   static async makeRequest(endpoint: string, options: RequestInit = {}) {
     try {
       const url = `${API_BASE_URL}/api${endpoint}`;
@@ -31,6 +36,7 @@ export class ApiService {
     }
   }
 
+  // Authentication
   static async login(email: string, password: string) {
     return await this.makeRequest('/auth/login', {
       method: 'POST',
@@ -63,6 +69,7 @@ export class ApiService {
     return await this.makeRequest('/auth/me');
   }
 
+  // Weight Tracking
   static async getWeightEntries() {
     return await this.makeRequest('/weight-entries');
   }
@@ -74,6 +81,7 @@ export class ApiService {
     });
   }
 
+  // Steps Tracking
   static async getSteps(date?: string) {
     const query = date ? `?date=${date}` : '';
     return await this.makeRequest(`/steps${query}`);
@@ -86,6 +94,7 @@ export class ApiService {
     });
   }
 
+  // Water Tracking
   static async getWaterEntries() {
     return await this.makeRequest('/water-entries');
   }
@@ -97,6 +106,7 @@ export class ApiService {
     });
   }
 
+  // Meals Tracking (Breakfast, Lunch, Dinner)
   static async getMealsByDate(date: string) {
     return await this.makeRequest(`/meals?date=${date}`);
   }
@@ -125,6 +135,7 @@ export class ApiService {
     });
   }
 
+  // Mood Tracking
   static async getDailyMoods() {
     return await this.makeRequest('/daily-moods');
   }
@@ -136,11 +147,20 @@ export class ApiService {
     });
   }
 
+  // Historical Data - Get all logs for viewing past entries
   static async getHistoricalData(startDate?: string, endDate?: string) {
     let query = '';
     if (startDate && endDate) {
       query = `?startDate=${startDate}&endDate=${endDate}`;
     }
     return await this.makeRequest(`/history${query}`);
+  }
+
+  // Nutrition Estimation - Estimate nutrition for custom foods using AI
+  static async estimateNutrition(foodName: string) {
+    return await this.makeRequest('/estimate-nutrition', {
+      method: 'POST',
+      body: JSON.stringify({ foodName }),
+    });
   }
 }

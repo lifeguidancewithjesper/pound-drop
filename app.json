@@ -21,7 +21,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
-      "buildNumber": "23",
+      "buildNumber": "24",
       "icon": "./assets/logo-pound-drop.png",
       "infoPlist": {
         "NSCameraUsageDescription": "Take photos of your meals for tracking",

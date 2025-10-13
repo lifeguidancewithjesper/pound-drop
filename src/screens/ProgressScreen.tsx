@@ -62,18 +62,21 @@ export default function ProgressScreen({ navigation }: { navigation: any }) {
     );
     
     let streak = 0;
-    let currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
     for (const log of sortedLogs) {
       const logDate = new Date(log.date);
       logDate.setHours(0, 0, 0, 0);
       
-      const daysDiff = Math.floor((currentDate.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24));
+      // Calculate expected date for this streak position
+      const expectedDate = new Date(today);
+      expectedDate.setDate(expectedDate.getDate() - streak);
       
-      if (daysDiff === streak) {
+      const daysDiff = Math.floor((expectedDate.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff === 0) {
         streak++;
-        currentDate.setDate(currentDate.getDate() - 1);
       } else {
         break;
       }
@@ -158,6 +161,136 @@ export default function ProgressScreen({ navigation }: { navigation: any }) {
               </View>
             ))}
           </ScrollView>
+        </View>
+
+        {/* Weight Progress Chart */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📈 Weight Progress Chart</Text>
+          <View style={styles.chartCard}>
+            {(() => {
+              const weightLogs = [...logs]
+                .filter(log => log.weight)
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .slice(-14); // Last 14 days
+              
+              if (weightLogs.length < 2) {
+                return (
+                  <View style={styles.chartEmpty}>
+                    <Ionicons name="analytics-outline" size={48} color="#9CA3AF" />
+                    <Text style={styles.chartEmptyText}>Log weight for at least 2 days to see your progress chart</Text>
+                  </View>
+                );
+              }
+
+              const weights = weightLogs.map(log => parseFloat(log.weight!));
+              const maxWeight = Math.max(...weights);
+              const minWeight = Math.min(...weights);
+              const range = maxWeight - minWeight || 1;
+              const chartHeight = 150;
+              const chartWidth = width - 72;
+              const pointSpacing = chartWidth / (weightLogs.length - 1);
+
+              return (
+                <View>
+                  <View style={[styles.chartArea, { height: chartHeight }]}>
+                    {/* Y-axis labels */}
+                    <View style={styles.yAxisLabels}>
+                      <Text style={styles.yAxisLabel}>{maxWeight.toFixed(1)}</Text>
+                      <Text style={styles.yAxisLabel}>{((maxWeight + minWeight) / 2).toFixed(1)}</Text>
+                      <Text style={styles.yAxisLabel}>{minWeight.toFixed(1)}</Text>
+                    </View>
+                    
+                    {/* Chart line and points */}
+                    <View style={styles.chartContent}>
+                      {/* Grid lines */}
+                      <View style={[styles.gridLine, { top: 0 }]} />
+                      <View style={[styles.gridLine, { top: chartHeight / 2 }]} />
+                      <View style={[styles.gridLine, { bottom: 0 }]} />
+                      
+                      {/* Line segments */}
+                      {weightLogs.map((log, index) => {
+                        if (index === 0) return null;
+                        const prevWeight = parseFloat(weightLogs[index - 1].weight!);
+                        const currWeight = parseFloat(log.weight!);
+                        const prevY = chartHeight - ((prevWeight - minWeight) / range) * chartHeight;
+                        const currY = chartHeight - ((currWeight - minWeight) / range) * chartHeight;
+                        const x1 = (index - 1) * pointSpacing;
+                        const x2 = index * pointSpacing;
+                        
+                        const lineLength = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(currY - prevY, 2));
+                        const angle = Math.atan2(currY - prevY, x2 - x1) * (180 / Math.PI);
+                        
+                        return (
+                          <View
+                            key={`line-${index}`}
+                            style={[
+                              styles.chartLine,
+                              {
+                                left: x1,
+                                top: prevY,
+                                width: lineLength,
+                                transform: [{ rotate: `${angle}deg` }],
+                              },
+                            ]}
+                          />
+                        );
+                      })}
+                      
+                      {/* Data points */}
+                      {weightLogs.map((log, index) => {
+                        const weight = parseFloat(log.weight!);
+                        const y = chartHeight - ((weight - minWeight) / range) * chartHeight;
+                        const x = index * pointSpacing;
+                        const isLowest = weight === minWeight;
+                        
+                        return (
+                          <View
+                            key={`point-${index}`}
+                            style={[
+                              styles.chartPoint,
+                              {
+                                left: x - 6,
+                                top: y - 6,
+                                backgroundColor: isLowest ? '#16A34A' : '#9333EA',
+                              },
+                            ]}
+                          >
+                            {isLowest && (
+                              <Ionicons name="trophy" size={8} color="#fff" />
+                            )}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                  
+                  {/* X-axis labels */}
+                  <View style={styles.xAxisLabels}>
+                    {weightLogs.map((log, index) => {
+                      if (index % Math.ceil(weightLogs.length / 4) !== 0 && index !== weightLogs.length - 1) return null;
+                      return (
+                        <Text key={`x-${index}`} style={styles.xAxisLabel}>
+                          {formatDate(log.date)}
+                        </Text>
+                      );
+                    })}
+                  </View>
+                  
+                  {/* Chart legend */}
+                  <View style={styles.chartLegend}>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: '#9333EA' }]} />
+                      <Text style={styles.legendText}>Weight</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: '#16A34A' }]} />
+                      <Text style={styles.legendText}>Lowest</Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })()}
+          </View>
         </View>
 
         {/* Quick Stats Grid */}
@@ -556,6 +689,105 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#DC2626',
     marginTop: 12,
+  },
+  chartCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  chartEmpty: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  chartEmptyText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 12,
+    paddingHorizontal: 20,
+  },
+  chartArea: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  yAxisLabels: {
+    width: 40,
+    justifyContent: 'space-between',
+    paddingRight: 8,
+  },
+  yAxisLabel: {
+    fontSize: 11,
+    color: '#6B7280',
+    textAlign: 'right',
+  },
+  chartContent: {
+    flex: 1,
+    position: 'relative',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+  },
+  gridLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: '#E5E7EB',
+  },
+  chartLine: {
+    position: 'absolute',
+    height: 3,
+    backgroundColor: '#9333EA',
+    transformOrigin: 'left center',
+  },
+  chartPoint: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  xAxisLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 40,
+    marginTop: 8,
+  },
+  xAxisLabel: {
+    fontSize: 10,
+    color: '#6B7280',
+  },
+  chartLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    marginTop: 16,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#6B7280',
   },
   bottomPadding: {
     height: 40,

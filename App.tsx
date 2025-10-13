@@ -16,6 +16,12 @@ import LoginScreen from './src/screens/LoginScreen';
 import SignUpScreen from './src/screens/SignUpScreen';
 import AdminScreen from './src/screens/AdminScreen';
 import DailyLogScreen from './src/screens/DailyLogScreen';
+import MealPlannerScreen from './src/screens/MealPlannerScreen';
+import QuickWorkoutsScreen from './src/screens/QuickWorkoutsScreen';
+import RestaurantGuideScreen from './src/screens/RestaurantGuideScreen';
+import PersonalizedWorkoutScreen from './src/screens/PersonalizedWorkoutScreen';
+import FoodSwapScreen from './src/screens/FoodSwapScreen';
+import NutritionEducationScreen from './src/screens/NutritionEducationScreen';
 import { StorageProvider } from './src/context/StorageContext';
 import { SubscriptionProvider } from './src/context/SubscriptionContext';
 
@@ -160,6 +166,12 @@ export default function App() {
                 {(props) => <MainTabs {...props} onLogout={handleLogout} />}
               </Stack.Screen>
               <Stack.Screen name="DailyLog" component={DailyLogScreen} />
+              <Stack.Screen name="MealPlanner" component={MealPlannerScreen} />
+              <Stack.Screen name="QuickWorkouts" component={QuickWorkoutsScreen} />
+              <Stack.Screen name="RestaurantGuide" component={RestaurantGuideScreen} />
+              <Stack.Screen name="PersonalizedWorkout" component={PersonalizedWorkoutScreen} />
+              <Stack.Screen name="FoodSwap" component={FoodSwapScreen} />
+              <Stack.Screen name="NutritionEducation" component={NutritionEducationScreen} />
             </Stack.Navigator>
           ) : (
             // User is not logged in - show authentication screens

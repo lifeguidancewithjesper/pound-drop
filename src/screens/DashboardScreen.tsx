@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, Image, StatusBar, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useStorage } from '../context/StorageContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 // Import logo
 import logo from '../../assets/logo-pound-drop.png';
@@ -25,19 +25,87 @@ function useLiveTime() {
 
 export default function DashboardScreen() {
   const navigation = useNavigation();
-  const { getTodayLog, username, isFirstLogin, getUserInfo, weightUnit } = useStorage();
+  const { getTodayLog, username, isFirstLogin, getUserInfo, weightUnit, calculateCalories, calculateMacros, logs, getChallengeStartDate, startChallenge, getCurrentChallengeDay } = useStorage();
   const todayLog = getTodayLog();
   const currentTime = useLiveTime();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [sectionPositions, setSectionPositions] = useState({
+    meals: 0,
+    mood: 0,
+    challenge: 0,
+    weekly: 0,
+  });
 
   useEffect(() => {
     getUserInfo();
   }, []);
 
-  const weight = todayLog?.weight || '--';
+  // Force re-render when screen is focused (for challenge reset)
+  useFocusEffect(
+    useCallback(() => {
+      setRefreshKey(prev => prev + 1);
+    }, [])
+  );
+
+  // Calculate streak
+  const calculateStreak = () => {
+    if (logs.length === 0) return 0;
+    
+    const sortedLogs = [...logs].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (const log of sortedLogs) {
+      const logDate = new Date(log.date);
+      logDate.setHours(0, 0, 0, 0);
+      
+      // Calculate expected date for this streak position
+      const expectedDate = new Date(today);
+      expectedDate.setDate(expectedDate.getDate() - streak);
+      
+      const daysDiff = Math.floor((expectedDate.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff === 0) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
+  };
+
+  const streak = calculateStreak();
+  
+  // Format weight based on user's preferred unit
+  let weight = '--';
+  if (todayLog?.weight) {
+    const weightInLbs = parseFloat(todayLog.weight);
+    if (weightUnit === 'kg') {
+      const weightInKg = weightInLbs / 2.20462;
+      weight = weightInKg.toFixed(1);
+    } else {
+      weight = weightInLbs.toFixed(1);
+    }
+  }
+  
   const steps = parseInt(todayLog?.steps || '0');
   const water = todayLog?.water || 0;
   const stepsProgress = Math.min((steps / 10000) * 100, 100);
   const waterProgress = Math.min((water / 8) * 100, 100);
+
+  // Scroll to section function
+  const scrollToSection = (section: keyof typeof sectionPositions) => {
+    const yPosition = sectionPositions[section];
+    if (scrollViewRef.current && yPosition) {
+      scrollViewRef.current.scrollTo({ y: yPosition - 80, animated: true });
+    }
+  };
   
   const moodEmojis = ['😢', '😕', '😐', '🙂', '😄'];
   const moodText = todayLog?.mood !== undefined ? moodEmojis[todayLog.mood] : 'Not logged';
@@ -46,6 +114,14 @@ export default function DashboardScreen() {
   const hasLunch = todayLog?.meals?.lunch && todayLog.meals.lunch.length > 0;
   const hasDinner = todayLog?.meals?.dinner && todayLog.meals.dinner.length > 0;
   const mealsLogged = (hasBreakfast ? 1 : 0) + (hasLunch ? 1 : 0) + (hasDinner ? 1 : 0);
+  
+  const calorieData = todayLog?.meals ? calculateCalories(todayLog.meals, todayLog.snacks) : { total: 0, breakfast: 0, lunch: 0, dinner: 0, snacks: 0 };
+  const macroData = todayLog?.meals ? calculateMacros(todayLog.meals, todayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 }, snacks: { protein: 0, carbs: 0, fat: 0 } };
+  
+  // Get latest meal time for display
+  const latestMealTime = hasDinner ? todayLog?.mealTimes?.dinner : 
+                         hasLunch ? todayLog?.mealTimes?.lunch : 
+                         hasBreakfast ? todayLog?.mealTimes?.breakfast : null;
 
   // Format date and time
   const dateStr = currentTime.toLocaleDateString('en-US', { 
@@ -62,7 +138,7 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <ScrollView style={styles.container}>
+      <ScrollView ref={scrollViewRef} style={styles.container}>
         {/* Header with Elegant Wave */}
         <View style={styles.headerWrapper}>
           <View style={styles.waveBackground} />
@@ -89,6 +165,12 @@ export default function DashboardScreen() {
                 <Text style={styles.welcomeText} data-testid="text-welcome">
                   {isFirstLogin ? '🎉 Welcome' : '👋 Welcome back'}, {username}!
                 </Text>
+                {streak > 0 && (
+                  <View style={styles.streakBadge} data-testid="streak-badge">
+                    <Ionicons name="flame" size={16} color="#F97316" />
+                    <Text style={styles.streakText}>{streak} day streak!</Text>
+                  </View>
+                )}
               </View>
             )}
           </View>
@@ -155,6 +237,10 @@ export default function DashboardScreen() {
             onPress={() => navigation.navigate('Wellness' as never, { tab: 'meals' } as never)}
             activeOpacity={0.8}
             data-testid="card-meals"
+            onLayout={(event) => {
+              const { y } = event.nativeEvent.layout;
+              setSectionPositions(prev => ({ ...prev, meals: y }));
+            }}
           >
             <View style={styles.cardHeader}>
               <Ionicons name="restaurant-outline" size={28} color="#fff" />
@@ -178,6 +264,41 @@ export default function DashboardScreen() {
                 color="#fff" 
               />
             </View>
+            {calorieData.total > 0 && (
+              <>
+                <View style={styles.calorieRow}>
+                  <Ionicons name="flame" size={16} color="#fff" />
+                  <Text style={styles.calorieText} data-testid="text-total-calories">{calorieData.total} cal</Text>
+                </View>
+                <View style={styles.macroRow}>
+                  <Text style={styles.macroText} data-testid="text-total-macros">
+                    P: {macroData.total.protein}g | C: {macroData.total.carbs}g | F: {macroData.total.fat}g
+                  </Text>
+                </View>
+              </>
+            )}
+            {(todayLog?.mealTimes?.breakfast || todayLog?.mealTimes?.lunch || todayLog?.mealTimes?.dinner) && (
+              <View style={styles.mealTimesContainer}>
+                {todayLog?.mealTimes?.breakfast && (
+                  <View style={styles.mealTimeItem}>
+                    <Text style={styles.mealTimeLabel}>B:</Text>
+                    <Text style={styles.mealTimeValue}>{todayLog.mealTimes.breakfast}</Text>
+                  </View>
+                )}
+                {todayLog?.mealTimes?.lunch && (
+                  <View style={styles.mealTimeItem}>
+                    <Text style={styles.mealTimeLabel}>L:</Text>
+                    <Text style={styles.mealTimeValue}>{todayLog.mealTimes.lunch}</Text>
+                  </View>
+                )}
+                {todayLog?.mealTimes?.dinner && (
+                  <View style={styles.mealTimeItem}>
+                    <Text style={styles.mealTimeLabel}>D:</Text>
+                    <Text style={styles.mealTimeValue}>{todayLog.mealTimes.dinner}</Text>
+                  </View>
+                )}
+              </View>
+            )}
           </TouchableOpacity>
 
           {/* Row 3: Mood + Measurements (if logged) */}
@@ -186,6 +307,10 @@ export default function DashboardScreen() {
             onPress={() => navigation.navigate('Wellness' as never, { tab: 'mood' } as never)}
             activeOpacity={0.8}
             data-testid="card-mood"
+            onLayout={(event) => {
+              const { y } = event.nativeEvent.layout;
+              setSectionPositions(prev => ({ ...prev, mood: y }));
+            }}
           >
             <View style={styles.cardHeader}>
               <Ionicons name="happy-outline" size={28} color="#fff" />
@@ -266,6 +391,246 @@ export default function DashboardScreen() {
               </View>
             </TouchableOpacity>
           )}
+        </View>
+
+        {/* 4-Week Transformation Challenge */}
+        <View 
+          style={styles.challengeSection}
+          onLayout={(event) => {
+            const { y } = event.nativeEvent.layout;
+            setSectionPositions(prev => ({ ...prev, challenge: y }));
+          }}
+        >
+          {(() => {
+            const challengeDay = getCurrentChallengeDay();
+            const weekNumber = challengeDay ? Math.ceil(challengeDay / 7) : 0;
+            const progressPercentage = challengeDay ? (challengeDay / 28) * 100 : 0;
+            
+            // Weekly messages
+            const weeklyMessages = [
+              "🌟 Foundation Week - Building healthy habits",
+              "💪 Momentum Week - You're getting stronger!",
+              "🔥 Power Week - Halfway there, keep pushing!",
+              "🏆 Final Push - The finish line is near!"
+            ];
+            
+            const weekMessage = weekNumber > 0 ? weeklyMessages[weekNumber - 1] : "";
+
+            return (
+              <View style={styles.challengeCard}>
+                <View style={styles.challengeHeader}>
+                  <View>
+                    <Text style={styles.challengeTitle}>4-Week Transformation Challenge</Text>
+                    {challengeDay ? (
+                      <Text style={styles.challengeSubtitle}>{weekMessage}</Text>
+                    ) : (
+                      <Text style={styles.challengeSubtitle}>Start your journey today!</Text>
+                    )}
+                  </View>
+                  <Ionicons name="fitness" size={32} color="#9333EA" />
+                </View>
+
+                {challengeDay ? (
+                  <>
+                    <View style={styles.challengeDayDisplay}>
+                      <Text style={styles.challengeDayText}>Day {challengeDay} of 28</Text>
+                      <Text style={styles.challengeWeekText}>Week {weekNumber}</Text>
+                    </View>
+                    <View style={styles.challengeProgressBar}>
+                      <View style={[styles.challengeProgressFill, { width: `${progressPercentage}%` }]} />
+                    </View>
+                    {challengeDay === 28 && (
+                      <View style={styles.challengeCompleteBanner}>
+                        <Ionicons name="trophy" size={24} color="#F59E0B" />
+                        <Text style={styles.challengeCompleteText}>🎉 Challenge Complete! You did it!</Text>
+                      </View>
+                    )}
+                    {challengeDay === 7 || challengeDay === 14 || challengeDay === 21 ? (
+                      <View style={styles.challengeWeekBanner}>
+                        <Ionicons name="ribbon" size={20} color="#9333EA" />
+                        <Text style={styles.challengeWeekText}>Week {Math.floor(challengeDay / 7)} Complete! 🎊</Text>
+                      </View>
+                    ) : null}
+                  </>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.challengeStartButton}
+                    onPress={startChallenge}
+                    data-testid="button-start-challenge"
+                  >
+                    <Ionicons name="rocket" size={20} color="#fff" />
+                    <Text style={styles.challengeStartButtonText}>Start Challenge</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          })()}
+        </View>
+
+        {/* Weekly Summary Card */}
+        <View 
+          style={styles.weeklySummarySection}
+          onLayout={(event) => {
+            const { y } = event.nativeEvent.layout;
+            setSectionPositions(prev => ({ ...prev, weekly: y }));
+          }}
+        >
+          <View style={styles.weeklySummaryCard}>
+            <View style={styles.weeklySummaryHeader}>
+              <Text style={styles.weeklySummaryTitle}>📊 This Week's Progress</Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Progress' as never)}
+                data-testid="button-view-progress"
+              >
+                <Text style={styles.viewDetailsLink}>View Details</Text>
+              </TouchableOpacity>
+            </View>
+            {(() => {
+              // Calculate week stats
+              const oneWeekAgo = new Date();
+              oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+              
+              const weekLogs = logs.filter(log => new Date(log.date) >= oneWeekAgo);
+              const daysLogged = weekLogs.length;
+              
+              // Get weights in chronological order (earliest to latest)
+              const weekWeightsWithDate = weekLogs
+                .filter(log => log.weight)
+                .map(log => ({ weight: parseFloat(log.weight!), date: new Date(log.date) }))
+                .sort((a, b) => a.date.getTime() - b.date.getTime());
+              
+              const weekChange = weekWeightsWithDate.length >= 2 
+                ? (weekWeightsWithDate[weekWeightsWithDate.length - 1].weight - weekWeightsWithDate[0].weight).toFixed(1)
+                : '0.0';
+              
+              const totalWorkouts = weekLogs.reduce((sum, log) => 
+                sum + (log.workouts?.length || 0), 0
+              );
+              
+              return (
+                <View>
+                  <View style={styles.weekStatsGrid}>
+                    <View style={styles.weekStatItem}>
+                      <Text style={styles.weekStatValue}>{daysLogged}/7</Text>
+                      <Text style={styles.weekStatLabel}>Days Logged</Text>
+                    </View>
+                    <View style={styles.weekStatItem}>
+                      <Text style={[styles.weekStatValue, { color: parseFloat(weekChange) < 0 ? '#16A34A' : '#6B7280' }]}>
+                        {parseFloat(weekChange) > 0 ? '+' : ''}{weekChange} {weightUnit}
+                      </Text>
+                      <Text style={styles.weekStatLabel}>Weight Change</Text>
+                    </View>
+                    <View style={styles.weekStatItem}>
+                      <Text style={styles.weekStatValue}>{totalWorkouts}</Text>
+                      <Text style={styles.weekStatLabel}>Workouts</Text>
+                    </View>
+                  </View>
+                  
+                  {daysLogged >= 5 && (
+                    <View style={styles.weeklyWinBanner}>
+                      <Ionicons name="trophy" size={20} color="#F59E0B" />
+                      <Text style={styles.weeklyWinText}>
+                        Amazing! {daysLogged} days of consistent logging this week! 🎉
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {parseFloat(weekChange) < 0 && (
+                    <View style={styles.weeklyWinBanner}>
+                      <Ionicons name="trending-down" size={20} color="#16A34A" />
+                      <Text style={styles.weeklyWinText}>
+                        You lost {Math.abs(parseFloat(weekChange))} {weightUnit} this week! Keep it up! 💪
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })()}
+          </View>
+        </View>
+
+        {/* Quick Actions Section */}
+        <View style={styles.quickActionsSection}>
+          <Text style={styles.quickActionsTitle}>🚀 Quick Actions</Text>
+          <View style={styles.quickActionsGrid}>
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => navigation.navigate('MealPlanner' as never)}
+              activeOpacity={0.8}
+              data-testid="button-meal-planner"
+            >
+              <View style={styles.quickActionIcon}>
+                <Ionicons name="restaurant" size={32} color="#9333EA" />
+              </View>
+              <Text style={styles.quickActionTitle}>Meal Planner</Text>
+              <Text style={styles.quickActionSubtitle}>Pre-built Pound Drop meals</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => navigation.navigate('PersonalizedWorkout' as never)}
+              activeOpacity={0.8}
+              data-testid="button-personalized-workout"
+            >
+              <View style={styles.quickActionIcon}>
+                <Ionicons name="fitness" size={32} color="#F59E0B" />
+              </View>
+              <Text style={styles.quickActionTitle}>Personalized Plans</Text>
+              <Text style={styles.quickActionSubtitle}>30-min natural workouts</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => navigation.navigate('RestaurantGuide' as never)}
+              activeOpacity={0.8}
+              data-testid="button-restaurant-guide"
+            >
+              <View style={styles.quickActionIcon}>
+                <Ionicons name="restaurant-outline" size={32} color="#16A34A" />
+              </View>
+              <Text style={styles.quickActionTitle}>Dining Out Guide</Text>
+              <Text style={styles.quickActionSubtitle}>Eat out without guilt</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => navigation.navigate('Wellness' as never, { tab: 'mood' } as never)}
+              activeOpacity={0.8}
+              data-testid="button-track-wins"
+            >
+              <View style={styles.quickActionIcon}>
+                <Ionicons name="trophy" size={32} color="#F59E0B" />
+              </View>
+              <Text style={styles.quickActionTitle}>Track Wins</Text>
+              <Text style={styles.quickActionSubtitle}>Daily victories & progress</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => navigation.navigate('FoodSwap' as never)}
+              activeOpacity={0.8}
+              data-testid="button-food-swaps"
+            >
+              <View style={styles.quickActionIcon}>
+                <Ionicons name="swap-horizontal" size={32} color="#8B5CF6" />
+              </View>
+              <Text style={styles.quickActionTitle}>Food Swaps</Text>
+              <Text style={styles.quickActionSubtitle}>Healthy alternatives</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => navigation.navigate('Wellness' as never, { tab: 'mood' } as never)}
+              activeOpacity={0.8}
+              data-testid="button-check-cravings"
+            >
+              <View style={styles.quickActionIcon}>
+                <Ionicons name="candy" size={32} color="#DB2777" />
+              </View>
+              <Text style={styles.quickActionTitle}>Check Cravings</Text>
+              <Text style={styles.quickActionSubtitle}>Track & manage urges</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Bottom Padding */}
@@ -356,6 +721,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#0369A1',
+  },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    gap: 6,
+  },
+  streakText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#F97316',
   },
   gridContainer: {
     flexDirection: 'row',
@@ -483,7 +864,274 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
+  calorieRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 6,
+  },
+  calorieText: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  macroRow: {
+    marginTop: 6,
+  },
+  macroText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '600',
+  },
+  mealTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 4,
+  },
+  mealTimeText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontWeight: '500',
+  },
+  mealTimesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  mealTimeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  mealTimeLabel: {
+    fontSize: 11,
+    color: '#fff',
+    fontWeight: 'bold',
+    opacity: 0.9,
+  },
+  mealTimeValue: {
+    fontSize: 11,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  weeklySummarySection: {
+    paddingHorizontal: 16,
+    marginTop: 20,
+  },
+  weeklySummaryCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  weeklySummaryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  weeklySummaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  viewDetailsLink: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#9333EA',
+  },
+  weekStatsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+  },
+  weekStatItem: {
+    alignItems: 'center',
+  },
+  weekStatValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  weekStatLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  weeklyWinBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    padding: 12,
+    borderRadius: 12,
+    gap: 10,
+    marginTop: 8,
+  },
+  weeklyWinText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  quickActionsSection: {
+    paddingHorizontal: 16,
+    marginTop: 20,
+  },
+  quickActionsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 16,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  quickActionCard: {
+    width: '48%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  quickActionIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  quickActionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  quickActionSubtitle: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
   bottomPadding: {
     height: 20,
+  },
+  challengeSection: {
+    paddingHorizontal: 16,
+    marginTop: 20,
+  },
+  challengeCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 2,
+    borderColor: '#9333EA',
+  },
+  challengeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  challengeTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  challengeSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  challengeDayDisplay: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  challengeDayText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#9333EA',
+  },
+  challengeWeekText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  challengeProgressBar: {
+    height: 12,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 6,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  challengeProgressFill: {
+    height: '100%',
+    backgroundColor: '#9333EA',
+    borderRadius: 6,
+  },
+  challengeStartButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#9333EA',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  challengeStartButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  challengeCompleteBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    padding: 12,
+    borderRadius: 12,
+    gap: 10,
+  },
+  challengeCompleteText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  challengeWeekBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF2FF',
+    padding: 12,
+    borderRadius: 12,
+    gap: 10,
   },
 });
