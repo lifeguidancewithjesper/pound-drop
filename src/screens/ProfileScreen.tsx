@@ -648,31 +648,28 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
 
   const handleMenuItemPress = (index: number) => {
     switch (index) {
-      case 0: // Food Swaps
-        navigation.navigate('FoodSwap' as never);
-        break;
-      case 1: // Nutrition Education
+      case 0: // Nutrition Education
         navigation.navigate('NutritionEducation' as never);
         break;
-      case 2: // Change your email
+      case 1: // Change your email
         handlePersonalInfo();
         break;
-      case 3: // Goals
+      case 2: // Goals
         handleEditGoals();
         break;
-      case 4: // Notifications
+      case 3: // Notifications
         handleNotifications();
         break;
-      case 5: // Subscription
+      case 4: // Subscription
         handleSubscription();
         break;
-      case 6: // Help & Support
+      case 5: // Help & Support
         Alert.alert('Help & Support', 'Need help? Contact us at support@pounddropapp.com');
         break;
-      case 7: // Privacy Policy
+      case 6: // Privacy Policy
         handlePrivacyPolicy();
         break;
-      case 8: // Disclaimer
+      case 7: // Disclaimer
         handleDisclaimer();
         break;
       default:
@@ -681,7 +678,6 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   };
 
   const menuItems = [
-    { icon: 'swap-horizontal-outline', title: 'Smart Food Swaps', subtitle: 'Easy swaps for your favorite foods' },
     { icon: 'school-outline', title: 'Nutrition Education', subtitle: 'Learn what foods work best for you' },
     { icon: 'person-outline', title: 'Change your email', subtitle: 'Update your email address' },
     { icon: 'flag-outline', title: 'Goals', subtitle: 'Set your weight and weight loss goals' },

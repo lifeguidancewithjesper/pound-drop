@@ -59,7 +59,7 @@ export default function WellnessScreen() {
   const mealCount = [hasBreakfast, hasLunch, hasDinner].filter(Boolean).length;
   const hasExercise = hasWorkout || hasSteps;
   
-  const completedCount = [hasBreakfast, hasLunch, hasDinner, hasWater, hasSteps, hasWorkout, hasMood, hasMeasurements, hasFasting].filter(Boolean).length;
+  const completedCount = [hasBreakfast, hasLunch, hasDinner, hasWater, hasSteps, hasMood, hasFasting].filter(Boolean).length;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -70,6 +70,30 @@ export default function WellnessScreen() {
           <Text style={styles.headerTitle}>Wellness Tracker</Text>
           <Text style={styles.headerSubtitle}>Track your daily health journey</Text>
         </View>
+
+        {/* Collapsible Pound Drop Method */}
+        <TouchableOpacity 
+          style={styles.methodToggle} 
+          onPress={() => setMethodExpanded(!methodExpanded)}
+          data-testid="button-toggle-method"
+        >
+          <Text style={styles.methodToggleText}>🎯 Pound Drop Method</Text>
+          <Ionicons name={methodExpanded ? "chevron-up" : "chevron-down"} size={24} color="#9333EA" />
+        </TouchableOpacity>
+
+        {methodExpanded && (
+          <View style={styles.methodCard}>
+            <Text style={styles.methodHeadline}>Eat Less, Move Less</Text>
+            <Text style={styles.methodBullet}>• Consume 1-3 meals daily, and walk min 30 mins daily.</Text>
+            <Text style={styles.methodSubtitle}>Get sufficient proteins and wholefoods, eating in a way that doesn't spike blood sugar and insulin. Low insulin = weight loss.</Text>
+            <View style={styles.methodSteps}>
+              <MethodStep number="1" title="Diet" desc="Get sufficient proteins for breakfast (20g) and add fiber rich natural wholefoods like vegetables, nuts, seeds, fruits, berries etc. First consume your greens, then proteins, fats, and carbs last. This is to keep blood sugar and insulin low.{'\n\n'}For lunch eat mostly natural whole foods and non-starchy vegetables, with sufficient proteins.{'\n\n'}Dinner meals should be a lighter version of your lunch meal here it's ok to add a little starchy vegetables." />
+              <MethodStep number="2" title="Fasting" desc="Fast between meals and practice 16-hour intermittent fasting daily to lower insulin levels and trigger fat burning." />
+              <MethodStep number="3" title="Exercise" desc="Minimum 30 min walk daily. Don't overdo it - too much exercise increases hunger and cravings. Eat less, move less." />
+              <MethodStep number="4" title="Track + Celebrate Wins" desc="Log daily: weight, water, steps, meals • Check off Daily Actions • Celebrate non-scale victories • Consistency over perfection!" />
+            </View>
+          </View>
+        )}
 
         {/* Challenge Checklist (when active) or Daily Actions */}
         {isChallengeActive ? (
@@ -123,7 +147,7 @@ export default function WellnessScreen() {
               <Ionicons name="checkbox" size={24} color="#9333EA" />
               <Text style={styles.checklistTitle}>Daily Actions</Text>
               <View style={styles.progressBadge}>
-                <Text style={styles.progressText}>{completedCount}/9</Text>
+                <Text style={styles.progressText}>{completedCount}/7</Text>
               </View>
             </View>
             <View style={styles.checklistGrid}>
@@ -132,34 +156,8 @@ export default function WellnessScreen() {
               <CheckItem label="Dinner" completed={hasDinner} />
               <CheckItem label="Hydration" completed={hasWater} />
               <CheckItem label="Steps" completed={hasSteps} />
-              <CheckItem label="Exercise" completed={hasWorkout} />
               <CheckItem label="Mood" completed={hasMood} />
-              <CheckItem label="Measurements" completed={hasMeasurements} />
               <CheckItem label="Fasting" completed={hasFasting} />
-            </View>
-          </View>
-        )}
-
-        {/* Collapsible Pound Drop Method */}
-        <TouchableOpacity 
-          style={styles.methodToggle} 
-          onPress={() => setMethodExpanded(!methodExpanded)}
-          data-testid="button-toggle-method"
-        >
-          <Text style={styles.methodToggleText}>🎯 Pound Drop Method</Text>
-          <Ionicons name={methodExpanded ? "chevron-up" : "chevron-down"} size={24} color="#9333EA" />
-        </TouchableOpacity>
-
-        {methodExpanded && (
-          <View style={styles.methodCard}>
-            <Text style={styles.methodHeadline}>Eat Less, Move Less</Text>
-            <Text style={styles.methodBullet}>• Consume 1-3 meals daily, and walk min 30 mins daily.</Text>
-            <Text style={styles.methodSubtitle}>Get sufficient proteins and wholefoods, eating in a way that doesn't spike blood sugar and insulin. Low insulin = weight loss.</Text>
-            <View style={styles.methodSteps}>
-              <MethodStep number="1" title="Diet" desc="Get sufficient proteins for breakfast (20g) and add fiber rich natural wholefoods like vegetables, nuts, seeds, fruits, berries etc. First consume your greens, then proteins, fats, and carbs last. This is to keep blood sugar and insulin low.{'\n\n'}For lunch eat mostly natural whole foods and non-starchy vegetables, with sufficient proteins.{'\n\n'}Dinner meals should be a lighter version of your lunch meal here it's ok to add a little starchy vegetables." />
-              <MethodStep number="2" title="Fasting" desc="Fast between meals and practice 16-hour intermittent fasting daily to lower insulin levels and trigger fat burning." />
-              <MethodStep number="3" title="Exercise" desc="Minimum 30 min walk daily. Don't overdo it - too much exercise increases hunger and cravings. Eat less, move less." />
-              <MethodStep number="4" title="Track + Celebrate Wins" desc="Log daily: weight, water, steps, meals • Check off Daily Actions • Celebrate non-scale victories • Consistency over perfection!" />
             </View>
           </View>
         )}
