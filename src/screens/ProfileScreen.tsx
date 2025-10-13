@@ -35,7 +35,7 @@ type UserStats = {
 
 export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   const navigation = useNavigation();
-  const { logs, reloadAllData, getChallengeStartDate, startChallenge, updateTodayLog, weightUnit, setWeightUnit, getStartingWeight, setStartingWeight } = useStorage();
+  const { logs, reloadAllData, getChallengeStartDate, startChallenge, updateTodayLog, weightUnit } = useStorage();
   const { subscriptionStatus, daysRemainingInTrial, isTrialActive, isSubscriptionActive } = useSubscription();
   const [loading, setLoading] = useState(true);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -227,209 +227,87 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   };
 
   const handleSetCurrentWeight = () => {
-    // Ask which unit to use
-    Alert.alert(
+    Alert.prompt(
       'Set Current Weight',
-      'Which unit would you like to use?',
+      'Enter your current weight (in lbs):',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Pounds (lbs)',
-          onPress: () => {
-            Alert.prompt(
-              'Set Current Weight',
-              'Enter your current weight in lbs:',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Save',
-                  onPress: async (value) => {
-                    if (!value || value.trim() === '') {
-                      Alert.alert('Error', 'Weight cannot be empty');
-                      return;
-                    }
-                    
-                    const weight = parseFloat(value);
-                    if (isNaN(weight) || weight <= 0) {
-                      Alert.alert('Error', 'Please enter a valid weight');
-                      return;
-                    }
+          text: 'Save',
+          onPress: async (currentWeight) => {
+            if (!currentWeight || currentWeight.trim() === '') {
+              Alert.alert('Error', 'Weight cannot be empty');
+              return;
+            }
+            
+            const weight = parseFloat(currentWeight);
+            if (isNaN(weight) || weight <= 0) {
+              Alert.alert('Error', 'Please enter a valid weight');
+              return;
+            }
 
-                    await saveCurrentWeight(weight, 'lbs');
-                  }
-                }
-              ],
-              'plain-text',
-              userProfile.currentWeight ? userProfile.currentWeight.toString() : ''
-            );
-          }
-        },
-        {
-          text: 'Kilograms (kg)',
-          onPress: () => {
-            Alert.prompt(
-              'Set Current Weight',
-              'Enter your current weight in kg:',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Save',
-                  onPress: async (value) => {
-                    if (!value || value.trim() === '') {
-                      Alert.alert('Error', 'Weight cannot be empty');
-                      return;
-                    }
-                    
-                    const weight = parseFloat(value);
-                    if (isNaN(weight) || weight <= 0) {
-                      Alert.alert('Error', 'Please enter a valid weight');
-                      return;
-                    }
-
-                    // Pass the kg value directly, saveCurrentWeight will handle conversion
-                    await saveCurrentWeight(weight, 'kg');
-                  }
-                }
-              ],
-              'plain-text',
-              userProfile.currentWeight ? (userProfile.currentWeight * 0.453592).toFixed(1) : ''
-            );
+            await saveCurrentWeight(weight);
           }
         }
-      ]
+      ],
+      'plain-text',
+      userProfile.currentWeight ? userProfile.currentWeight.toString() : ''
     );
   };
 
   const handleSetTargetWeight = () => {
-    // Ask which unit to use
-    Alert.alert(
+    Alert.prompt(
       'Set Target Weight',
-      'Which unit would you like to use?',
+      'Enter your target weight (in lbs):',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Pounds (lbs)',
-          onPress: () => {
-            Alert.prompt(
-              'Set Target Weight',
-              'Enter your target weight in lbs:',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Save',
-                  onPress: async (value) => {
-                    if (!value || value.trim() === '') {
-                      Alert.alert('Error', 'Target weight cannot be empty');
-                      return;
-                    }
-                    
-                    const weight = parseFloat(value);
-                    if (isNaN(weight) || weight <= 0) {
-                      Alert.alert('Error', 'Please enter a valid weight');
-                      return;
-                    }
+          text: 'Save',
+          onPress: async (targetWeight) => {
+            if (!targetWeight || targetWeight.trim() === '') {
+              Alert.alert('Error', 'Target weight cannot be empty');
+              return;
+            }
+            
+            const weight = parseFloat(targetWeight);
+            if (isNaN(weight) || weight <= 0) {
+              Alert.alert('Error', 'Please enter a valid weight');
+              return;
+            }
 
-                    // Check if target is realistic
-                    if (userProfile.currentWeight && weight >= userProfile.currentWeight) {
-                      Alert.alert(
-                        'Notice', 
-                        'Your target weight should be less than your current weight. Are you sure?',
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          { text: 'Yes, Save It', onPress: () => saveTargetWeight(weight) }
-                        ]
-                      );
-                      return;
-                    }
+            // Check if target is realistic
+            if (userProfile.currentWeight && weight >= userProfile.currentWeight) {
+              Alert.alert(
+                'Notice', 
+                'Your target weight should be less than your current weight. Are you sure?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Yes, Save It', onPress: () => saveTargetWeight(weight) }
+                ]
+              );
+              return;
+            }
 
-                    await saveTargetWeight(weight);
-                  }
-                }
-              ],
-              'plain-text',
-              userProfile.targetWeight ? userProfile.targetWeight.toString() : ''
-            );
-          }
-        },
-        {
-          text: 'Kilograms (kg)',
-          onPress: () => {
-            Alert.prompt(
-              'Set Target Weight',
-              'Enter your target weight in kg:',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Save',
-                  onPress: async (value) => {
-                    if (!value || value.trim() === '') {
-                      Alert.alert('Error', 'Target weight cannot be empty');
-                      return;
-                    }
-                    
-                    const weight = parseFloat(value);
-                    if (isNaN(weight) || weight <= 0) {
-                      Alert.alert('Error', 'Please enter a valid weight');
-                      return;
-                    }
-
-                    // Convert kg to lbs for storage
-                    const weightInLbs = weight * 2.20462;
-                    
-                    // Check if target is realistic
-                    if (userProfile.currentWeight && weightInLbs >= userProfile.currentWeight) {
-                      Alert.alert(
-                        'Notice', 
-                        'Your target weight should be less than your current weight. Are you sure?',
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          { text: 'Yes, Save It', onPress: () => saveTargetWeight(weightInLbs) }
-                        ]
-                      );
-                      return;
-                    }
-
-                    await saveTargetWeight(weightInLbs);
-                  }
-                }
-              ],
-              'plain-text',
-              userProfile.targetWeight ? (userProfile.targetWeight * 0.453592).toFixed(1) : ''
-            );
+            await saveTargetWeight(weight);
           }
         }
-      ]
+      ],
+      'plain-text',
+      userProfile.targetWeight ? userProfile.targetWeight.toString() : ''
     );
   };
 
-  const saveCurrentWeight = async (currentWeight: number, unitUsed: 'lbs' | 'kg') => {
+  const saveCurrentWeight = async (currentWeight: number) => {
     try {
       const storedUser = await SecureStore.getItemAsync('pounddrop_user');
       if (storedUser) {
         const userData = JSON.parse(storedUser);
-        
-        // Convert to lbs for storage in userData
-        const weightInLbs = unitUsed === 'kg' ? currentWeight * 2.20462 : currentWeight;
-        userData.currentWeight = weightInLbs.toString();
+        userData.currentWeight = currentWeight.toString();
         await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
-        
-        // CRITICAL: Also update today's log so Wellness screen shows the correct weight
-        updateTodayLog({ weight: weightInLbs.toString() });
-        console.log('✅ Updated today\'s log with weight:', weightInLbs, 'lbs');
-        
-        // ALWAYS update starting weight when setting current weight
-        // This gives users a fresh baseline for milestone tracking
-        await setWeightUnit(unitUsed);
-        await setStartingWeight(currentWeight);
-        console.log('🏁 Set starting weight for milestone tracking:', currentWeight, unitUsed);
-        
-        // Reset highest milestone when setting new starting weight
-        await SecureStore.setItemAsync('pounddrop_highest_milestone', '0');
-        console.log('🔄 Reset milestone tracker for new starting weight');
         
         // Reload user data to reflect changes
         loadUserData();
-        Alert.alert('Success', `Current weight set to ${currentWeight.toFixed(1)} ${unitUsed}!`);
+        Alert.alert('Success', `Current weight set to ${currentWeight} lbs!`);
       }
     } catch (error) {
       console.error('Error updating current weight:', error);
@@ -447,8 +325,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
         
         // Reload user data to reflect changes
         loadUserData();
-        const displayWeight = weightUnit === 'kg' ? (targetWeight * 0.453592).toFixed(1) : targetWeight.toFixed(1);
-        Alert.alert('Success', `Target weight set to ${displayWeight} ${weightUnit}!`);
+        Alert.alert('Success', `Target weight set to ${targetWeight} lbs!`);
       }
     } catch (error) {
       console.error('Error updating target weight:', error);
@@ -560,7 +437,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
       'Choose an option:',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'One-Time Purchase ($47)', onPress: handleOneTimePurchase },
+        { text: 'One-Time Purchase ($27)', onPress: handleOneTimePurchase },
         { text: 'Delete Account', onPress: handleDeleteAccount, style: 'destructive' },
       ]
     );
@@ -569,11 +446,11 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   const handleOneTimePurchase = () => {
     Alert.alert(
       'One-Time Purchase',
-      'Get lifetime access to Pound Drop for just $47 USD (one-time payment)!\n\nThis includes:\n• Unlimited food logging\n• Advanced tracking features\n• Lifetime updates\n• No monthly fees',
+      'Get lifetime access to Pound Drop for just $27 USD (one-time payment)!\n\nThis includes:\n• Unlimited food logging\n• Advanced tracking features\n• Lifetime updates\n• No monthly fees',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Purchase for $47',
+          text: 'Purchase for $27',
           onPress: () => {
             Alert.alert('Coming Soon', 'One-time purchase will be available soon! This will be processed through the App Store.');
           }
@@ -771,28 +648,31 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
 
   const handleMenuItemPress = (index: number) => {
     switch (index) {
-      case 0: // Nutrition Education
+      case 0: // Food Swaps
+        navigation.navigate('FoodSwap' as never);
+        break;
+      case 1: // Nutrition Education
         navigation.navigate('NutritionEducation' as never);
         break;
-      case 1: // Change your email
+      case 2: // Change your email
         handlePersonalInfo();
         break;
-      case 2: // Goals
+      case 3: // Goals
         handleEditGoals();
         break;
-      case 3: // Notifications
+      case 4: // Notifications
         handleNotifications();
         break;
-      case 4: // Subscription
+      case 5: // Subscription
         handleSubscription();
         break;
-      case 5: // Help & Support
+      case 6: // Help & Support
         Alert.alert('Help & Support', 'Need help? Contact us at support@pounddropapp.com');
         break;
-      case 6: // Privacy Policy
+      case 7: // Privacy Policy
         handlePrivacyPolicy();
         break;
-      case 7: // Disclaimer
+      case 8: // Disclaimer
         handleDisclaimer();
         break;
       default:
@@ -801,6 +681,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   };
 
   const menuItems = [
+    { icon: 'swap-horizontal-outline', title: 'Smart Food Swaps', subtitle: 'Easy swaps for your favorite foods' },
     { icon: 'school-outline', title: 'Nutrition Education', subtitle: 'Learn what foods work best for you' },
     { icon: 'person-outline', title: 'Change your email', subtitle: 'Update your email address' },
     { icon: 'flag-outline', title: 'Goals', subtitle: 'Set your weight and weight loss goals' },
@@ -902,9 +783,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>
-              {userStats.weightLoss > 0 
-                ? `-${weightUnit === 'kg' ? (userStats.weightLoss * 0.453592).toFixed(1) : userStats.weightLoss.toFixed(1)}` 
-                : '0'}
+              {userStats.weightLoss > 0 ? `-${userStats.weightLoss.toFixed(1)}` : '0'}
             </Text>
             <Text style={styles.statLabel}>{weightUnit} Lost</Text>
           </View>
@@ -912,17 +791,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
 
         {/* Current Goals */}
         <View style={styles.goalsSection}>
-          <View style={styles.goalsSectionHeader}>
-            <Text style={styles.sectionTitle}>Current Goals</Text>
-            <TouchableOpacity 
-              onPress={() => setWeightUnit(weightUnit === 'lbs' ? 'kg' : 'lbs')}
-              style={styles.unitToggle}
-              data-testid="button-toggle-unit"
-            >
-              <Ionicons name="swap-horizontal" size={16} color="#8B5CF6" />
-              <Text style={styles.unitToggleText}>{weightUnit === 'lbs' ? 'kg' : 'lbs'}</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.sectionTitle}>Current Goals</Text>
           <View style={styles.goalCard}>
             <View style={styles.goalHeader}>
               <Ionicons name="flag" size={24} color="#8B5CF6" />
@@ -930,7 +799,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
                 <Text style={styles.goalTitle}>Target Weight</Text>
                 <Text style={styles.goalSubtitle}>
                   {userProfile.targetWeight ? 
-                    `${weightUnit === 'kg' ? (userProfile.targetWeight * 0.453592).toFixed(1) : userProfile.targetWeight.toFixed(1)} ${weightUnit} (${weightUnit === 'kg' ? (goalProgress.remaining * 0.453592).toFixed(1) : goalProgress.remaining.toFixed(1)} ${weightUnit} to go)` : 
+                    `${userProfile.targetWeight.toFixed(1)} ${weightUnit} (${goalProgress.remaining.toFixed(1)} ${weightUnit} to go)` : 
                     'Set your weight goal'
                   }
                 </Text>
@@ -1087,31 +956,11 @@ const styles = StyleSheet.create({
   goalsSection: {
     marginBottom: 24,
   },
-  goalsSectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 0,
-  },
-  unitToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    gap: 4,
-  },
-  unitToggleText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#8B5CF6',
+    marginBottom: 16,
   },
   goalCard: {
     backgroundColor: '#FFFFFF',

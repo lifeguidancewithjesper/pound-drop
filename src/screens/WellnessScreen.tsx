@@ -44,21 +44,22 @@ export default function WellnessScreen() {
   const isChallengeActive = challengeDay !== null && challengeDay > 0;
   
   //  Check what's completed today
-  const hasWeight = !!todayLog?.weight;
   const hasSteps = !!todayLog?.steps && parseInt(todayLog.steps) > 0;
   const hasWater = (todayLog?.water || 0) >= 8;
   const hasBreakfast = !!(todayLog?.meals?.breakfast?.length);
   const hasLunch = !!(todayLog?.meals?.lunch?.length);
   const hasDinner = !!(todayLog?.meals?.dinner?.length);
+  const hasMood = todayLog?.mood !== undefined;
+  const hasMeasurements = !!todayLog?.measurements;
+  const hasWorkout = !!(todayLog?.workouts?.length);
   const hasFasting = !!todayLog?.fasting;
   
   // Challenge-specific checks
   const hasMeals = hasBreakfast || hasLunch || hasDinner;
   const mealCount = [hasBreakfast, hasLunch, hasDinner].filter(Boolean).length;
-  const hasExercise = hasSteps;
+  const hasExercise = hasWorkout || hasSteps;
   
-  // Pound Drop Method core actions (7 items)
-  const completedCount = [hasWeight, hasBreakfast, hasLunch, hasDinner, hasWater, hasSteps, hasFasting].filter(Boolean).length;
+  const completedCount = [hasBreakfast, hasLunch, hasDinner, hasWater, hasSteps, hasWorkout, hasMood, hasMeasurements, hasFasting].filter(Boolean).length;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -69,30 +70,6 @@ export default function WellnessScreen() {
           <Text style={styles.headerTitle}>Wellness Tracker</Text>
           <Text style={styles.headerSubtitle}>Track your daily health journey</Text>
         </View>
-
-        {/* Collapsible Pound Drop Method */}
-        <TouchableOpacity 
-          style={styles.methodToggle} 
-          onPress={() => setMethodExpanded(!methodExpanded)}
-          data-testid="button-toggle-method"
-        >
-          <Text style={styles.methodToggleText}>🎯 Pound Drop Method</Text>
-          <Ionicons name={methodExpanded ? "chevron-up" : "chevron-down"} size={24} color="#9333EA" />
-        </TouchableOpacity>
-
-        {methodExpanded && (
-          <View style={styles.methodCard}>
-            <Text style={styles.methodHeadline}>Eat Less, Move Less</Text>
-            <Text style={styles.methodBullet}>• Consume 1-3 meals daily, and walk min 30 mins daily.</Text>
-            <Text style={styles.methodSubtitle}>Get sufficient proteins and wholefoods, eating in a way that doesn't spike blood sugar and insulin. Low insulin = weight loss.</Text>
-            <View style={styles.methodSteps}>
-              <MethodStep number="1" title="Diet" desc="Get sufficient proteins for breakfast (20g) and add fiber rich natural wholefoods like vegetables, nuts, seeds, fruits, berries etc. First consume your greens, then proteins, fats, and carbs last. This is to keep blood sugar and insulin low. For lunch eat mostly natural whole foods and non-starchy vegetables, with sufficient proteins. Dinner meals should be a lighter version of your lunch meal here it's ok to add a little starchy vegetables." />
-              <MethodStep number="2" title="Fasting" desc="Fast between meals and practice 16-hour intermittent fasting daily to lower insulin levels and trigger fat burning." />
-              <MethodStep number="3" title="Exercise" desc="Minimum 30 min walk daily. Don't overdo it - too much exercise increases hunger and cravings. Eat less, move less." />
-              <MethodStep number="4" title="Track + Celebrate Wins" desc="Log daily: weight, water, steps, meals • Check off Daily Actions • Celebrate non-scale victories • Consistency over perfection!" />
-            </View>
-          </View>
-        )}
 
         {/* Challenge Checklist (when active) or Daily Actions */}
         {isChallengeActive ? (
@@ -146,17 +123,43 @@ export default function WellnessScreen() {
               <Ionicons name="checkbox" size={24} color="#9333EA" />
               <Text style={styles.checklistTitle}>Daily Actions</Text>
               <View style={styles.progressBadge}>
-                <Text style={styles.progressText}>{completedCount}/7</Text>
+                <Text style={styles.progressText}>{completedCount}/9</Text>
               </View>
             </View>
             <View style={styles.checklistGrid}>
-              <CheckItem label="Weight" completed={hasWeight} />
               <CheckItem label="Breakfast" completed={hasBreakfast} />
               <CheckItem label="Lunch" completed={hasLunch} />
               <CheckItem label="Dinner" completed={hasDinner} />
               <CheckItem label="Hydration" completed={hasWater} />
               <CheckItem label="Steps" completed={hasSteps} />
+              <CheckItem label="Exercise" completed={hasWorkout} />
+              <CheckItem label="Mood" completed={hasMood} />
+              <CheckItem label="Measurements" completed={hasMeasurements} />
               <CheckItem label="Fasting" completed={hasFasting} />
+            </View>
+          </View>
+        )}
+
+        {/* Collapsible Pound Drop Method */}
+        <TouchableOpacity 
+          style={styles.methodToggle} 
+          onPress={() => setMethodExpanded(!methodExpanded)}
+          data-testid="button-toggle-method"
+        >
+          <Text style={styles.methodToggleText}>🎯 Pound Drop Method</Text>
+          <Ionicons name={methodExpanded ? "chevron-up" : "chevron-down"} size={24} color="#9333EA" />
+        </TouchableOpacity>
+
+        {methodExpanded && (
+          <View style={styles.methodCard}>
+            <Text style={styles.methodHeadline}>Eat Less, Move Less</Text>
+            <Text style={styles.methodBullet}>• Consume 1-3 meals daily, and walk min 30 mins daily.</Text>
+            <Text style={styles.methodSubtitle}>Get sufficient proteins and wholefoods, eating in a way that doesn't spike blood sugar and insulin. Low insulin = weight loss.</Text>
+            <View style={styles.methodSteps}>
+              <MethodStep number="1" title="Diet" desc="Get sufficient proteins for breakfast (20g) and add fiber rich natural wholefoods like vegetables, nuts, seeds, fruits, berries etc. First consume your greens, then proteins, fats, and carbs last. This is to keep blood sugar and insulin low.{'\n\n'}For lunch eat mostly natural whole foods and non-starchy vegetables, with sufficient proteins.{'\n\n'}Dinner meals should be a lighter version of your lunch meal here it's ok to add a little starchy vegetables." />
+              <MethodStep number="2" title="Fasting" desc="Fast between meals and practice 16-hour intermittent fasting daily to lower insulin levels and trigger fat burning." />
+              <MethodStep number="3" title="Exercise" desc="Minimum 30 min walk daily. Don't overdo it - too much exercise increases hunger and cravings. Eat less, move less." />
+              <MethodStep number="4" title="Track + Celebrate Wins" desc="Log daily: weight, water, steps, meals • Check off Daily Actions • Celebrate non-scale victories • Consistency over perfection!" />
             </View>
           </View>
         )}
@@ -264,30 +267,14 @@ function TabButton({ label, icon, active, onPress }: { label: string; icon: any;
 
 // Tab Components
 function WeightTab() {
-  const { getTodayLog, updateTodayLog, weightUnit, setWeightUnit, getStartingWeight, getStartingWeightUnit, setStartingWeight, getWeightLoss, getMilestone, getHighestMilestone, updateHighestMilestone } = useStorage();
-  
-  // Get today's weight (stored in lbs) and convert if needed for display
-  const todayWeightInLbs = getTodayLog()?.weight || '';
-  const displayWeight = todayWeightInLbs && weightUnit === 'kg' 
-    ? (parseFloat(todayWeightInLbs) * 0.453592).toFixed(1)
-    : todayWeightInLbs;
-  
-  const [weight, setWeight] = useState(displayWeight);
+  const { getTodayLog, updateTodayLog, weightUnit, setWeightUnit, getStartingWeight, setStartingWeight, getWeightLoss, getMilestone, getHighestMilestone, updateHighestMilestone } = useStorage();
+  const [weight, setWeight] = useState(getTodayLog()?.weight || '');
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationMilestone, setCelebrationMilestone] = useState(0);
 
   const toggleUnit = () => {
     const newUnit = weightUnit === 'lbs' ? 'kg' : 'lbs';
     setWeightUnit(newUnit);
-    
-    // Update displayed weight when unit changes
-    const todayWeightInLbs = getTodayLog()?.weight || '';
-    if (todayWeightInLbs) {
-      const newDisplayWeight = newUnit === 'kg' 
-        ? (parseFloat(todayWeightInLbs) * 0.453592).toFixed(1)
-        : todayWeightInLbs;
-      setWeight(newDisplayWeight);
-    }
   };
 
   const handleSave = () => {
@@ -297,25 +284,14 @@ function WeightTab() {
     }
 
     const currentWeight = parseFloat(weight);
+    const displayWeight = currentWeight.toFixed(1);
     const startingWeight = getStartingWeight();
-
-    console.log('🔍 STEP 1 - Initial Check:', {
-      currentWeight,
-      startingWeight,
-      weightUnit,
-      hasStartingWeight: !!startingWeight
-    });
-
-    // Convert to lbs for storage (daily logs always store in lbs)
-    const weightInLbs = weightUnit === 'kg' ? currentWeight * 2.20462 : currentWeight;
-    const weightToStore = weightInLbs.toString();
 
     // If no starting weight, set this as the starting weight
     if (!startingWeight) {
       setStartingWeight(currentWeight);
-      updateTodayLog({ weight: weightToStore });
-      console.log('🏁 SET AS STARTING WEIGHT:', currentWeight, weightUnit);
-      Alert.alert('Success', `Weight logged as ${weight} ${weightUnit}! This is your starting weight.`);
+      updateTodayLog({ weight });
+      Alert.alert('Success', `Weight logged as ${displayWeight} ${weightUnit}! This is your starting weight.`);
       return;
     }
 
@@ -324,42 +300,15 @@ function WeightTab() {
     const newMilestone = getMilestone(weightLoss);
     const highestMilestone = getHighestMilestone();
 
-    // Comprehensive debug logging
-    console.log('🔍 STEP 2 - Weight Loss Calculation:', {
-      startingWeight,
-      startingWeightUnit: getStartingWeightUnit(),
-      currentWeight,
-      currentWeightUnit: weightUnit,
-      weightLoss,
-      weightLossRounded: Math.round(weightLoss * 100) / 100,
-      savingAsLbs: weightInLbs
-    });
-
-    console.log('🔍 STEP 3 - Milestone Check:', {
-      weightLoss,
-      newMilestone,
-      highestMilestone,
-      willCelebrate: newMilestone > 0 && newMilestone > highestMilestone
-    });
-
-    updateTodayLog({ weight: weightToStore });
+    updateTodayLog({ weight });
 
     // Trigger celebration only if this is a NEW higher milestone
     if (newMilestone > 0 && newMilestone > highestMilestone) {
       updateHighestMilestone(newMilestone);
       setCelebrationMilestone(newMilestone);
       setShowCelebration(true);
-      console.log('🎉🎉🎉 CELEBRATION TRIGGERED! 🎉🎉🎉', {
-        milestone: newMilestone,
-        unit: getStartingWeightUnit()
-      });
     } else {
-      Alert.alert('Success', `Weight logged as ${weight} ${weightUnit}!`);
-      console.log('❌ NO CELEBRATION:', {
-        reason: newMilestone === 0 ? 'No milestone reached' : 'Milestone already achieved',
-        newMilestone,
-        highestMilestone
-      });
+      Alert.alert('Success', `Weight logged as ${displayWeight} ${weightUnit}!`);
     }
   };
 
@@ -387,7 +336,7 @@ function WeightTab() {
       <CelebrationModal
         visible={showCelebration}
         milestone={celebrationMilestone}
-        unit={getStartingWeightUnit()}
+        unit={weightUnit}
         onClose={() => setShowCelebration(false)}
       />
     </View>

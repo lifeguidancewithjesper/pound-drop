@@ -38,7 +38,7 @@ export default function ProgressScreen({ navigation }: { navigation: any }) {
     const streak = calculateStreak();
 
     setStats({
-      currentWeight: currentWeight > 0 ? `${currentWeight} ${weightUnit}` : 'Not logged',
+      currentWeight: currentWeight > 0 ? `${currentWeight.toFixed(1)} ${weightUnit}` : 'Not logged',
       totalLoss,
       streak,
       logsCount: logs.length,
@@ -325,7 +325,7 @@ export default function ProgressScreen({ navigation }: { navigation: any }) {
               <View style={[styles.timelineDot, { backgroundColor: '#9333EA' }]} />
               <View style={styles.timelineContent}>
                 <Text style={styles.timelineTitle}>Starting Weight</Text>
-                <Text style={styles.timelineValue}>{getStartingWeight() || 'Not set'} {weightUnit}</Text>
+                <Text style={styles.timelineValue}>{getStartingWeight() ? `${parseFloat(getStartingWeight()!.toString()).toFixed(1)} ${weightUnit}` : 'Not set'}</Text>
               </View>
             </View>
             <View style={styles.timelineLine} />
@@ -358,7 +358,7 @@ export default function ProgressScreen({ navigation }: { navigation: any }) {
                   {log.weight ? (
                     <View style={styles.weightBadge}>
                       <Ionicons name="scale" size={14} color="#9333EA" />
-                      <Text style={styles.weightBadgeText}>{log.weight} {weightUnit}</Text>
+                      <Text style={styles.weightBadgeText}>{parseFloat(log.weight).toFixed(1)} {weightUnit}</Text>
                     </View>
                   ) : null}
                 </View>
