@@ -229,7 +229,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
   const handleSetCurrentWeight = () => {
     Alert.prompt(
       'Set Current Weight',
-      'Enter your current weight (in lbs):',
+      `Enter your current weight (in ${weightUnit}):`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -251,14 +251,14 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
         }
       ],
       'plain-text',
-      userProfile.currentWeight ? userProfile.currentWeight.toString() : ''
+      userProfile.currentWeight ? userProfile.currentWeight.toFixed(1) : ''
     );
   };
 
   const handleSetTargetWeight = () => {
     Alert.prompt(
       'Set Target Weight',
-      'Enter your target weight (in lbs):',
+      `Enter your target weight (in ${weightUnit}):`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -293,7 +293,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
         }
       ],
       'plain-text',
-      userProfile.targetWeight ? userProfile.targetWeight.toString() : ''
+      userProfile.targetWeight ? userProfile.targetWeight.toFixed(1) : ''
     );
   };
 
@@ -307,7 +307,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
         
         // Reload user data to reflect changes
         loadUserData();
-        Alert.alert('Success', `Current weight set to ${currentWeight} lbs!`);
+        Alert.alert('Success', `Current weight set to ${currentWeight.toFixed(1)} ${weightUnit}!`);
       }
     } catch (error) {
       console.error('Error updating current weight:', error);
@@ -325,7 +325,7 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
         
         // Reload user data to reflect changes
         loadUserData();
-        Alert.alert('Success', `Target weight set to ${targetWeight} lbs!`);
+        Alert.alert('Success', `Target weight set to ${targetWeight.toFixed(1)} ${weightUnit}!`);
       }
     } catch (error) {
       console.error('Error updating target weight:', error);
