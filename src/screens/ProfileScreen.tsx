@@ -17,6 +17,11 @@ import { useStorage } from '../context/StorageContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import SubscriptionScreen from './SubscriptionScreen';
 import theme from '../utils/theme';
+import { 
+  scheduleDailyMealReminder, 
+  scheduleMonthlyWeightReminder, 
+  scheduleWeeklyProgressReminder 
+} from '../utils/notifications';
 
 type UserProfile = {
   name: string;
@@ -383,12 +388,17 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           text: 'Enable Reminder',
           onPress: async () => {
             try {
-              const storedUser = await SecureStore.getItemAsync('pounddrop_user');
-              if (storedUser) {
-                const userData = JSON.parse(storedUser);
-                userData.monthlyWeightReminder = true;
-                await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
-                Alert.alert('Success', 'Monthly weight check reminder enabled! You\'ll be reminded on the 1st of each month.');
+              const success = await scheduleMonthlyWeightReminder();
+              if (success) {
+                const storedUser = await SecureStore.getItemAsync('pounddrop_user');
+                if (storedUser) {
+                  const userData = JSON.parse(storedUser);
+                  userData.monthlyWeightReminder = true;
+                  await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
+                }
+                Alert.alert('Success', 'Monthly weight check reminder enabled! You\'ll be reminded on the 1st of each month at 9 AM.');
+              } else {
+                Alert.alert('Permission Denied', 'Please enable notifications in your device settings to receive reminders.');
               }
             } catch (error) {
               console.error('Error setting reminder:', error);
@@ -410,12 +420,17 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           text: 'Enable Reminder',
           onPress: async () => {
             try {
-              const storedUser = await SecureStore.getItemAsync('pounddrop_user');
-              if (storedUser) {
-                const userData = JSON.parse(storedUser);
-                userData.dailyMealReminder = true;
-                await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
+              const success = await scheduleDailyMealReminder();
+              if (success) {
+                const storedUser = await SecureStore.getItemAsync('pounddrop_user');
+                if (storedUser) {
+                  const userData = JSON.parse(storedUser);
+                  userData.dailyMealReminder = true;
+                  await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
+                }
                 Alert.alert('Success', 'Daily meal logging reminder enabled! You\'ll be reminded every evening at 6 PM.');
+              } else {
+                Alert.alert('Permission Denied', 'Please enable notifications in your device settings to receive reminders.');
               }
             } catch (error) {
               console.error('Error setting reminder:', error);
@@ -437,12 +452,17 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
           text: 'Enable Reminder',
           onPress: async () => {
             try {
-              const storedUser = await SecureStore.getItemAsync('pounddrop_user');
-              if (storedUser) {
-                const userData = JSON.parse(storedUser);
-                userData.weeklyProgressReminder = true;
-                await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
-                Alert.alert('Success', 'Weekly progress review reminder enabled! You\'ll be reminded every Sunday.');
+              const success = await scheduleWeeklyProgressReminder();
+              if (success) {
+                const storedUser = await SecureStore.getItemAsync('pounddrop_user');
+                if (storedUser) {
+                  const userData = JSON.parse(storedUser);
+                  userData.weeklyProgressReminder = true;
+                  await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
+                }
+                Alert.alert('Success', 'Weekly progress review reminder enabled! You\'ll be reminded every Sunday at 10 AM.');
+              } else {
+                Alert.alert('Permission Denied', 'Please enable notifications in your device settings to receive reminders.');
               }
             } catch (error) {
               console.error('Error setting reminder:', error);

@@ -103,8 +103,8 @@ export default function DashboardScreen() {
   const hasDinner = todayLog?.meals?.dinner && todayLog.meals.dinner.length > 0;
   const mealsLogged = (hasBreakfast ? 1 : 0) + (hasLunch ? 1 : 0) + (hasDinner ? 1 : 0);
   
-  const calorieData = todayLog?.meals ? calculateCalories(todayLog.meals) : { total: 0, breakfast: 0, lunch: 0, dinner: 0 };
-  const macroData = todayLog?.meals ? calculateMacros(todayLog.meals) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 } };
+  const calorieData = todayLog?.meals ? calculateCalories(todayLog.meals, todayLog.snacks) : { total: 0, breakfast: 0, lunch: 0, dinner: 0 };
+  const macroData = todayLog?.meals ? calculateMacros(todayLog.meals, todayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 } };
   
   // Get latest meal time for display
   const latestMealTime = hasDinner ? todayLog?.mealTimes?.dinner : 

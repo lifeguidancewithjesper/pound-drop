@@ -68,79 +68,8 @@ export default function DailyLogScreen({ navigation }: any) {
             const waterGlasses = dayLog.water || 0;
             const steps = dayLog.steps || '0';
             
-            const calorieData = dayLog.meals ? calculateCalories(dayLog.meals, dayLog.snacks) : { total: 0, breakfast: 0, lunch: 0, dinner: 0, snacks: 0 };
-            const macroData = dayLog.meals ? calculateMacros(dayLog.meals, dayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 }, snacks: { protein: 0, carbs: 0, fat: 0 } };
-
-            // Create array of all meal entries with timestamps for chronological sorting
-            const mealEntries: Array<{
-              type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-              time: string;
-              timeValue: number;
-              foods: any[];
-              calories?: number;
-              macros?: { protein: number; carbs: number; fat: number };
-              feeling?: number;
-              snackIndex?: number;
-            }> = [];
-
-            // Add breakfast if exists
-            if (breakfastFoods.length > 0 && dayLog.mealTimes?.breakfast) {
-              const [hours, minutes] = dayLog.mealTimes.breakfast.split(':').map(Number);
-              mealEntries.push({
-                type: 'breakfast',
-                time: dayLog.mealTimes.breakfast,
-                timeValue: hours * 60 + minutes,
-                foods: breakfastFoods,
-                calories: calorieData.breakfast,
-                macros: macroData.breakfast,
-                feeling: dayLog.mealFeelings?.breakfast,
-              });
-            }
-
-            // Add lunch if exists
-            if (lunchFoods.length > 0 && dayLog.mealTimes?.lunch) {
-              const [hours, minutes] = dayLog.mealTimes.lunch.split(':').map(Number);
-              mealEntries.push({
-                type: 'lunch',
-                time: dayLog.mealTimes.lunch,
-                timeValue: hours * 60 + minutes,
-                foods: lunchFoods,
-                calories: calorieData.lunch,
-                macros: macroData.lunch,
-                feeling: dayLog.mealFeelings?.lunch,
-              });
-            }
-
-            // Add dinner if exists
-            if (dinnerFoods.length > 0 && dayLog.mealTimes?.dinner) {
-              const [hours, minutes] = dayLog.mealTimes.dinner.split(':').map(Number);
-              mealEntries.push({
-                type: 'dinner',
-                time: dayLog.mealTimes.dinner,
-                timeValue: hours * 60 + minutes,
-                foods: dinnerFoods,
-                calories: calorieData.dinner,
-                macros: macroData.dinner,
-                feeling: dayLog.mealFeelings?.dinner,
-              });
-            }
-
-            // Add snacks if exist
-            snackFoods.forEach((snack, index) => {
-              if (dayLog.snackTimes && dayLog.snackTimes[index]) {
-                const [hours, minutes] = dayLog.snackTimes[index].split(':').map(Number);
-                mealEntries.push({
-                  type: 'snack',
-                  time: dayLog.snackTimes[index],
-                  timeValue: hours * 60 + minutes,
-                  foods: [snack],
-                  snackIndex: index,
-                });
-              }
-            });
-
-            // Sort meal entries chronologically by time
-            mealEntries.sort((a, b) => a.timeValue - b.timeValue);
+            const calorieData = dayLog.meals ? calculateCalories(dayLog.meals, dayLog.snacks) : { total: 0, breakfast: 0, lunch: 0, dinner: 0 };
+            const macroData = dayLog.meals ? calculateMacros(dayLog.meals, dayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 } };
 
             return (
               <View key={dayLog.date} style={styles.daySection}>
@@ -157,86 +86,190 @@ export default function DailyLogScreen({ navigation }: any) {
                     <Text style={styles.sectionTitle}>Meals & Snacks (Chronological)</Text>
                   </View>
 
-                  {/* Display all meals and snacks in chronological order */}
-                  {mealEntries.map((entry, entryIndex) => {
-                    const isSnack = entry.type === 'snack';
-                    const cardStyle = isSnack ? styles.snackCard : styles.mealCard;
-                    
-                    // Get icon and label based on meal type
-                    const getMealIcon = () => {
-                      switch(entry.type) {
-                        case 'breakfast': return { name: 'sunny', color: '#FACC15', label: 'Breakfast' };
-                        case 'lunch': return { name: 'partly-sunny', color: '#06B6D4', label: 'Lunch' };
-                        case 'dinner': return { name: 'moon', color: '#9333EA', label: 'Dinner' };
-                        case 'snack': return { name: 'warning', color: '#F59E0B', label: 'Snack' };
-                      }
-                    };
-                    
-                    const mealIcon = getMealIcon();
-                    
-                    return (
-                      <View key={`${entry.type}-${entryIndex}`} style={cardStyle}>
-                        <View style={styles.mealHeader}>
-                          <Ionicons name={mealIcon.name as any} size={18} color={mealIcon.color} />
-                          <Text style={[styles.mealTitle, isSnack && { color: '#F59E0B' }]}>{mealIcon.label}</Text>
-                          <Text style={styles.mealTime}>{entry.time}</Text>
-                        </View>
-                        
-                        {/* Display foods */}
-                        {entry.foods.map((food, foodIndex) => (
-                          <View key={foodIndex} style={styles.foodItem}>
+                  {/* Breakfast */}
+                  {breakfastFoods.length > 0 && (
+                    <View style={styles.mealCard}>
+                      <View style={styles.mealHeader}>
+                        <Ionicons name="sunny" size={18} color="#FACC15" />
+                        <Text style={styles.mealTitle}>Breakfast</Text>
+                        {dayLog.mealTimes?.breakfast && (
+                          <Text style={styles.mealTime}>{dayLog.mealTimes.breakfast}</Text>
+                        )}
+                      </View>
+                      <>
+                        {breakfastFoods.map((food, index) => (
+                          <View key={index} style={styles.foodItem}>
                             <View style={styles.foodBullet} />
                             <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
                           </View>
                         ))}
-                        
-                        {/* Display calories and macros */}
-                        {entry.calories && entry.calories > 0 && (
+                        {calorieData.breakfast > 0 && (
                           <>
                             <View style={styles.calorieRow}>
                               <Ionicons name="flame" size={16} color="#F97316" />
-                              <Text style={styles.calorieText}>{entry.calories} calories</Text>
-                            </View>
-                            {entry.macros && (
-                              <View style={styles.macroRow}>
-                                <Text style={styles.macroText}>
-                                  P: {entry.macros.protein}g | C: {entry.macros.carbs}g | F: {entry.macros.fat}g
-                                </Text>
-                              </View>
-                            )}
-                          </>
-                        )}
-                        
-                        {/* Display snack calories if available */}
-                        {isSnack && entry.foods[0] && typeof entry.foods[0] !== 'string' && entry.foods[0].calories && (
-                          <>
-                            <View style={styles.calorieRow}>
-                              <Ionicons name="flame" size={16} color="#F97316" />
-                              <Text style={styles.calorieText}>{entry.foods[0].calories} calories</Text>
+                              <Text style={styles.calorieText}>{calorieData.breakfast} calories</Text>
                             </View>
                             <View style={styles.macroRow}>
                               <Text style={styles.macroText}>
-                                P: {entry.foods[0].protein || 0}g | C: {entry.foods[0].carbs || 0}g | F: {entry.foods[0].fat || 0}g
+                                P: {macroData.breakfast.protein}g | C: {macroData.breakfast.carbs}g | F: {macroData.breakfast.fat}g
                               </Text>
                             </View>
                           </>
                         )}
-                        
-                        {/* Display feeling if available */}
-                        {entry.feeling && (
+                        {dayLog.mealFeelings?.breakfast && (
                           <View style={styles.feelingRow}>
                             <Ionicons name="heart" size={16} color="#EF4444" />
-                            <Text style={styles.feelingText}>Feeling: {entry.feeling}/10</Text>
+                            <Text style={styles.feelingText}>Feeling: {dayLog.mealFeelings.breakfast}/10</Text>
                           </View>
                         )}
-                      </View>
-                    );
-                  })}
+                      </>
+                    </View>
+                  )}
 
-                  {mealEntries.length === 0 && (
+                  {/* Snacks with individual timestamps */}
+                  {snackFoods.map((snack, index) => (
+                    <View key={`snack-${index}`} style={styles.snackCard}>
+                      <View style={styles.mealHeader}>
+                        <Ionicons name="warning" size={18} color="#F59E0B" />
+                        <Text style={[styles.mealTitle, { color: '#F59E0B' }]}>Snack</Text>
+                        {dayLog.snackTimes && dayLog.snackTimes[index] && (
+                          <Text style={styles.mealTime}>{dayLog.snackTimes[index]}</Text>
+                        )}
+                      </View>
+                      <View style={styles.foodItem}>
+                        <View style={styles.foodBullet} />
+                        <Text style={styles.foodText}>{typeof snack === 'string' ? snack : snack.name}</Text>
+                      </View>
+                      {typeof snack !== 'string' && snack.calories && (
+                        <>
+                          <View style={styles.calorieRow}>
+                            <Ionicons name="flame" size={16} color="#F97316" />
+                            <Text style={styles.calorieText}>{snack.calories} calories</Text>
+                          </View>
+                          <View style={styles.macroRow}>
+                            <Text style={styles.macroText}>
+                              P: {snack.protein || 0}g | C: {snack.carbs || 0}g | F: {snack.fat || 0}g
+                            </Text>
+                          </View>
+                        </>
+                      )}
+                    </View>
+                  ))}
+
+                  {/* Lunch */}
+                  {lunchFoods.length > 0 && (
+                    <View style={styles.mealCard}>
+                      <View style={styles.mealHeader}>
+                        <Ionicons name="partly-sunny" size={18} color="#06B6D4" />
+                        <Text style={styles.mealTitle}>Lunch</Text>
+                        {dayLog.mealTimes?.lunch && (
+                          <Text style={styles.mealTime}>{dayLog.mealTimes.lunch}</Text>
+                        )}
+                      </View>
+                      <>
+                        {lunchFoods.map((food, index) => (
+                          <View key={index} style={styles.foodItem}>
+                            <View style={styles.foodBullet} />
+                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
+                          </View>
+                        ))}
+                        {calorieData.lunch > 0 && (
+                          <>
+                            <View style={styles.calorieRow}>
+                              <Ionicons name="flame" size={16} color="#F97316" />
+                              <Text style={styles.calorieText}>{calorieData.lunch} calories</Text>
+                            </View>
+                            <View style={styles.macroRow}>
+                              <Text style={styles.macroText}>
+                                P: {macroData.lunch.protein}g | C: {macroData.lunch.carbs}g | F: {macroData.lunch.fat}g
+                              </Text>
+                            </View>
+                          </>
+                        )}
+                        {dayLog.mealFeelings?.lunch && (
+                          <View style={styles.feelingRow}>
+                            <Ionicons name="heart" size={16} color="#EF4444" />
+                            <Text style={styles.feelingText}>Feeling: {dayLog.mealFeelings.lunch}/10</Text>
+                          </View>
+                        )}
+                      </>
+                    </View>
+                  )}
+
+                  {/* Dinner */}
+                  {dinnerFoods.length > 0 && (
+                    <View style={styles.mealCard}>
+                      <View style={styles.mealHeader}>
+                        <Ionicons name="moon" size={18} color="#9333EA" />
+                        <Text style={styles.mealTitle}>Dinner</Text>
+                        {dayLog.mealTimes?.dinner && (
+                          <Text style={styles.mealTime}>{dayLog.mealTimes.dinner}</Text>
+                        )}
+                      </View>
+                      <>
+                        {dinnerFoods.map((food, index) => (
+                          <View key={index} style={styles.foodItem}>
+                            <View style={styles.foodBullet} />
+                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
+                          </View>
+                        ))}
+                        {calorieData.dinner > 0 && (
+                          <>
+                            <View style={styles.calorieRow}>
+                              <Ionicons name="flame" size={16} color="#F97316" />
+                              <Text style={styles.calorieText}>{calorieData.dinner} calories</Text>
+                            </View>
+                            <View style={styles.macroRow}>
+                              <Text style={styles.macroText}>
+                                P: {macroData.dinner.protein}g | C: {macroData.dinner.carbs}g | F: {macroData.dinner.fat}g
+                              </Text>
+                            </View>
+                          </>
+                        )}
+                        {dayLog.mealFeelings?.dinner && (
+                          <View style={styles.feelingRow}>
+                            <Ionicons name="heart" size={16} color="#EF4444" />
+                            <Text style={styles.feelingText}>Feeling: {dayLog.mealFeelings.dinner}/10</Text>
+                          </View>
+                        )}
+                      </>
+                    </View>
+                  )}
+
+                  {!breakfastFoods.length && !lunchFoods.length && !dinnerFoods.length && !snackFoods.length && (
                     <Text style={styles.emptyText}>No meals or snacks logged</Text>
                   )}
                 </View>
+
+                {/* Daily Nutrition Summary */}
+                {(breakfastFoods.length > 0 || lunchFoods.length > 0 || dinnerFoods.length > 0 || snackFoods.length > 0) && (
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                      <Ionicons name="nutrition" size={20} color="#EC4899" />
+                      <Text style={styles.sectionTitle}>Daily Totals</Text>
+                    </View>
+                    <View style={styles.nutritionSummaryCard}>
+                      <View style={styles.totalCaloriesRow}>
+                        <Ionicons name="flame" size={24} color="#F97316" />
+                        <Text style={styles.totalCaloriesText}>{calorieData.total} calories</Text>
+                      </View>
+                      <View style={styles.macrosSummaryRow}>
+                        <View style={styles.macroSummaryItem}>
+                          <Text style={styles.macroSummaryValue}>{macroData.total.protein}g</Text>
+                          <Text style={styles.macroSummaryLabel}>Protein</Text>
+                        </View>
+                        <View style={styles.macroSummaryItem}>
+                          <Text style={styles.macroSummaryValue}>{macroData.total.carbs}g</Text>
+                          <Text style={styles.macroSummaryLabel}>Carbs</Text>
+                        </View>
+                        <View style={styles.macroSummaryItem}>
+                          <Text style={styles.macroSummaryValue}>{macroData.total.fat}g</Text>
+                          <Text style={styles.macroSummaryLabel}>Fat</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                )}
 
                 {/* Activity Summary */}
                 <View style={styles.section}>
@@ -829,6 +862,52 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1F2937',
     lineHeight: 20,
+  },
+  nutritionSummaryCard: {
+    backgroundColor: '#FDF2F8',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#EC4899',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  totalCaloriesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  totalCaloriesText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#F97316',
+  },
+  macrosSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#FBCFE8',
+  },
+  macroSummaryItem: {
+    alignItems: 'center',
+  },
+  macroSummaryValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  macroSummaryLabel: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   bottomPadding: { height: 40 },
 });

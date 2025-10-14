@@ -91,8 +91,8 @@ interface StorageContextType {
   getMilestone: (weightLoss: number) => number;
   getHighestMilestone: () => number;
   updateHighestMilestone: (milestone: number) => Promise<void>;
-  calculateCalories: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }) => { total: number; breakfast: number; lunch: number; dinner: number };
-  calculateMacros: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }) => { 
+  calculateCalories: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => { total: number; breakfast: number; lunch: number; dinner: number };
+  calculateMacros: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => { 
     total: { protein: number; carbs: number; fat: number }; 
     breakfast: { protein: number; carbs: number; fat: number }; 
     lunch: { protein: number; carbs: number; fat: number }; 
@@ -395,7 +395,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const calculateCalories = (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }) => {
+  const calculateCalories = (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => {
     const getCaloriesForMeal = (mealItems: (string | FoodWithNutrition)[] | undefined) => {
       if (!mealItems || mealItems.length === 0) return 0;
       return mealItems.reduce((total, foodItem) => {
@@ -412,16 +412,17 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     const breakfastCals = getCaloriesForMeal(meals.breakfast);
     const lunchCals = getCaloriesForMeal(meals.lunch);
     const dinnerCals = getCaloriesForMeal(meals.dinner);
+    const snacksCals = getCaloriesForMeal(snacks);
 
     return {
-      total: breakfastCals + lunchCals + dinnerCals,
+      total: breakfastCals + lunchCals + dinnerCals + snacksCals,
       breakfast: breakfastCals,
       lunch: lunchCals,
       dinner: dinnerCals
     };
   };
 
-  const calculateMacros = (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }) => {
+  const calculateMacros = (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => {
     const getMacrosForMeal = (mealItems: (string | FoodWithNutrition)[] | undefined) => {
       if (!mealItems || mealItems.length === 0) {
         return { protein: 0, carbs: 0, fat: 0 };
@@ -448,12 +449,13 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     const breakfastMacros = getMacrosForMeal(meals.breakfast);
     const lunchMacros = getMacrosForMeal(meals.lunch);
     const dinnerMacros = getMacrosForMeal(meals.dinner);
+    const snacksMacros = getMacrosForMeal(snacks);
 
     return {
       total: {
-        protein: breakfastMacros.protein + lunchMacros.protein + dinnerMacros.protein,
-        carbs: breakfastMacros.carbs + lunchMacros.carbs + dinnerMacros.carbs,
-        fat: breakfastMacros.fat + lunchMacros.fat + dinnerMacros.fat
+        protein: breakfastMacros.protein + lunchMacros.protein + dinnerMacros.protein + snacksMacros.protein,
+        carbs: breakfastMacros.carbs + lunchMacros.carbs + dinnerMacros.carbs + snacksMacros.carbs,
+        fat: breakfastMacros.fat + lunchMacros.fat + dinnerMacros.fat + snacksMacros.fat
       },
       breakfast: breakfastMacros,
       lunch: lunchMacros,
