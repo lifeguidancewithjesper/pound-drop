@@ -595,15 +595,15 @@ export default function DashboardScreen() {
 
             <TouchableOpacity
               style={styles.quickActionCard}
-              onPress={() => navigation.navigate('Wellness' as never, { tab: 'mood' } as never)}
+              onPress={() => navigation.navigate('FoodSwap' as never)}
               activeOpacity={0.8}
-              data-testid="button-update-journal"
+              data-testid="button-food-swaps"
             >
               <View style={styles.quickActionIcon}>
-                <Ionicons name="book" size={32} color="#8B5CF6" />
+                <Ionicons name="swap-horizontal" size={32} color="#8B5CF6" />
               </View>
-              <Text style={styles.quickActionTitle}>Update Journal</Text>
-              <Text style={styles.quickActionSubtitle}>Daily reflections</Text>
+              <Text style={styles.quickActionTitle}>Food Swaps</Text>
+              <Text style={styles.quickActionSubtitle}>30+ healthy alternatives</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

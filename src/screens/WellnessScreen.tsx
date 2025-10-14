@@ -272,6 +272,23 @@ function WeightTab() {
 
   const toggleUnit = () => {
     const newUnit = weightUnit === 'lbs' ? 'kg' : 'lbs';
+    
+    // Convert weight value when toggling units
+    if (weight && !isNaN(parseFloat(weight))) {
+      const currentValue = parseFloat(weight);
+      let convertedValue;
+      
+      if (newUnit === 'kg') {
+        // Converting lbs to kg
+        convertedValue = currentValue / 2.20462;
+      } else {
+        // Converting kg to lbs
+        convertedValue = currentValue * 2.20462;
+      }
+      
+      setWeight(convertedValue.toFixed(1));
+    }
+    
     setWeightUnit(newUnit);
   };
 

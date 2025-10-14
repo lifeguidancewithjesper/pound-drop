@@ -187,8 +187,8 @@ export default function ProgressScreen({ navigation }: { navigation: any }) {
               const minWeight = Math.min(...weights);
               const range = maxWeight - minWeight || 1;
               const chartHeight = 150;
-              const chartWidth = width - 72;
-              const pointSpacing = chartWidth / (weightLogs.length - 1);
+              const chartWidth = width - 96; // Increased padding to prevent overflow
+              const pointSpacing = weightLogs.length > 1 ? chartWidth / (weightLogs.length - 1) : 0;
 
               return (
                 <View>
