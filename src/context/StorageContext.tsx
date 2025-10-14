@@ -86,19 +86,17 @@ interface StorageContextType {
   weightUnit: 'lbs' | 'kg';
   setWeightUnit: (unit: 'lbs' | 'kg') => Promise<void>;
   getStartingWeight: () => number | null;
-  getStartingWeightUnit: () => 'lbs' | 'kg';
   setStartingWeight: (weight: number) => Promise<void>;
   getWeightLoss: (currentWeight: number) => number;
   getMilestone: (weightLoss: number) => number;
   getHighestMilestone: () => number;
   updateHighestMilestone: (milestone: number) => Promise<void>;
-  calculateCalories: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => { total: number; breakfast: number; lunch: number; dinner: number; snacks: number };
-  calculateMacros: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => { 
+  calculateCalories: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }) => { total: number; breakfast: number; lunch: number; dinner: number };
+  calculateMacros: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }) => { 
     total: { protein: number; carbs: number; fat: number }; 
     breakfast: { protein: number; carbs: number; fat: number }; 
     lunch: { protein: number; carbs: number; fat: number }; 
     dinner: { protein: number; carbs: number; fat: number };
-    snacks: { protein: number; carbs: number; fat: number };
   };
   getChallengeStartDate: () => string | null;
   startChallenge: () => Promise<void>;
@@ -257,10 +255,6 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     return startingWeight;
   };
 
-  const getStartingWeightUnit = () => {
-    return startingWeightUnit;
-  };
-
   const setStartingWeight = async (weight: number) => {
     try {
       await SecureStore.setItemAsync(STARTING_WEIGHT_KEY, weight.toString());
@@ -275,26 +269,24 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const getWeightLoss = (currentWeight: number) => {
     if (!startingWeight) return 0;
     
-    // Convert current weight to starting weight's unit for accurate comparison
-    let adjustedCurrentWeight = currentWeight;
+    // Convert starting weight to current unit for comparison
+    let adjustedStartingWeight = startingWeight;
     if (weightUnit !== startingWeightUnit) {
       if (weightUnit === 'kg' && startingWeightUnit === 'lbs') {
-        // Current is in kg, starting is in lbs - convert current to lbs
-        adjustedCurrentWeight = currentWeight * 2.20462;
+        // Current is in kg, starting is in lbs - convert starting to kg
+        adjustedStartingWeight = startingWeight / 2.20462;
       } else if (weightUnit === 'lbs' && startingWeightUnit === 'kg') {
-        // Current is in lbs, starting is in kg - convert current to kg
-        adjustedCurrentWeight = currentWeight / 2.20462;
+        // Current is in lbs, starting is in kg - convert starting to lbs
+        adjustedStartingWeight = startingWeight * 2.20462;
       }
     }
     
-    // Return weight loss in starting weight's unit
-    return Math.max(0, startingWeight - adjustedCurrentWeight);
+    // Return weight loss in current unit
+    return Math.max(0, adjustedStartingWeight - currentWeight);
   };
 
   const getMilestone = (weightLoss: number) => {
-    // Milestones are in the starting weight's unit (same for both kg and lbs: 2, 5, 10, 15, 20)
     const milestones = [20, 15, 10, 5, 2];
-    
     for (const milestone of milestones) {
       if (weightLoss >= milestone) {
         return milestone;
@@ -403,7 +395,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const calculateCalories = (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => {
+  const calculateCalories = (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }) => {
     const getCaloriesForMeal = (mealItems: (string | FoodWithNutrition)[] | undefined) => {
       if (!mealItems || mealItems.length === 0) return 0;
       return mealItems.reduce((total, foodItem) => {
@@ -420,18 +412,16 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     const breakfastCals = getCaloriesForMeal(meals.breakfast);
     const lunchCals = getCaloriesForMeal(meals.lunch);
     const dinnerCals = getCaloriesForMeal(meals.dinner);
-    const snackCals = getCaloriesForMeal(snacks);
 
     return {
-      total: breakfastCals + lunchCals + dinnerCals + snackCals,
+      total: breakfastCals + lunchCals + dinnerCals,
       breakfast: breakfastCals,
       lunch: lunchCals,
-      dinner: dinnerCals,
-      snacks: snackCals
+      dinner: dinnerCals
     };
   };
 
-  const calculateMacros = (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => {
+  const calculateMacros = (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }) => {
     const getMacrosForMeal = (mealItems: (string | FoodWithNutrition)[] | undefined) => {
       if (!mealItems || mealItems.length === 0) {
         return { protein: 0, carbs: 0, fat: 0 };
@@ -458,18 +448,16 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     const breakfastMacros = getMacrosForMeal(meals.breakfast);
     const lunchMacros = getMacrosForMeal(meals.lunch);
     const dinnerMacros = getMacrosForMeal(meals.dinner);
-    const snackMacros = getMacrosForMeal(snacks);
 
     return {
       total: {
-        protein: breakfastMacros.protein + lunchMacros.protein + dinnerMacros.protein + snackMacros.protein,
-        carbs: breakfastMacros.carbs + lunchMacros.carbs + dinnerMacros.carbs + snackMacros.carbs,
-        fat: breakfastMacros.fat + lunchMacros.fat + dinnerMacros.fat + snackMacros.fat
+        protein: breakfastMacros.protein + lunchMacros.protein + dinnerMacros.protein,
+        carbs: breakfastMacros.carbs + lunchMacros.carbs + dinnerMacros.carbs,
+        fat: breakfastMacros.fat + lunchMacros.fat + dinnerMacros.fat
       },
       breakfast: breakfastMacros,
       lunch: lunchMacros,
-      dinner: dinnerMacros,
-      snacks: snackMacros
+      dinner: dinnerMacros
     };
   };
 
@@ -496,7 +484,6 @@ export function StorageProvider({ children }: { children: ReactNode }) {
       weightUnit,
       setWeightUnit,
       getStartingWeight,
-      getStartingWeightUnit,
       setStartingWeight,
       getWeightLoss,
       getMilestone,

@@ -81,19 +81,7 @@ export default function DashboardScreen() {
   };
 
   const streak = calculateStreak();
-  
-  // Format weight based on user's preferred unit
-  let weight = '--';
-  if (todayLog?.weight) {
-    const weightInLbs = parseFloat(todayLog.weight);
-    if (weightUnit === 'kg') {
-      const weightInKg = weightInLbs / 2.20462;
-      weight = weightInKg.toFixed(1);
-    } else {
-      weight = weightInLbs.toFixed(1);
-    }
-  }
-  
+  const weight = todayLog?.weight || '--';
   const steps = parseInt(todayLog?.steps || '0');
   const water = todayLog?.water || 0;
   const stepsProgress = Math.min((steps / 10000) * 100, 100);
@@ -115,8 +103,8 @@ export default function DashboardScreen() {
   const hasDinner = todayLog?.meals?.dinner && todayLog.meals.dinner.length > 0;
   const mealsLogged = (hasBreakfast ? 1 : 0) + (hasLunch ? 1 : 0) + (hasDinner ? 1 : 0);
   
-  const calorieData = todayLog?.meals ? calculateCalories(todayLog.meals, todayLog.snacks) : { total: 0, breakfast: 0, lunch: 0, dinner: 0, snacks: 0 };
-  const macroData = todayLog?.meals ? calculateMacros(todayLog.meals, todayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 }, snacks: { protein: 0, carbs: 0, fat: 0 } };
+  const calorieData = todayLog?.meals ? calculateCalories(todayLog.meals) : { total: 0, breakfast: 0, lunch: 0, dinner: 0 };
+  const macroData = todayLog?.meals ? calculateMacros(todayLog.meals) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 } };
   
   // Get latest meal time for display
   const latestMealTime = hasDinner ? todayLog?.mealTimes?.dinner : 
@@ -607,15 +595,15 @@ export default function DashboardScreen() {
 
             <TouchableOpacity
               style={styles.quickActionCard}
-              onPress={() => navigation.navigate('FoodSwap' as never)}
+              onPress={() => navigation.navigate('Wellness' as never, { tab: 'mood' } as never)}
               activeOpacity={0.8}
-              data-testid="button-food-swaps"
+              data-testid="button-update-journal"
             >
               <View style={styles.quickActionIcon}>
-                <Ionicons name="swap-horizontal" size={32} color="#8B5CF6" />
+                <Ionicons name="book" size={32} color="#8B5CF6" />
               </View>
-              <Text style={styles.quickActionTitle}>Food Swaps</Text>
-              <Text style={styles.quickActionSubtitle}>Healthy alternatives</Text>
+              <Text style={styles.quickActionTitle}>Update Journal</Text>
+              <Text style={styles.quickActionSubtitle}>Daily reflections</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

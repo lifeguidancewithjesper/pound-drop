@@ -24,7 +24,7 @@ export default function SignUpScreen({
   navigation?: any;
   onSignUpSuccess?: () => void;
 }) {
-  const { setUserInfo } = useStorage();
+  const { setUserInfo, setWeightUnit } = useStorage();
   const { startTrial } = useSubscription();
   const [formData, setFormData] = useState({
     username: '',
@@ -35,6 +35,7 @@ export default function SignUpScreen({
     targetWeight: '',
     startWeight: '',
   });
+  const [weightUnit, setWeightUnitState] = useState<'lbs' | 'kg'>('lbs');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignUp = async () => {
@@ -79,6 +80,7 @@ export default function SignUpScreen({
 
       await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(userData));
       await setUserInfo(formData.username, true);
+      await setWeightUnit(weightUnit);
       await startTrial();
       
       Alert.alert(
@@ -178,12 +180,35 @@ export default function SignUpScreen({
           {/* Weight Section Header */}
           <Text style={styles.sectionHeader}>Weight Goals (Optional)</Text>
           
+          {/* Unit Toggle */}
+          <View style={styles.unitToggleContainer}>
+            <Text style={styles.unitToggleLabel}>Preferred Unit:</Text>
+            <View style={styles.unitToggle}>
+              <TouchableOpacity
+                style={[styles.unitButton, weightUnit === 'lbs' && styles.unitButtonActive]}
+                onPress={() => setWeightUnitState('lbs')}
+              >
+                <Text style={[styles.unitButtonText, weightUnit === 'lbs' && styles.unitButtonTextActive]}>
+                  lbs
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.unitButton, weightUnit === 'kg' && styles.unitButtonActive]}
+                onPress={() => setWeightUnitState('kg')}
+              >
+                <Text style={[styles.unitButtonText, weightUnit === 'kg' && styles.unitButtonTextActive]}>
+                  kg
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          
           {/* Current Weight */}
           <View style={styles.inputContainer}>
             <Ionicons name="fitness-outline" size={20} color="#6B7280" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Current Weight (lbs)"
+              placeholder={`Current Weight (${weightUnit})`}
               value={formData.currentWeight}
               onChangeText={(value) => updateFormData('currentWeight', value)}
               keyboardType="numeric"
@@ -195,7 +220,7 @@ export default function SignUpScreen({
             <Ionicons name="trophy-outline" size={20} color="#6B7280" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Target Weight (lbs)"
+              placeholder={`Target Weight (${weightUnit})`}
               value={formData.targetWeight}
               onChangeText={(value) => updateFormData('targetWeight', value)}
               keyboardType="numeric"
@@ -335,5 +360,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#9333EA',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  unitToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  unitToggleLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  unitToggle: {
+    flexDirection: 'row',
+    backgroundColor: '#E5E7EB',
+    borderRadius: 8,
+    padding: 2,
+  },
+  unitButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  unitButtonActive: {
+    backgroundColor: theme.colors.primary,
+  },
+  unitButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  unitButtonTextActive: {
+    color: '#FFFFFF',
   },
 });
