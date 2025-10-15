@@ -114,6 +114,16 @@ export default function NutritionEducationScreen() {
                       ))}
                     </View>
                   )}
+
+                  {/* Sources/Citations */}
+                  {topic.sources && topic.sources.length > 0 && (
+                    <View style={styles.sourcesSection}>
+                      <Text style={styles.sectionTitle}>Sources:</Text>
+                      {topic.sources.map((source, index) => (
+                        <Text key={index} style={styles.sourceText}>{source}</Text>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
 
@@ -326,6 +336,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
+  },
+  sourcesSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  sourceText: {
+    fontSize: 12,
+    color: '#888',
+    lineHeight: 18,
+    marginBottom: 4,
+    fontStyle: 'italic',
   },
   tipContainer: {
     flexDirection: 'row',

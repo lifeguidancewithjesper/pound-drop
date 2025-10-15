@@ -117,11 +117,11 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
         <View style={styles.pricingCard}>
           <View style={styles.priceContainer}>
             <Text style={styles.currency}>$</Text>
-            <Text style={styles.price}>4.95</Text>
+            <Text style={styles.price}>4.99</Text>
             <Text style={styles.period}>/month</Text>
           </View>
           <Text style={styles.pricingSubtitle}>
-            or get lifetime access for $47 one-time payment
+            or get lifetime access for $49.99 one-time payment
           </Text>
           <View style={styles.trialBadge}>
             <Ionicons name="gift-outline" size={20} color="#10B981" />
@@ -147,7 +147,7 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
 
         {/* Terms */}
         <Text style={styles.terms}>
-          Your subscription will automatically renew monthly at $4.95 unless canceled at least 24 hours before the end of the current period. Subscriptions are managed through your Apple ID and can be canceled anytime in your iPhone Settings.
+          Your subscription will automatically renew monthly at $4.99 unless canceled at least 24 hours before the end of the current period. Subscriptions are managed through your Apple ID and can be canceled anytime in your iPhone Settings.
         </Text>
       </ScrollView>
 
