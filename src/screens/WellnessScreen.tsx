@@ -535,6 +535,66 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
       return;
     }
 
+    // Helper to prompt for portion and add food
+    const promptForPortionAndAdd = (finalName: string) => {
+      // Determine suggested unit based on food category
+      const category = foundFood.category?.toLowerCase() || '';
+      let suggestedUnit = 'g';
+      if (category.includes('vegetable') || category.includes('fruit') || category.includes('grain')) {
+        suggestedUnit = 'cups';
+      } else if (category.includes('dessert') || category.includes('snack')) {
+        suggestedUnit = 'pieces';
+      } else if (category.includes('protein')) {
+        suggestedUnit = 'g';
+      }
+
+      Alert.prompt(
+        'Portion Size',
+        `Enter amount (e.g., 150 for ${suggestedUnit})`,
+        (amount) => {
+          const portionAmount = parseFloat(amount || '100');
+          if (isNaN(portionAmount)) {
+            Alert.alert('Invalid amount', 'Please enter a valid number');
+            return;
+          }
+
+          Alert.alert(
+            'Select Unit',
+            'What unit did you use?',
+            [
+              { text: 'Grams (g)', onPress: () => addFoodWithPortion(finalName, portionAmount, 'g') },
+              { text: 'Cups', onPress: () => addFoodWithPortion(finalName, portionAmount, 'cups') },
+              { text: 'Pieces', onPress: () => addFoodWithPortion(finalName, portionAmount, 'pieces') },
+              { text: 'Slices', onPress: () => addFoodWithPortion(finalName, portionAmount, 'slice') },
+              { text: 'Ounces (oz)', onPress: () => addFoodWithPortion(finalName, portionAmount, 'oz') },
+            ]
+          );
+        }
+      );
+    };
+
+    // Helper to convert portions to grams and scale nutrition
+    const addFoodWithPortion = (finalName: string, amount: number, unit: string) => {
+      const conversions: Record<string, number> = {
+        'g': 1,
+        'cups': 150,
+        'pieces': 50,
+        'slice': 100,
+        'oz': 28.35,
+      };
+      const grams = amount * (conversions[unit] || 100);
+      const multiplier = grams / 100;
+
+      addFood({
+        name: finalName,
+        calories: foundFood.calories * multiplier,
+        protein: foundFood.protein * multiplier,
+        carbs: foundFood.carbs * multiplier,
+        fat: foundFood.fat * multiplier,
+        portion: { amount, unit }
+      });
+    };
+
     Alert.alert(
       'Add a note? (Optional)',
       'You can add details like "with cinnamon" or "with vegetables"',
@@ -547,14 +607,7 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
               `Add to "${baseFoodName}"`,
               (note) => {
                 const displayName = note && note.trim() ? `${baseFoodName} ${note.trim()}` : baseFoodName;
-                // Add food with nutrition data from database
-                addFood({
-                  name: displayName,
-                  calories: foundFood.calories,
-                  protein: foundFood.protein,
-                  carbs: foundFood.carbs,
-                  fat: foundFood.fat
-                });
+                promptForPortionAndAdd(displayName);
               }
             );
           }
@@ -562,14 +615,7 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
         {
           text: 'Skip',
           onPress: () => {
-            // Add food with nutrition data from database
-            addFood({
-              name: baseFoodName,
-              calories: foundFood.calories,
-              protein: foundFood.protein,
-              carbs: foundFood.carbs,
-              fat: foundFood.fat
-            });
+            promptForPortionAndAdd(baseFoodName);
           }
         }
       ]
@@ -657,6 +703,66 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
       return;
     }
 
+    // Helper to prompt for portion and add snack
+    const promptForPortionAndAdd = (finalName: string) => {
+      // Determine suggested unit based on food category
+      const category = foundFood.category?.toLowerCase() || '';
+      let suggestedUnit = 'g';
+      if (category.includes('vegetable') || category.includes('fruit') || category.includes('grain')) {
+        suggestedUnit = 'cups';
+      } else if (category.includes('dessert') || category.includes('snack')) {
+        suggestedUnit = 'pieces';
+      } else if (category.includes('protein')) {
+        suggestedUnit = 'g';
+      }
+
+      Alert.prompt(
+        'Portion Size',
+        `Enter amount (e.g., 2 for cookies, 150 for grams)`,
+        (amount) => {
+          const portionAmount = parseFloat(amount || '100');
+          if (isNaN(portionAmount)) {
+            Alert.alert('Invalid amount', 'Please enter a valid number');
+            return;
+          }
+
+          Alert.alert(
+            'Select Unit',
+            'What unit did you use?',
+            [
+              { text: 'Grams (g)', onPress: () => addSnackWithPortion(finalName, portionAmount, 'g') },
+              { text: 'Cups', onPress: () => addSnackWithPortion(finalName, portionAmount, 'cups') },
+              { text: 'Pieces', onPress: () => addSnackWithPortion(finalName, portionAmount, 'pieces') },
+              { text: 'Slices', onPress: () => addSnackWithPortion(finalName, portionAmount, 'slice') },
+              { text: 'Ounces (oz)', onPress: () => addSnackWithPortion(finalName, portionAmount, 'oz') },
+            ]
+          );
+        }
+      );
+    };
+
+    // Helper to convert portions to grams and scale nutrition
+    const addSnackWithPortion = (finalName: string, amount: number, unit: string) => {
+      const conversions: Record<string, number> = {
+        'g': 1,
+        'cups': 150,
+        'pieces': 50,
+        'slice': 100,
+        'oz': 28.35,
+      };
+      const grams = amount * (conversions[unit] || 100);
+      const multiplier = grams / 100;
+
+      addSnack({
+        name: finalName,
+        calories: foundFood.calories * multiplier,
+        protein: foundFood.protein * multiplier,
+        carbs: foundFood.carbs * multiplier,
+        fat: foundFood.fat * multiplier,
+        portion: { amount, unit }
+      });
+    };
+
     Alert.alert(
       'Add a note? (Optional)',
       'You can add details like "small portion" or "with tea"',
@@ -669,13 +775,7 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
               `Add to "${baseFoodName}"`,
               (note) => {
                 const displayName = note && note.trim() ? `${baseFoodName} ${note.trim()}` : baseFoodName;
-                addSnack({
-                  name: displayName,
-                  calories: foundFood.calories,
-                  protein: foundFood.protein,
-                  carbs: foundFood.carbs,
-                  fat: foundFood.fat
-                });
+                promptForPortionAndAdd(displayName);
               }
             );
           }
@@ -683,13 +783,7 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
         {
           text: 'Skip',
           onPress: () => {
-            addSnack({
-              name: baseFoodName,
-              calories: foundFood.calories,
-              protein: foundFood.protein,
-              carbs: foundFood.carbs,
-              fat: foundFood.fat
-            });
+            promptForPortionAndAdd(baseFoodName);
           }
         }
       ]
@@ -720,16 +814,21 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
       {todayLog?.snacks && todayLog.snacks.length > 0 && (
         <View style={styles.snacksList}>
           <Text style={styles.sectionLabel}>Today's Snacks:</Text>
-          {todayLog.snacks.map((snack, index) => (
-            <View key={index} style={styles.snackItemRow}>
-              <Text style={styles.snackItemText}>
-                {typeof snack === 'string' ? snack : snack.name}
-              </Text>
-              <TouchableOpacity onPress={() => removeSnack(index)} data-testid={`button-remove-snack-${index}`}>
-                <Ionicons name="trash" size={20} color="#EF4444" />
-              </TouchableOpacity>
-            </View>
-          ))}
+          {todayLog.snacks.map((snack, index) => {
+            const displayText = typeof snack === 'string' 
+              ? snack 
+              : (snack.portion 
+                ? `${snack.portion.amount}${snack.portion.unit} ${snack.name}` 
+                : snack.name);
+            return (
+              <View key={index} style={styles.snackItemRow}>
+                <Text style={styles.snackItemText}>{displayText}</Text>
+                <TouchableOpacity onPress={() => removeSnack(index)} data-testid={`button-remove-snack-${index}`}>
+                  <Ionicons name="trash" size={20} color="#EF4444" />
+                </TouchableOpacity>
+              </View>
+            );
+          })}
         </View>
       )}
       
