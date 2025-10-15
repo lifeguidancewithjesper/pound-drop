@@ -87,10 +87,10 @@ export default function WellnessScreen() {
         {methodExpanded && (
           <View style={styles.methodCard}>
             <Text style={styles.methodHeadline}>Eat Less, Move Less</Text>
-            <Text style={styles.methodBullet}>• Consume 1-3 meals daily, and walk min 30 mins daily.</Text>
+            <Text style={[styles.methodBullet, { fontStyle: 'italic' }]}>• Consume 1-3 meals daily, and walk min 30 mins daily.</Text>
             <Text style={styles.methodSubtitle}>Get sufficient proteins and wholefoods, eating in a way that doesn't spike blood sugar and insulin. Low insulin = weight loss.{'\n\n'}NO calorie or carb counting - use hand-based portion guidelines instead!</Text>
             <View style={styles.methodSteps}>
-              <MethodStep number="1" title="Diet" desc="Use hand-based portions (NOT calorie counting):{'\n'}• Veggies = 2 cupped hands{'\n'}• Protein = palm size{'\n'}• Starches = fist size{'\n'}• Fats = thumb size{'\n\n'}Breakfast: Get sufficient protein (palm size) with fiber-rich wholefoods. Eat greens first, then proteins, fats, and carbs last to keep blood sugar low.{'\n\n'}Lunch: Natural wholefoods, non-starchy vegetables (2 cupped hands), with sufficient protein (palm size).{'\n\n'}Dinner: Lighter version of lunch - can add small portions of starchy vegetables (fist size)." />
+              <MethodStep number="1" title="Diet" desc="Use hand-based portions (NOT calorie counting):\n• Veggies = 2 cupped hands\n• Protein = palm size\n• Starches = fist size\n• Fats = thumb size\n\nBreakfast: Get sufficient protein (palm size) with fiber-rich wholefoods. Eat greens first, then proteins, fats, and carbs last to keep blood sugar low.\n\nLunch: Natural wholefoods, non-starchy vegetables (2 cupped hands), with sufficient protein (palm size).\n\nDinner: Lighter version of lunch - can add small portions of starchy vegetables (fist size)." />
               <MethodStep number="2" title="Fasting" desc="Fast between meals and practice 16-hour intermittent fasting daily to lower insulin levels and trigger fat burning." />
               <MethodStep number="3" title="Exercise" desc="Minimum 30 min walk daily. Don't overdo it - too much exercise increases hunger and cravings. Eat less, move less." />
               <MethodStep number="4" title="Track + Celebrate Wins" desc="Log daily: weight, water, steps, meals • Check off Daily Actions • Celebrate non-scale victories • Consistency over perfection!" />
