@@ -1,40 +1,25 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, SafeAreaView, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStorage } from '../context/StorageContext';
-import { searchFoods, foodDatabase as fullFoodDatabase } from '../data/foodDatabase';
+import { searchFoods, foodDatabase } from '../data/foodDatabase';
 import CelebrationModal from '../components/CelebrationModal';
 
-type Tab = 'weight' | 'steps' | 'water' | 'meals' | 'snacks' | 'mood' | 'measurements' | 'workout' | 'fasting';
+type Tab = 'weight' | 'steps' | 'water' | 'meals' | 'mood' | 'measurements' | 'workout' | 'fasting';
 
 export default function WellnessScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { getTodayLog, updateTodayLog, getChallengeStartDate, getCurrentChallengeDay } = useStorage();
   const todayLog = getTodayLog();
-  const scrollViewRef = useRef<ScrollView>(null);
-  const tabContentRef = useRef<View>(null);
   
   const params = route.params as { tab?: Tab } | undefined;
   const [activeTab, setActiveTab] = useState<Tab>(params?.tab || 'weight');
-  const [methodExpanded, setMethodExpanded] = useState(false);
   
   useEffect(() => {
     if (params?.tab) {
       setActiveTab(params.tab);
-      // Scroll to tab content when navigating with a tab parameter
-      setTimeout(() => {
-        if (scrollViewRef.current && tabContentRef.current) {
-          tabContentRef.current.measureLayout(
-            scrollViewRef.current as any,
-            (x, y) => {
-              scrollViewRef.current?.scrollTo({ y: y - 100, animated: true });
-            },
-            () => {}
-          );
-        }
-      }, 100);
     }
   }, [params?.tab]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,41 +44,17 @@ export default function WellnessScreen() {
   const mealCount = [hasBreakfast, hasLunch, hasDinner].filter(Boolean).length;
   const hasExercise = hasWorkout || hasSteps;
   
-  const completedCount = [hasBreakfast, hasLunch, hasDinner, hasWater, hasSteps, hasMood, hasFasting].filter(Boolean).length;
+  const completedCount = [hasBreakfast, hasLunch, hasDinner, hasWater, hasSteps, hasWorkout, hasMood, hasMeasurements, hasFasting].filter(Boolean).length;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      <ScrollView ref={scrollViewRef} style={styles.container}>
+      <ScrollView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Wellness Tracker</Text>
           <Text style={styles.headerSubtitle}>Track your daily health journey</Text>
         </View>
-
-        {/* Collapsible Pound Drop Method */}
-        <TouchableOpacity 
-          style={styles.methodToggle} 
-          onPress={() => setMethodExpanded(!methodExpanded)}
-          data-testid="button-toggle-method"
-        >
-          <Text style={styles.methodToggleText}>🎯 Pound Drop Method</Text>
-          <Ionicons name={methodExpanded ? "chevron-up" : "chevron-down"} size={24} color="#9333EA" />
-        </TouchableOpacity>
-
-        {methodExpanded && (
-          <View style={styles.methodCard}>
-            <Text style={styles.methodHeadline}>Eat Less, Move Less</Text>
-            <Text style={styles.methodBullet}>• Consume 1-3 meals daily, and walk min 30 mins daily.</Text>
-            <Text style={styles.methodSubtitle}>Get sufficient proteins and wholefoods, eating in a way that doesn't spike blood sugar and insulin. Low insulin = weight loss.</Text>
-            <View style={styles.methodSteps}>
-              <MethodStep number="1" title="Diet" desc="Get sufficient proteins for breakfast (20g) and add fiber rich natural wholefoods like vegetables, nuts, seeds, fruits, berries etc. First consume your greens, then proteins, fats, and carbs last. This is to keep blood sugar and insulin low.{'\n\n'}For lunch eat mostly natural whole foods and non-starchy vegetables, with sufficient proteins.{'\n\n'}Dinner meals should be a lighter version of your lunch meal here it's ok to add a little starchy vegetables." />
-              <MethodStep number="2" title="Fasting" desc="Fast between meals and practice 16-hour intermittent fasting daily to lower insulin levels and trigger fat burning." />
-              <MethodStep number="3" title="Exercise" desc="Minimum 30 min walk daily. Don't overdo it - too much exercise increases hunger and cravings. Eat less, move less." />
-              <MethodStep number="4" title="Track + Celebrate Wins" desc="Log daily: weight, water, steps, meals • Check off Daily Actions • Celebrate non-scale victories • Consistency over perfection!" />
-            </View>
-          </View>
-        )}
 
         {/* Challenge Checklist (when active) or Daily Actions */}
         {isChallengeActive ? (
@@ -117,7 +78,7 @@ export default function WellnessScreen() {
               />
               <ChallengeStep 
                 icon="time" 
-                title="Fasting: 16 Hours Daily + No Snacking" 
+                title="Fasting: 16 Hours Daily" 
                 completed={hasFasting}
                 subtitle={hasFasting ? 'Fasting window set' : 'Set your fasting window'}
               />
@@ -147,7 +108,7 @@ export default function WellnessScreen() {
               <Ionicons name="checkbox" size={24} color="#9333EA" />
               <Text style={styles.checklistTitle}>Daily Actions</Text>
               <View style={styles.progressBadge}>
-                <Text style={styles.progressText}>{completedCount}/7</Text>
+                <Text style={styles.progressText}>{completedCount}/9</Text>
               </View>
             </View>
             <View style={styles.checklistGrid}>
@@ -156,11 +117,55 @@ export default function WellnessScreen() {
               <CheckItem label="Dinner" completed={hasDinner} />
               <CheckItem label="Hydration" completed={hasWater} />
               <CheckItem label="Steps" completed={hasSteps} />
+              <CheckItem label="Exercise" completed={hasWorkout} />
               <CheckItem label="Mood" completed={hasMood} />
+              <CheckItem label="Measurements" completed={hasMeasurements} />
               <CheckItem label="Fasting" completed={hasFasting} />
             </View>
           </View>
         )}
+
+        {/* Quick Actions */}
+        <View style={styles.quickActionsRow}>
+          <TouchableOpacity 
+            style={styles.quickActionButton} 
+            onPress={() => setActiveTab('mood')}
+            data-testid="button-track-cravings"
+          >
+            <Ionicons name="candy" size={22} color="#fff" />
+            <Text style={styles.quickActionButtonText}>Track Cravings</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.quickActionButton} 
+            onPress={() => setActiveTab('mood')}
+            data-testid="button-track-wins"
+          >
+            <Ionicons name="trophy" size={22} color="#fff" />
+            <Text style={styles.quickActionButtonText}>Track Wins</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.quickActionButton} 
+            onPress={() => setActiveTab('mood')}
+            data-testid="button-daily-journal"
+          >
+            <Ionicons name="book" size={22} color="#fff" />
+            <Text style={styles.quickActionButtonText}>Daily Journal</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Pound Drop Method */}
+        <View style={styles.methodCard}>
+          <Text style={styles.methodTitle}>🎯 Pound Drop Method</Text>
+          <Text style={styles.methodSubtitle}>2-3 meals daily. Get sufficient proteins and wholefoods, eating in a way that doesn't spike blood sugar. Low insulin = weight loss.</Text>
+          <View style={styles.methodSteps}>
+            <MethodStep number="1" title="Diet" desc="NOT about calorie or carb counting - use your hands as guidelines for healthy eating amounts: veggies = 2 cupped hands, starches = fist, protein = palm, fat = thumb. Get sufficient protein for weight loss! Eat 2-3 meals daily with wholefoods, and consume proteins/fats before carbs to avoid blood sugar spikes." />
+            <MethodStep number="2" title="Fasting" desc="Fast between meals and practice 16-hour intermittent fasting daily to lower insulin levels and trigger fat burning." />
+            <MethodStep number="3" title="Exercise" desc="Minimum 30 min walk daily. Don't overdo it - too much exercise increases hunger and cravings. Eat less, move less." />
+            <MethodStep number="4" title="Track + Celebrate Wins" desc="Log daily: weight, water, steps, meals • Check off Daily Actions • Celebrate non-scale victories • Consistency over perfection!" />
+          </View>
+        </View>
 
         {/* Show Food Log Button */}
         <View style={styles.foodLogButtonContainer}>
@@ -177,7 +182,6 @@ export default function WellnessScreen() {
           <TabButton label="Steps" icon="walk" active={activeTab === 'steps'} onPress={() => setActiveTab('steps')} />
           <TabButton label="Hydration" icon="water" active={activeTab === 'water'} onPress={() => setActiveTab('water')} />
           <TabButton label="Meals" icon="restaurant" active={activeTab === 'meals'} onPress={() => setActiveTab('meals')} />
-          <TabButton label="Snacks" icon="fast-food" active={activeTab === 'snacks'} onPress={() => setActiveTab('snacks')} />
           <TabButton label="Mood" icon="happy" active={activeTab === 'mood'} onPress={() => setActiveTab('mood')} />
           <TabButton label="Measure" icon="resize" active={activeTab === 'measurements'} onPress={() => setActiveTab('measurements')} />
           <TabButton label="Workout" icon="barbell" active={activeTab === 'workout'} onPress={() => setActiveTab('workout')} />
@@ -185,12 +189,11 @@ export default function WellnessScreen() {
         </ScrollView>
 
         {/* Tab Content */}
-        <View ref={tabContentRef} style={styles.tabContent}>
+        <View style={styles.tabContent}>
           {activeTab === 'weight' && <WeightTab />}
           {activeTab === 'steps' && <StepsTab />}
           {activeTab === 'water' && <WaterTab />}
           {activeTab === 'meals' && <MealsTab searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
-          {activeTab === 'snacks' && <SnacksTab searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
           {activeTab === 'mood' && <MoodTab />}
           {activeTab === 'measurements' && <MeasurementsTab />}
           {activeTab === 'workout' && <WorkoutTab />}
@@ -272,23 +275,6 @@ function WeightTab() {
 
   const toggleUnit = () => {
     const newUnit = weightUnit === 'lbs' ? 'kg' : 'lbs';
-    
-    // Convert weight value when toggling units
-    if (weight && !isNaN(parseFloat(weight))) {
-      const currentValue = parseFloat(weight);
-      let convertedValue;
-      
-      if (newUnit === 'kg') {
-        // Converting lbs to kg
-        convertedValue = currentValue / 2.20462;
-      } else {
-        // Converting kg to lbs
-        convertedValue = currentValue * 2.20462;
-      }
-      
-      setWeight(convertedValue.toFixed(1));
-    }
-    
     setWeightUnit(newUnit);
   };
 
@@ -299,14 +285,13 @@ function WeightTab() {
     }
 
     const currentWeight = parseFloat(weight);
-    const displayWeight = currentWeight.toFixed(1);
     const startingWeight = getStartingWeight();
 
     // If no starting weight, set this as the starting weight
     if (!startingWeight) {
       setStartingWeight(currentWeight);
       updateTodayLog({ weight });
-      Alert.alert('Success', `Weight logged as ${displayWeight} ${weightUnit}! This is your starting weight.`);
+      Alert.alert('Success', `Weight logged as ${weight} ${weightUnit}! This is your starting weight.`);
       return;
     }
 
@@ -323,7 +308,7 @@ function WeightTab() {
       setCelebrationMilestone(newMilestone);
       setShowCelebration(true);
     } else {
-      Alert.alert('Success', `Weight logged as ${displayWeight} ${weightUnit}!`);
+      Alert.alert('Success', `Weight logged as ${weight} ${weightUnit}!`);
     }
   };
 
@@ -437,121 +422,187 @@ function WaterTab() {
 }
 
 function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (q: string) => void }) {
-  const { getTodayLog, updateTodayLog } = useStorage();
+  const { getTodayLog, updateTodayLog, calculateCalories, calculateMacros } = useStorage();
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner'>('breakfast');
+  const [customFood, setCustomFood] = useState('');
   const foods = searchFoods(searchQuery);
+  const todayLog = getTodayLog();
+  
+  // Calculate today's nutrition
+  const calorieData = calculateCalories(todayLog?.meals || {}, todayLog?.snacks);
+  const macroData = calculateMacros(todayLog?.meals || {}, todayLog?.snacks);
 
-  const addFood = (foodItem: string | { name: string; calories?: number; protein?: number; carbs?: number; fat?: number; fiber?: number; isEstimated?: boolean }) => {
-    const foodName = typeof foodItem === 'string' ? foodItem : foodItem.name;
+  const addFood = (foodName: string) => {
+    // Look up food in database
+    const foodItem = foodDatabase.find(f => f.name === foodName);
     
-    updateTodayLog((prev) => {
-      const currentMeals = prev.meals || {};
-      const currentMealItems = currentMeals[selectedMeal] || [];
-      const currentMealTimes = prev.mealTimes || {};
-      
-      // Capture time only if this is the first food for this meal
-      const shouldCaptureTime = currentMealItems.length === 0;
-      const currentTime = shouldCaptureTime ? new Date().toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      }) : currentMealTimes[selectedMeal];
-      
-      return {
-        meals: {
-          ...currentMeals,
-          [selectedMeal]: [...currentMealItems, foodItem]
-        },
-        mealTimes: {
-          ...currentMealTimes,
-          [selectedMeal]: currentTime
-        }
-      };
-    });
-    setSearchQuery('');
+    // Determine suggested unit based on food category
+    const category = foodItem?.category || 'Other';
+    let suggestedUnit = 'g';
+    let unitOptions = [
+      { text: 'Grams (g)', value: 'g' },
+      { text: 'Ounces (oz)', value: 'oz' }
+    ];
     
-    // Ask for meal feeling
-    Alert.alert(
-      'How did you feel after eating?',
-      'Rate how you felt (1-10 scale)',
+    if (category === 'Vegetables' || category === 'Fruits') {
+      suggestedUnit = 'cups';
+      unitOptions = [
+        { text: 'Cups', value: 'cups' },
+        { text: 'Grams (g)', value: 'g' }
+      ];
+    } else if (category === 'Desserts' || category === 'Sweets') {
+      suggestedUnit = 'pieces';
+      unitOptions = [
+        { text: 'Pieces', value: 'pieces' },
+        { text: 'Slices', value: 'slice' },
+        { text: 'Grams (g)', value: 'g' }
+      ];
+    }
+    
+    // Ask for portion size
+    Alert.prompt(
+      'Portion Size',
+      `How much ${foodName} did you eat? (e.g., 250 for 250g, 2 for 2 cups)`,
       [
-        ...Array.from({length: 10}, (_, i) => ({
-          text: `${i + 1}${i === 9 ? ' (Best)' : i === 0 ? ' (Worst)' : ''}`,
-          onPress: () => {
-            updateTodayLog((prev) => {
-              const currentFeelings = prev.mealFeelings || {};
-              return {
-                mealFeelings: {
-                  ...currentFeelings,
-                  [selectedMeal]: i + 1
-                }
-              };
-            });
-            Alert.alert('Success', `${foodName} added to ${selectedMeal} with feeling: ${i + 1}/10`);
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Add',
+          onPress: (amountText) => {
+            const amount = parseFloat(amountText || '100');
+            if (isNaN(amount) || amount <= 0) {
+              Alert.alert('Error', 'Please enter a valid portion size');
+              return;
+            }
+            
+            // Ask for unit
+            Alert.alert(
+              'Unit',
+              `Select unit for ${amount}:`,
+              [
+                ...unitOptions.map(option => ({
+                  text: option.text,
+                  onPress: () => {
+                    const unit = option.value;
+                    
+                    // Calculate macros with portion
+                    const portionToGrams = (amt: number, u: string): number => {
+                      const conversions: Record<string, number> = {
+                        'g': 1,
+                        'cups': 150,
+                        'pieces': 50,
+                        'slice': 100,
+                        'oz': 28.35,
+                      };
+                      return amt * (conversions[u] || 100);
+                    };
+                    
+                    const grams = portionToGrams(amount, unit);
+                    const multiplier = grams / 100;
+                    
+                    const foodWithPortion = {
+                      name: foodName,
+                      calories: foodItem ? Math.round((foodItem.calories || 0) * multiplier) : undefined,
+                      protein: foodItem ? Math.round((foodItem.protein || 0) * multiplier * 10) / 10 : undefined,
+                      carbs: foodItem ? Math.round((foodItem.carbs || 0) * multiplier * 10) / 10 : undefined,
+                      fat: foodItem ? Math.round((foodItem.fat || 0) * multiplier * 10) / 10 : undefined,
+                      fiber: foodItem ? Math.round((foodItem.fiber || 0) * multiplier * 10) / 10 : undefined,
+                      portion: { amount, unit }
+                    };
+                    
+                    // Add food with portion
+                    updateTodayLog((prev) => {
+                      const currentMeals = prev.meals || {};
+                      const currentMealItems = currentMeals[selectedMeal] || [];
+                      const currentMealTimes = prev.mealTimes || {};
+                      
+                      const shouldCaptureTime = currentMealItems.length === 0;
+                      const currentTime = shouldCaptureTime ? new Date().toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit',
+                        hour12: true 
+                      }) : currentMealTimes[selectedMeal];
+                      
+                      return {
+                        meals: {
+                          ...currentMeals,
+                          [selectedMeal]: [...currentMealItems, foodWithPortion]
+                        },
+                        mealTimes: {
+                          ...currentMealTimes,
+                          [selectedMeal]: currentTime
+                        }
+                      };
+                    });
+                    
+                    setSearchQuery('');
+                    setCustomFood('');
+                    
+                    // Ask for meal feeling
+                    Alert.alert(
+                      'How did you feel after eating?',
+                      'Rate how you felt (1-10 scale)',
+                      [
+                        ...Array.from({length: 10}, (_, i) => ({
+                          text: `${i + 1}${i === 9 ? ' (Best)' : i === 0 ? ' (Worst)' : ''}`,
+                          onPress: () => {
+                            updateTodayLog((prev) => {
+                              const currentFeelings = prev.mealFeelings || {};
+                              return {
+                                mealFeelings: {
+                                  ...currentFeelings,
+                                  [selectedMeal]: i + 1
+                                }
+                              };
+                            });
+                            Alert.alert('Success', `${amount}${unit} ${foodName} added!`);
+                          }
+                        })),
+                        { text: 'Skip', style: 'cancel', onPress: () => {
+                          Alert.alert('Added!', `${amount}${unit} ${foodName} added!`);
+                        }}
+                      ]
+                    );
+                  }
+                })),
+                { text: 'Cancel', style: 'cancel' }
+              ]
+            );
           }
-        })),
-        { text: 'Skip', style: 'cancel', onPress: () => {
-          Alert.alert('Added!', `${foodName} added to ${selectedMeal}`);
-        }}
-      ]
+        }
+      ],
+      'plain-text',
+      '100'
     );
   };
 
-  // Add food from database with optional modifier
-  const addFoodWithModifier = (baseFoodName: string) => {
-    // Find the food in the database to get nutrition data
-    const foundFood = fullFoodDatabase.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
-    
-    if (!foundFood) {
-      // If not found in database, just add as string (fallback)
-      addFood(baseFoodName);
+  const addCustomFood = () => {
+    if (!customFood.trim()) {
+      Alert.alert('Error', 'Please enter a food name');
       return;
     }
-
-    Alert.alert(
-      'Add a note? (Optional)',
-      'You can add details like "with cinnamon" or "with vegetables"',
-      [
-        {
-          text: 'Add Note',
-          onPress: () => {
-            Alert.prompt(
-              'Add Note',
-              `Add to "${baseFoodName}"`,
-              (note) => {
-                const displayName = note && note.trim() ? `${baseFoodName} ${note.trim()}` : baseFoodName;
-                // Add food with nutrition data from database
-                addFood({
-                  name: displayName,
-                  calories: foundFood.calories,
-                  protein: foundFood.protein,
-                  carbs: foundFood.carbs,
-                  fat: foundFood.fat
-                });
-              }
-            );
-          }
-        },
-        {
-          text: 'Skip',
-          onPress: () => {
-            // Add food with nutrition data from database
-            addFood({
-              name: baseFoodName,
-              calories: foundFood.calories,
-              protein: foundFood.protein,
-              carbs: foundFood.carbs,
-              fat: foundFood.fat
-            });
-          }
-        }
-      ]
-    );
+    addFood(customFood.trim());
   };
 
   return (
     <View style={styles.tabCard}>
       <Text style={styles.tabTitle}>Log Meals</Text>
+      
+      {/* Daily Nutrition Summary */}
+      {calorieData.total > 0 && (
+        <View style={styles.nutritionSummary}>
+          <View style={styles.calorieRow}>
+            <Ionicons name="flame" size={18} color="#9333EA" />
+            <Text style={styles.calorieSummaryText}>{calorieData.total} cal today</Text>
+          </View>
+          <Text style={styles.macroSummaryText}>
+            Protein: {Math.round(macroData.total.protein)}g | Carbs: {Math.round(macroData.total.carbs)}g | Fat: {Math.round(macroData.total.fat)}g
+          </Text>
+        </View>
+      )}
+      
       <View style={styles.mealSelector}>
         <TouchableOpacity 
           style={[styles.mealButton, selectedMeal === 'breakfast' && styles.mealButtonActive]} 
@@ -573,7 +624,23 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
         </TouchableOpacity>
       </View>
       
-      <Text style={styles.sectionLabel}>Search Food Database:</Text>
+      <View style={styles.customFoodSection}>
+        <Text style={styles.sectionLabel}>Add Custom Food:</Text>
+        <View style={styles.customFoodRow}>
+          <TextInput
+            style={styles.customFoodInput}
+            placeholder="Enter food name..."
+            value={customFood}
+            onChangeText={setCustomFood}
+            data-testid="input-custom-food"
+          />
+          <TouchableOpacity style={styles.addButton} onPress={addCustomFood} data-testid="button-add-custom-food">
+            <Ionicons name="add-circle" size={32} color="#16A34A" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <Text style={styles.sectionLabel}>Or Search Database:</Text>
       <TextInput
         style={styles.searchInput}
         placeholder="Search foods..."
@@ -583,140 +650,7 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
       />
       <ScrollView style={styles.foodList}>
         {foods.slice(0, 20).map((food) => (
-          <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addFoodWithModifier(food.name)}>
-            <Text style={styles.foodName}>{food.name}</Text>
-            <Text style={styles.foodCategory}>{food.category}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
-
-function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (q: string) => void }) {
-  const { getTodayLog, updateTodayLog } = useStorage();
-  const todayLog = getTodayLog();
-  const foods = searchFoods(searchQuery);
-
-  const addSnack = (foodItem: string | { name: string; calories?: number; protein?: number; carbs?: number; fat?: number; fiber?: number; isEstimated?: boolean }) => {
-    const foodName = typeof foodItem === 'string' ? foodItem : foodItem.name;
-    
-    updateTodayLog((prev) => {
-      const currentSnacks = prev.snacks || [];
-      const currentSnackTimes = prev.snackTimes || [];
-      
-      // Capture current time
-      const currentTime = new Date().toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      });
-      
-      return {
-        snacks: [...currentSnacks, foodItem],
-        snackTimes: [...currentSnackTimes, currentTime]
-      };
-    });
-    setSearchQuery('');
-    Alert.alert('Added!', `${foodName} added to snacks`);
-  };
-
-  // Add food from database with optional modifier
-  const addSnackWithModifier = (baseFoodName: string) => {
-    const foundFood = fullFoodDatabase.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
-    
-    if (!foundFood) {
-      addSnack(baseFoodName);
-      return;
-    }
-
-    Alert.alert(
-      'Add a note? (Optional)',
-      'You can add details like "small portion" or "with tea"',
-      [
-        {
-          text: 'Add Note',
-          onPress: () => {
-            Alert.prompt(
-              'Add Note',
-              `Add to "${baseFoodName}"`,
-              (note) => {
-                const displayName = note && note.trim() ? `${baseFoodName} ${note.trim()}` : baseFoodName;
-                addSnack({
-                  name: displayName,
-                  calories: foundFood.calories,
-                  protein: foundFood.protein,
-                  carbs: foundFood.carbs,
-                  fat: foundFood.fat
-                });
-              }
-            );
-          }
-        },
-        {
-          text: 'Skip',
-          onPress: () => {
-            addSnack({
-              name: baseFoodName,
-              calories: foundFood.calories,
-              protein: foundFood.protein,
-              carbs: foundFood.carbs,
-              fat: foundFood.fat
-            });
-          }
-        }
-      ]
-    );
-  };
-
-  const removeSnack = (index: number) => {
-    updateTodayLog((prev) => {
-      const currentSnacks = prev.snacks || [];
-      const currentSnackTimes = prev.snackTimes || [];
-      return {
-        snacks: currentSnacks.filter((_, i) => i !== index),
-        snackTimes: currentSnackTimes.filter((_, i) => i !== index)
-      };
-    });
-  };
-
-  return (
-    <View style={styles.tabCard}>
-      <View style={styles.snackHeader}>
-        <Ionicons name="warning" size={24} color="#F59E0B" />
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.tabTitle}>Track Snacks Between Meals</Text>
-          <Text style={styles.snackWarning}>⚠️ Challenge rule: No snacking between meals. Track if you do anyway.</Text>
-        </View>
-      </View>
-
-      {todayLog?.snacks && todayLog.snacks.length > 0 && (
-        <View style={styles.snacksList}>
-          <Text style={styles.sectionLabel}>Today's Snacks:</Text>
-          {todayLog.snacks.map((snack, index) => (
-            <View key={index} style={styles.snackItemRow}>
-              <Text style={styles.snackItemText}>
-                {typeof snack === 'string' ? snack : snack.name}
-              </Text>
-              <TouchableOpacity onPress={() => removeSnack(index)} data-testid={`button-remove-snack-${index}`}>
-                <Ionicons name="trash" size={20} color="#EF4444" />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-      )}
-      
-      <Text style={styles.sectionLabel}>Search Food Database:</Text>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search foods..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        data-testid="input-search-snack"
-      />
-      <ScrollView style={styles.foodList}>
-        {foods.slice(0, 20).map((food) => (
-          <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addSnackWithModifier(food.name)}>
+          <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addFood(food.name)}>
             <Text style={styles.foodName}>{food.name}</Text>
             <Text style={styles.foodCategory}>{food.category}</Text>
           </TouchableOpacity>
@@ -1240,51 +1174,59 @@ const styles = StyleSheet.create({
   header: { backgroundColor: '#fff', padding: 20, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
   headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#1F2937' },
   headerSubtitle: { fontSize: 14, color: '#6B7280', marginTop: 4 },
-  checklistCard: { margin: 16, marginBottom: 8, padding: 12, backgroundColor: '#fff', borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
-  checklistHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  checklistTitle: { fontSize: 16, fontWeight: 'bold', color: '#1F2937', marginLeft: 10, flex: 1 },
-  progressBadge: { backgroundColor: '#9333EA', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  progressText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
-  checklistGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  challengeChecklistCard: { margin: 16, marginBottom: 8, padding: 14, backgroundColor: '#fff', borderRadius: 12, borderWidth: 2, borderColor: '#9333EA', shadowColor: '#9333EA', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 3 },
-  challengeChecklistHeader: { marginBottom: 12 },
-  challengeHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  challengeChecklistTitle: { fontSize: 18, fontWeight: 'bold', color: '#9333EA' },
-  challengeDayText: { fontSize: 12, color: '#6B7280', marginTop: 2 },
-  challengeStepsContainer: { gap: 10 },
-  challengeStepItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, paddingHorizontal: 12, backgroundColor: '#F9FAFB', borderRadius: 10, borderWidth: 1, borderColor: '#E5E7EB' },
-  challengeStepLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 },
-  challengeStepIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3E8FF', justifyContent: 'center', alignItems: 'center' },
+  checklistCard: { margin: 16, padding: 20, backgroundColor: '#fff', borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
+  checklistHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  checklistTitle: { fontSize: 18, fontWeight: 'bold', color: '#1F2937', marginLeft: 12, flex: 1 },
+  progressBadge: { backgroundColor: '#9333EA', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  progressText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  checklistGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  challengeChecklistCard: { margin: 16, padding: 20, backgroundColor: '#fff', borderRadius: 16, borderWidth: 2, borderColor: '#9333EA', shadowColor: '#9333EA', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 5 },
+  challengeChecklistHeader: { marginBottom: 20 },
+  challengeHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  challengeChecklistTitle: { fontSize: 20, fontWeight: 'bold', color: '#9333EA' },
+  challengeDayText: { fontSize: 13, color: '#6B7280', marginTop: 2 },
+  challengeStepsContainer: { gap: 16 },
+  challengeStepItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 16, backgroundColor: '#F9FAFB', borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB' },
+  challengeStepLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 },
+  challengeStepIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3E8FF', justifyContent: 'center', alignItems: 'center' },
   challengeStepIconCompleted: { backgroundColor: '#9333EA' },
   challengeStepText: { flex: 1 },
-  challengeStepTitle: { fontSize: 14, fontWeight: '600', color: '#1F2937' },
+  challengeStepTitle: { fontSize: 15, fontWeight: '600', color: '#1F2937' },
   challengeStepTitleCompleted: { color: '#16A34A' },
-  challengeStepSubtitle: { fontSize: 12, color: '#6B7280', marginTop: 2 },
-  checkItem: { flexDirection: 'row', alignItems: 'center', width: '48%', marginBottom: 6 },
-  checkLabel: { fontSize: 13, color: '#6B7280', marginLeft: 8 },
+  challengeStepSubtitle: { fontSize: 13, color: '#6B7280', marginTop: 2 },
+  checkItem: { flexDirection: 'row', alignItems: 'center', width: '48%', marginBottom: 8 },
+  checkLabel: { fontSize: 14, color: '#6B7280', marginLeft: 8 },
   checkLabelDone: { color: '#16A34A', fontWeight: '600' },
-  methodToggle: { 
-    marginHorizontal: 16, 
-    marginTop: 12, 
-    paddingVertical: 12, 
-    paddingHorizontal: 16, 
-    backgroundColor: '#fff', 
-    borderRadius: 10, 
+  quickActionsRow: { 
     flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#9333EA',
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 1 }, 
-    shadowOpacity: 0.08, 
-    shadowRadius: 3, 
-    elevation: 2
+    marginHorizontal: 16, 
+    marginTop: 16, 
+    gap: 12,
+    justifyContent: 'space-between',
   },
-  methodToggleText: { fontSize: 16, fontWeight: 'bold', color: '#9333EA' },
-  methodCard: { marginHorizontal: 16, marginTop: 12, padding: 20, backgroundColor: '#EEF2FF', borderRadius: 16 },
-  methodHeadline: { fontSize: 18, fontWeight: 'bold', color: '#9333EA', marginBottom: 8, textAlign: 'center' },
-  methodBullet: { fontSize: 14, color: '#4B5563', marginBottom: 8, textAlign: 'center' },
+  quickActionButton: { 
+    flex: 1,
+    backgroundColor: '#9333EA',
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  quickActionButtonText: { 
+    color: '#fff', 
+    fontSize: 13, 
+    fontWeight: '600',
+  },
+  methodCard: { margin: 16, marginTop: 0, padding: 20, backgroundColor: '#EEF2FF', borderRadius: 16 },
+  methodTitle: { fontSize: 20, fontWeight: 'bold', color: '#4338CA', marginBottom: 8, textAlign: 'center' },
   methodSubtitle: { fontSize: 13, color: '#6B7280', marginBottom: 16, textAlign: 'center', fontStyle: 'italic' },
   methodSteps: { gap: 12 },
   methodStep: { flexDirection: 'row', alignItems: 'flex-start' },
@@ -1301,6 +1243,10 @@ const styles = StyleSheet.create({
   tabContent: { marginHorizontal: 16 },
   tabCard: { backgroundColor: '#fff', padding: 20, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
   tabTitle: { fontSize: 20, fontWeight: 'bold', color: '#1F2937', marginBottom: 16 },
+  nutritionSummary: { backgroundColor: '#F3F4F6', padding: 12, borderRadius: 12, marginBottom: 16 },
+  calorieRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  calorieSummaryText: { fontSize: 16, fontWeight: '700', color: '#9333EA' },
+  macroSummaryText: { fontSize: 13, color: '#6B7280', fontWeight: '600' },
   weightHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   unitToggle: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EEF2FF', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, gap: 8 },
   unitToggleText: { fontSize: 16, fontWeight: '600', color: '#9333EA' },
@@ -1331,7 +1277,6 @@ const styles = StyleSheet.create({
   mealButtonTextActive: { color: '#fff' },
   customFoodSection: { marginBottom: 20, paddingBottom: 20, borderBottomWidth: 2, borderBottomColor: '#E5E7EB' },
   sectionLabel: { fontSize: 14, fontWeight: '600', color: '#1F2937', marginBottom: 12 },
-  estimatingText: { fontSize: 12, color: '#9333EA', marginTop: 8, fontStyle: 'italic' },
   customFoodRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   customFoodInput: { flex: 1, backgroundColor: '#F3F4F6', padding: 16, borderRadius: 12, fontSize: 16 },
   addButton: { padding: 4 },
@@ -1375,7 +1320,7 @@ const styles = StyleSheet.create({
   fastingPreview: { marginTop: 20, padding: 16, backgroundColor: '#EEF2FF', borderRadius: 12 },
   fastingPreviewLabel: { fontSize: 14, color: '#6B7280', marginBottom: 8 },
   fastingPreviewText: { fontSize: 16, fontWeight: '600', color: '#4338CA' },
-  foodLogButtonContainer: { marginHorizontal: 16, marginTop: 12 },
+  foodLogButtonContainer: { marginHorizontal: 16, marginTop: 16 },
   foodLogButton: { 
     backgroundColor: '#9333EA', 
     paddingVertical: 18, 
@@ -1419,41 +1364,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 4,
     fontStyle: 'italic',
-  },
-  snackHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: '#FEF3C7',
-    borderRadius: 12,
-  },
-  snackWarning: {
-    fontSize: 13,
-    color: '#92400E',
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  snacksList: {
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: '#FEE2E2',
-    borderRadius: 12,
-  },
-  snackItemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  snackItemText: {
-    fontSize: 15,
-    color: '#1F2937',
-    flex: 1,
   },
   bottomPadding: { height: 40 },
 });

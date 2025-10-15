@@ -10,6 +10,10 @@ interface FoodWithNutrition {
   fat?: number;
   fiber?: number;
   isEstimated?: boolean; // Flag to indicate if nutrition was estimated by AI
+  portion?: {
+    amount: number;
+    unit: string; // 'g', 'cups', 'pieces', 'oz', etc.
+  };
 }
 
 interface DailyLog {
@@ -399,7 +403,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     const getCaloriesForMeal = (mealItems: (string | FoodWithNutrition)[] | undefined) => {
       if (!mealItems || mealItems.length === 0) return 0;
       return mealItems.reduce((total, foodItem) => {
-        // If it's a FoodWithNutrition object, use its calories
+        // If it's a FoodWithNutrition object, use its calories (already scaled if portion exists)
         if (typeof foodItem === 'object' && foodItem.calories !== undefined) {
           return total + foodItem.calories;
         }
@@ -428,7 +432,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
         return { protein: 0, carbs: 0, fat: 0 };
       }
       return mealItems.reduce((totals, foodItem) => {
-        // If it's a FoodWithNutrition object, use its macros
+        // If it's a FoodWithNutrition object, use its macros (already scaled if portion exists)
         if (typeof foodItem === 'object') {
           return {
             protein: totals.protein + (foodItem.protein || 0),

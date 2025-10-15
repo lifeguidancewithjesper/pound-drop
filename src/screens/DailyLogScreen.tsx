@@ -97,12 +97,19 @@ export default function DailyLogScreen({ navigation }: any) {
                         )}
                       </View>
                       <>
-                        {breakfastFoods.map((food, index) => (
-                          <View key={index} style={styles.foodItem}>
-                            <View style={styles.foodBullet} />
-                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
-                          </View>
-                        ))}
+                        {breakfastFoods.map((food, index) => {
+                          const displayText = typeof food === 'string' 
+                            ? food 
+                            : (food.portion 
+                              ? `${food.portion.amount}${food.portion.unit} ${food.name}` 
+                              : food.name);
+                          return (
+                            <View key={index} style={styles.foodItem}>
+                              <View style={styles.foodBullet} />
+                              <Text style={styles.foodText}>{displayText}</Text>
+                            </View>
+                          );
+                        })}
                         {calorieData.breakfast > 0 && (
                           <>
                             <View style={styles.calorieRow}>
@@ -138,7 +145,13 @@ export default function DailyLogScreen({ navigation }: any) {
                       </View>
                       <View style={styles.foodItem}>
                         <View style={styles.foodBullet} />
-                        <Text style={styles.foodText}>{typeof snack === 'string' ? snack : snack.name}</Text>
+                        <Text style={styles.foodText}>
+                          {typeof snack === 'string' 
+                            ? snack 
+                            : (snack.portion 
+                              ? `${snack.portion.amount}${snack.portion.unit} ${snack.name}` 
+                              : snack.name)}
+                        </Text>
                       </View>
                       {typeof snack !== 'string' && snack.calories && (
                         <>
@@ -167,12 +180,19 @@ export default function DailyLogScreen({ navigation }: any) {
                         )}
                       </View>
                       <>
-                        {lunchFoods.map((food, index) => (
-                          <View key={index} style={styles.foodItem}>
-                            <View style={styles.foodBullet} />
-                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
-                          </View>
-                        ))}
+                        {lunchFoods.map((food, index) => {
+                          const displayText = typeof food === 'string' 
+                            ? food 
+                            : (food.portion 
+                              ? `${food.portion.amount}${food.portion.unit} ${food.name}` 
+                              : food.name);
+                          return (
+                            <View key={index} style={styles.foodItem}>
+                              <View style={styles.foodBullet} />
+                              <Text style={styles.foodText}>{displayText}</Text>
+                            </View>
+                          );
+                        })}
                         {calorieData.lunch > 0 && (
                           <>
                             <View style={styles.calorieRow}>
@@ -207,12 +227,19 @@ export default function DailyLogScreen({ navigation }: any) {
                         )}
                       </View>
                       <>
-                        {dinnerFoods.map((food, index) => (
-                          <View key={index} style={styles.foodItem}>
-                            <View style={styles.foodBullet} />
-                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
-                          </View>
-                        ))}
+                        {dinnerFoods.map((food, index) => {
+                          const displayText = typeof food === 'string' 
+                            ? food 
+                            : (food.portion 
+                              ? `${food.portion.amount}${food.portion.unit} ${food.name}` 
+                              : food.name);
+                          return (
+                            <View key={index} style={styles.foodItem}>
+                              <View style={styles.foodBullet} />
+                              <Text style={styles.foodText}>{displayText}</Text>
+                            </View>
+                          );
+                        })}
                         {calorieData.dinner > 0 && (
                           <>
                             <View style={styles.calorieRow}>
