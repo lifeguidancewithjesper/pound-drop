@@ -537,20 +537,9 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
 
     // Helper to prompt for portion and add food
     const promptForPortionAndAdd = (finalName: string) => {
-      // Determine suggested unit based on food category
-      const category = foundFood.category?.toLowerCase() || '';
-      let suggestedUnit = 'g';
-      if (category.includes('vegetable') || category.includes('fruit') || category.includes('grain')) {
-        suggestedUnit = 'cups';
-      } else if (category.includes('dessert') || category.includes('snack')) {
-        suggestedUnit = 'pieces';
-      } else if (category.includes('protein')) {
-        suggestedUnit = 'g';
-      }
-
       Alert.prompt(
         'Portion Size',
-        `Enter amount (e.g., 150 for ${suggestedUnit})`,
+        'Enter amount (e.g., 150 for grams)',
         (amount) => {
           const portionAmount = parseFloat(amount || '100');
           if (isNaN(portionAmount)) {
