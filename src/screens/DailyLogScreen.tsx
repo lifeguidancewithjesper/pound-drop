@@ -196,7 +196,7 @@ export default function DailyLogScreen({ navigation }: any) {
                             </View>
                             <View style={styles.macroRow}>
                               <Text style={styles.macroText}>
-                                P: {macroData.breakfast.protein}g | C: {macroData.breakfast.carbs}g | F: {macroData.breakfast.fat}g
+                                P: {Math.round(macroData.breakfast.protein)}g | C: {Math.round(macroData.breakfast.carbs)}g | F: {Math.round(macroData.breakfast.fat)}g
                               </Text>
                             </View>
                           </>
@@ -233,7 +233,7 @@ export default function DailyLogScreen({ navigation }: any) {
                           </View>
                           <View style={styles.macroRow}>
                             <Text style={styles.macroText}>
-                              P: {snack.protein || 0}g | C: {snack.carbs || 0}g | F: {snack.fat || 0}g
+                              P: {Math.round(snack.protein || 0)}g | C: {Math.round(snack.carbs || 0)}g | F: {Math.round(snack.fat || 0)}g
                             </Text>
                           </View>
                         </>
@@ -266,7 +266,7 @@ export default function DailyLogScreen({ navigation }: any) {
                             </View>
                             <View style={styles.macroRow}>
                               <Text style={styles.macroText}>
-                                P: {macroData.lunch.protein}g | C: {macroData.lunch.carbs}g | F: {macroData.lunch.fat}g
+                                P: {Math.round(macroData.lunch.protein)}g | C: {Math.round(macroData.lunch.carbs)}g | F: {Math.round(macroData.lunch.fat)}g
                               </Text>
                             </View>
                           </>
@@ -306,7 +306,7 @@ export default function DailyLogScreen({ navigation }: any) {
                             </View>
                             <View style={styles.macroRow}>
                               <Text style={styles.macroText}>
-                                P: {macroData.dinner.protein}g | C: {macroData.dinner.carbs}g | F: {macroData.dinner.fat}g
+                                P: {Math.round(macroData.dinner.protein)}g | C: {Math.round(macroData.dinner.carbs)}g | F: {Math.round(macroData.dinner.fat)}g
                               </Text>
                             </View>
                           </>
@@ -340,15 +340,15 @@ export default function DailyLogScreen({ navigation }: any) {
                       </View>
                       <View style={styles.macrosSummaryRow}>
                         <View style={styles.macroSummaryItem}>
-                          <Text style={styles.macroSummaryValue}>{macroData.total.protein}g</Text>
+                          <Text style={styles.macroSummaryValue}>{Math.round(macroData.total.protein)}g</Text>
                           <Text style={styles.macroSummaryLabel}>Protein</Text>
                         </View>
                         <View style={styles.macroSummaryItem}>
-                          <Text style={styles.macroSummaryValue}>{macroData.total.carbs}g</Text>
+                          <Text style={styles.macroSummaryValue}>{Math.round(macroData.total.carbs)}g</Text>
                           <Text style={styles.macroSummaryLabel}>Carbs</Text>
                         </View>
                         <View style={styles.macroSummaryItem}>
-                          <Text style={styles.macroSummaryValue}>{macroData.total.fat}g</Text>
+                          <Text style={styles.macroSummaryValue}>{Math.round(macroData.total.fat)}g</Text>
                           <Text style={styles.macroSummaryLabel}>Fat</Text>
                         </View>
                       </View>
