@@ -5,6 +5,240 @@ import { useStorage } from '../context/StorageContext';
 export default function DailyLogScreen({ navigation }: any) {
   const { logs, calculateCalories, calculateMacros } = useStorage();
 
+  const exportToHTML = async () => {
+    if (logs.length === 0) {
+      Alert.alert('No Data', 'No food logs to export');
+      return;
+    }
+
+    // Calculate totals
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalCarbs = 0;
+    let totalFat = 0;
+
+    sortedLogs.forEach((dayLog) => {
+      const calorieData = dayLog.meals ? calculateCalories(dayLog.meals, dayLog.snacks) : { total: 0 };
+      const macroData = dayLog.meals ? calculateMacros(dayLog.meals, dayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 } };
+      totalCalories += calorieData.total;
+      totalProtein += macroData.total.protein;
+      totalCarbs += macroData.total.carbs;
+      totalFat += macroData.total.fat;
+    });
+
+    const avgCalories = Math.round(totalCalories / sortedLogs.length);
+    const avgProtein = Math.round(totalProtein / sortedLogs.length);
+    const avgCarbs = Math.round(totalCarbs / sortedLogs.length);
+    const avgFat = Math.round(totalFat / sortedLogs.length);
+
+    // Generate HTML content
+    let htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pound Drop - Food Log Report</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f9fafb; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #9333EA 0%, #EC4899 100%); color: white; padding: 40px 30px; text-align: center; }
+    .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+    .header p { font-size: 16px; opacity: 0.95; }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 30px; background: #faf5ff; }
+    .stat-card { text-align: center; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(147,51,234,0.1); }
+    .stat-value { font-size: 28px; font-weight: 700; color: #9333EA; margin-bottom: 4px; }
+    .stat-label { font-size: 14px; color: #6b7280; }
+    .day-section { padding: 30px; border-bottom: 1px solid #e5e7eb; }
+    .day-section:last-child { border-bottom: none; }
+    .date-header { font-size: 20px; font-weight: 600; color: #1f2937; margin-bottom: 20px; display: flex; align-items: center; }
+    .date-icon { width: 24px; height: 24px; margin-right: 8px; color: #9333EA; }
+    .meal-section { margin-bottom: 20px; }
+    .meal-title { font-size: 16px; font-weight: 600; color: #9333EA; margin-bottom: 12px; }
+    .meal-time { font-size: 14px; color: #6b7280; margin-left: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th { background: #f3f4f6; text-align: left; padding: 10px; font-size: 13px; color: #6b7280; font-weight: 600; }
+    td { padding: 10px; border-bottom: 1px solid #e5e7eb; font-size: 14px; color: #374151; }
+    tr:last-child td { border-bottom: none; }
+    .nutrition-totals { background: #faf5ff; padding: 15px; border-radius: 8px; margin-top: 20px; }
+    .nutrition-row { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 15px; }
+    .nutrition-item { text-align: center; }
+    .nutrition-value { font-size: 20px; font-weight: 700; color: #9333EA; }
+    .nutrition-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    .footer { text-align: center; padding: 30px; background: #f9fafb; color: #9ca3af; font-size: 14px; }
+    @media print {
+      body { background: white; padding: 0; }
+      .container { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎯 Pound Drop Food Log</h1>
+      <p>Your complete nutrition journey - ${sortedLogs.length} ${sortedLogs.length === 1 ? 'day' : 'days'} tracked</p>
+    </div>
+
+    <div class="summary">
+      <div class="stat-card">
+        <div class="stat-value">${avgCalories}</div>
+        <div class="stat-label">Avg Calories/Day</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${avgProtein}g</div>
+        <div class="stat-label">Avg Protein/Day</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${avgCarbs}g</div>
+        <div class="stat-label">Avg Carbs/Day</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${avgFat}g</div>
+        <div class="stat-label">Avg Fat/Day</div>
+      </div>
+    </div>
+`;
+
+    sortedLogs.forEach((dayLog) => {
+      const date = formatDateHeader(dayLog.date);
+      const calorieData = dayLog.meals ? calculateCalories(dayLog.meals, dayLog.snacks) : { total: 0, breakfast: 0, lunch: 0, dinner: 0 };
+      const macroData = dayLog.meals ? calculateMacros(dayLog.meals, dayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 } };
+
+      htmlContent += `
+    <div class="day-section">
+      <div class="date-header">📅 ${date}</div>
+`;
+
+      // Breakfast
+      if (dayLog.meals?.breakfast && dayLog.meals.breakfast.length > 0) {
+        const time = dayLog.mealTimes?.breakfast || '';
+        const feeling = dayLog.mealFeelings?.breakfast || '';
+        htmlContent += `
+      <div class="meal-section">
+        <div class="meal-title">🌅 Breakfast${time ? `<span class="meal-time">${time}</span>` : ''}${feeling ? ` - ${feeling}` : ''}</div>
+        <table>
+          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+          <tbody>`;
+        dayLog.meals.breakfast.forEach((food: any) => {
+          const foodName = typeof food === 'string' ? food : food.name;
+          const portion = (typeof food !== 'string' && food.portion) ? `${food.portion.amount} ${food.portion.unit}` : '—';
+          const calories = (typeof food !== 'string' && food.calories) ? Math.round(food.calories) : '—';
+          const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) + 'g' : '—';
+          const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) + 'g' : '—';
+          const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) + 'g' : '—';
+          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td></tr>`;
+        });
+        htmlContent += `</tbody></table></div>`;
+      }
+
+      // Lunch
+      if (dayLog.meals?.lunch && dayLog.meals.lunch.length > 0) {
+        const time = dayLog.mealTimes?.lunch || '';
+        const feeling = dayLog.mealFeelings?.lunch || '';
+        htmlContent += `
+      <div class="meal-section">
+        <div class="meal-title">☀️ Lunch${time ? `<span class="meal-time">${time}</span>` : ''}${feeling ? ` - ${feeling}` : ''}</div>
+        <table>
+          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+          <tbody>`;
+        dayLog.meals.lunch.forEach((food: any) => {
+          const foodName = typeof food === 'string' ? food : food.name;
+          const portion = (typeof food !== 'string' && food.portion) ? `${food.portion.amount} ${food.portion.unit}` : '—';
+          const calories = (typeof food !== 'string' && food.calories) ? Math.round(food.calories) : '—';
+          const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) + 'g' : '—';
+          const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) + 'g' : '—';
+          const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) + 'g' : '—';
+          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td></tr>`;
+        });
+        htmlContent += `</tbody></table></div>`;
+      }
+
+      // Dinner
+      if (dayLog.meals?.dinner && dayLog.meals.dinner.length > 0) {
+        const time = dayLog.mealTimes?.dinner || '';
+        const feeling = dayLog.mealFeelings?.dinner || '';
+        htmlContent += `
+      <div class="meal-section">
+        <div class="meal-title">🌙 Dinner${time ? `<span class="meal-time">${time}</span>` : ''}${feeling ? ` - ${feeling}` : ''}</div>
+        <table>
+          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+          <tbody>`;
+        dayLog.meals.dinner.forEach((food: any) => {
+          const foodName = typeof food === 'string' ? food : food.name;
+          const portion = (typeof food !== 'string' && food.portion) ? `${food.portion.amount} ${food.portion.unit}` : '—';
+          const calories = (typeof food !== 'string' && food.calories) ? Math.round(food.calories) : '—';
+          const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) + 'g' : '—';
+          const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) + 'g' : '—';
+          const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) + 'g' : '—';
+          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td></tr>`;
+        });
+        htmlContent += `</tbody></table></div>`;
+      }
+
+      // Snacks
+      if (dayLog.snacks && dayLog.snacks.length > 0) {
+        htmlContent += `
+      <div class="meal-section">
+        <div class="meal-title">🍎 Snacks</div>
+        <table>
+          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+          <tbody>`;
+        dayLog.snacks.forEach((food: any) => {
+          const foodName = typeof food === 'string' ? food : food.name;
+          const portion = (typeof food !== 'string' && food.portion) ? `${food.portion.amount} ${food.portion.unit}` : '—';
+          const calories = (typeof food !== 'string' && food.calories) ? Math.round(food.calories) : '—';
+          const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) + 'g' : '—';
+          const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) + 'g' : '—';
+          const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) + 'g' : '—';
+          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td></tr>`;
+        });
+        htmlContent += `</tbody></table></div>`;
+      }
+
+      // Daily Totals
+      htmlContent += `
+      <div class="nutrition-totals">
+        <div class="nutrition-row">
+          <div class="nutrition-item">
+            <div class="nutrition-value">${Math.round(calorieData.total)}</div>
+            <div class="nutrition-label">Total Calories</div>
+          </div>
+          <div class="nutrition-item">
+            <div class="nutrition-value">${Math.round(macroData.total.protein)}g</div>
+            <div class="nutrition-label">Protein</div>
+          </div>
+          <div class="nutrition-item">
+            <div class="nutrition-value">${Math.round(macroData.total.carbs)}g</div>
+            <div class="nutrition-label">Carbs</div>
+          </div>
+          <div class="nutrition-item">
+            <div class="nutrition-value">${Math.round(macroData.total.fat)}g</div>
+            <div class="nutrition-label">Fat</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    });
+
+    htmlContent += `
+    <div class="footer">
+      <p>Generated by Pound Drop - Your Weight Loss Journey Partner 💜</p>
+      <p style="margin-top: 8px; font-size: 12px;">Keep crushing your goals! 🎯</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    try {
+      await Share.share({
+        message: htmlContent,
+        title: 'Pound Drop Food Log Report'
+      });
+    } catch (error) {
+      Alert.alert('Export Failed', 'Could not export food log');
+    }
+  };
+
   const exportToCSV = async () => {
     if (logs.length === 0) {
       Alert.alert('No Data', 'No food logs to export');
@@ -131,9 +365,14 @@ export default function DailyLogScreen({ navigation }: any) {
           <Text style={styles.headerTitle}>Food Log History</Text>
           <Text style={styles.headerSubtitle}>{logs.length} {logs.length === 1 ? 'day' : 'days'} logged</Text>
         </View>
-        <TouchableOpacity onPress={exportToCSV} style={styles.exportButton} data-testid="button-export-csv">
-          <Ionicons name="download" size={24} color="#9333EA" />
-        </TouchableOpacity>
+        <View style={styles.exportButtons}>
+          <TouchableOpacity onPress={exportToHTML} style={styles.exportButton} data-testid="button-export-html">
+            <Ionicons name="document-text" size={24} color="#EC4899" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={exportToCSV} style={styles.exportButton} data-testid="button-export-csv">
+            <Ionicons name="download" size={24} color="#9333EA" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.container}>
@@ -185,7 +424,14 @@ export default function DailyLogScreen({ navigation }: any) {
                         {breakfastFoods.map((food, index) => (
                           <View key={index} style={styles.foodItem}>
                             <View style={styles.foodBullet} />
-                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
+                            <Text style={styles.foodText}>
+                              {typeof food === 'string' 
+                                ? food 
+                                : food.portion 
+                                  ? `${food.portion.amount} ${food.portion.unit} of ${food.name}`
+                                  : food.name
+                              }
+                            </Text>
                           </View>
                         ))}
                         {calorieData.breakfast > 0 && (
@@ -223,7 +469,14 @@ export default function DailyLogScreen({ navigation }: any) {
                       </View>
                       <View style={styles.foodItem}>
                         <View style={styles.foodBullet} />
-                        <Text style={styles.foodText}>{typeof snack === 'string' ? snack : snack.name}</Text>
+                        <Text style={styles.foodText}>
+                          {typeof snack === 'string' 
+                            ? snack 
+                            : snack.portion 
+                              ? `${snack.portion.amount} ${snack.portion.unit} of ${snack.name}`
+                              : snack.name
+                          }
+                        </Text>
                       </View>
                       {typeof snack !== 'string' && snack.calories && (
                         <>
@@ -255,7 +508,14 @@ export default function DailyLogScreen({ navigation }: any) {
                         {lunchFoods.map((food, index) => (
                           <View key={index} style={styles.foodItem}>
                             <View style={styles.foodBullet} />
-                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
+                            <Text style={styles.foodText}>
+                              {typeof food === 'string' 
+                                ? food 
+                                : food.portion 
+                                  ? `${food.portion.amount} ${food.portion.unit} of ${food.name}`
+                                  : food.name
+                              }
+                            </Text>
                           </View>
                         ))}
                         {calorieData.lunch > 0 && (
@@ -295,7 +555,14 @@ export default function DailyLogScreen({ navigation }: any) {
                         {dinnerFoods.map((food, index) => (
                           <View key={index} style={styles.foodItem}>
                             <View style={styles.foodBullet} />
-                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
+                            <Text style={styles.foodText}>
+                              {typeof food === 'string' 
+                                ? food 
+                                : food.portion 
+                                  ? `${food.portion.amount} ${food.portion.unit} of ${food.name}`
+                                  : food.name
+                              }
+                            </Text>
                           </View>
                         ))}
                         {calorieData.dinner > 0 && (
@@ -588,8 +855,12 @@ const styles = StyleSheet.create({
   },
   backButton: { marginRight: 12 },
   headerTextContainer: { flex: 1 },
+  exportButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   exportButton: { 
-    marginLeft: 12,
     padding: 8,
     borderRadius: 8,
     backgroundColor: '#F3E8FF'
