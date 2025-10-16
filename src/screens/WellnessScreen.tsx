@@ -611,6 +611,22 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
     );
   };
 
+  const removeFoodFromMeal = (index: number) => {
+    updateTodayLog((prev) => {
+      const currentMeals = prev.meals || {};
+      const currentMealItems = currentMeals[selectedMeal] || [];
+      return {
+        meals: {
+          ...currentMeals,
+          [selectedMeal]: currentMealItems.filter((_, i) => i !== index)
+        }
+      };
+    });
+  };
+
+  const todayLog = getTodayLog();
+  const currentMealItems = todayLog?.meals?.[selectedMeal] || [];
+
   return (
     <View style={styles.tabCard}>
       <Text style={styles.tabTitle}>Log Meals</Text>
@@ -618,22 +634,46 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
         <TouchableOpacity 
           style={[styles.mealButton, selectedMeal === 'breakfast' && styles.mealButtonActive]} 
           onPress={() => setSelectedMeal('breakfast')}
+          data-testid={`button-select-breakfast`}
         >
           <Text style={[styles.mealButtonText, selectedMeal === 'breakfast' && styles.mealButtonTextActive]}>Breakfast</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.mealButton, selectedMeal === 'lunch' && styles.mealButtonActive]} 
           onPress={() => setSelectedMeal('lunch')}
+          data-testid={`button-select-lunch`}
         >
           <Text style={[styles.mealButtonText, selectedMeal === 'lunch' && styles.mealButtonTextActive]}>Lunch</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.mealButton, selectedMeal === 'dinner' && styles.mealButtonActive]} 
           onPress={() => setSelectedMeal('dinner')}
+          data-testid={`button-select-dinner`}
         >
           <Text style={[styles.mealButtonText, selectedMeal === 'dinner' && styles.mealButtonTextActive]}>Dinner</Text>
         </TouchableOpacity>
       </View>
+
+      {currentMealItems.length > 0 && (
+        <View style={styles.snacksList}>
+          <Text style={styles.sectionLabel}>Logged in {selectedMeal.charAt(0).toUpperCase() + selectedMeal.slice(1)}:</Text>
+          {currentMealItems.map((food, index) => {
+            const displayText = typeof food === 'string' 
+              ? food 
+              : (food.portion 
+                ? `${food.portion.amount}${food.portion.unit} ${food.name}` 
+                : food.name);
+            return (
+              <View key={index} style={styles.snackItemRow}>
+                <Text style={styles.snackItemText}>{displayText}</Text>
+                <TouchableOpacity onPress={() => removeFoodFromMeal(index)} data-testid={`button-remove-${selectedMeal}-${index}`}>
+                  <Ionicons name="trash" size={20} color="#EF4444" />
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
+      )}
       
       <Text style={styles.sectionLabel}>Search Food Database:</Text>
       <TextInput

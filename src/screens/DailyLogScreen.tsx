@@ -1,9 +1,91 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, Share, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStorage } from '../context/StorageContext';
 
 export default function DailyLogScreen({ navigation }: any) {
   const { logs, calculateCalories, calculateMacros } = useStorage();
+
+  const exportToCSV = async () => {
+    if (logs.length === 0) {
+      Alert.alert('No Data', 'No food logs to export');
+      return;
+    }
+
+    // Generate CSV content
+    let csvContent = 'Date,Meal Type,Food Item,Portion,Calories,Protein (g),Carbs (g),Fat (g),Time,Feeling\n';
+
+    sortedLogs.forEach((dayLog) => {
+      const date = new Date(dayLog.date).toLocaleDateString();
+      
+      // Breakfast
+      if (dayLog.meals?.breakfast) {
+        dayLog.meals.breakfast.forEach((food: any) => {
+          const foodName = typeof food === 'string' ? food : food.name;
+          const portion = (typeof food !== 'string' && food.portion) ? `${food.portion.amount}${food.portion.unit}` : '';
+          const calories = (typeof food !== 'string' && food.calories) ? Math.round(food.calories) : '';
+          const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) : '';
+          const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) : '';
+          const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) : '';
+          const time = dayLog.mealTimes?.breakfast || '';
+          const feeling = dayLog.mealFeelings?.breakfast || '';
+          csvContent += `${date},Breakfast,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${time},${feeling}\n`;
+        });
+      }
+
+      // Lunch
+      if (dayLog.meals?.lunch) {
+        dayLog.meals.lunch.forEach((food: any) => {
+          const foodName = typeof food === 'string' ? food : food.name;
+          const portion = (typeof food !== 'string' && food.portion) ? `${food.portion.amount}${food.portion.unit}` : '';
+          const calories = (typeof food !== 'string' && food.calories) ? Math.round(food.calories) : '';
+          const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) : '';
+          const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) : '';
+          const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) : '';
+          const time = dayLog.mealTimes?.lunch || '';
+          const feeling = dayLog.mealFeelings?.lunch || '';
+          csvContent += `${date},Lunch,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${time},${feeling}\n`;
+        });
+      }
+
+      // Dinner
+      if (dayLog.meals?.dinner) {
+        dayLog.meals.dinner.forEach((food: any) => {
+          const foodName = typeof food === 'string' ? food : food.name;
+          const portion = (typeof food !== 'string' && food.portion) ? `${food.portion.amount}${food.portion.unit}` : '';
+          const calories = (typeof food !== 'string' && food.calories) ? Math.round(food.calories) : '';
+          const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) : '';
+          const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) : '';
+          const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) : '';
+          const time = dayLog.mealTimes?.dinner || '';
+          const feeling = dayLog.mealFeelings?.dinner || '';
+          csvContent += `${date},Dinner,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${time},${feeling}\n`;
+        });
+      }
+
+      // Snacks
+      if (dayLog.snacks) {
+        dayLog.snacks.forEach((food: any, index: number) => {
+          const foodName = typeof food === 'string' ? food : food.name;
+          const portion = (typeof food !== 'string' && food.portion) ? `${food.portion.amount}${food.portion.unit}` : '';
+          const calories = (typeof food !== 'string' && food.calories) ? Math.round(food.calories) : '';
+          const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) : '';
+          const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) : '';
+          const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) : '';
+          const time = dayLog.snackTimes?.[index] || '';
+          csvContent += `${date},Snack,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${time},\n`;
+        });
+      }
+    });
+
+    try {
+      await Share.share({
+        message: csvContent,
+        title: 'Food Log Export'
+      });
+    } catch (error) {
+      Alert.alert('Export Failed', 'Could not export food log');
+    }
+  };
 
   // Sort logs by date descending (newest first)
   const sortedLogs = [...logs].sort((a, b) => {
@@ -49,6 +131,9 @@ export default function DailyLogScreen({ navigation }: any) {
           <Text style={styles.headerTitle}>Food Log History</Text>
           <Text style={styles.headerSubtitle}>{logs.length} {logs.length === 1 ? 'day' : 'days'} logged</Text>
         </View>
+        <TouchableOpacity onPress={exportToCSV} style={styles.exportButton} data-testid="button-export-csv">
+          <Ionicons name="download" size={24} color="#9333EA" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.container}>
@@ -97,19 +182,12 @@ export default function DailyLogScreen({ navigation }: any) {
                         )}
                       </View>
                       <>
-                        {breakfastFoods.map((food, index) => {
-                          const displayText = typeof food === 'string' 
-                            ? food 
-                            : (food.portion 
-                              ? `${food.portion.amount}${food.portion.unit} ${food.name}` 
-                              : food.name);
-                          return (
-                            <View key={index} style={styles.foodItem}>
-                              <View style={styles.foodBullet} />
-                              <Text style={styles.foodText}>{displayText}</Text>
-                            </View>
-                          );
-                        })}
+                        {breakfastFoods.map((food, index) => (
+                          <View key={index} style={styles.foodItem}>
+                            <View style={styles.foodBullet} />
+                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
+                          </View>
+                        ))}
                         {calorieData.breakfast > 0 && (
                           <>
                             <View style={styles.calorieRow}>
@@ -145,13 +223,7 @@ export default function DailyLogScreen({ navigation }: any) {
                       </View>
                       <View style={styles.foodItem}>
                         <View style={styles.foodBullet} />
-                        <Text style={styles.foodText}>
-                          {typeof snack === 'string' 
-                            ? snack 
-                            : (snack.portion 
-                              ? `${snack.portion.amount}${snack.portion.unit} ${snack.name}` 
-                              : snack.name)}
-                        </Text>
+                        <Text style={styles.foodText}>{typeof snack === 'string' ? snack : snack.name}</Text>
                       </View>
                       {typeof snack !== 'string' && snack.calories && (
                         <>
@@ -180,19 +252,12 @@ export default function DailyLogScreen({ navigation }: any) {
                         )}
                       </View>
                       <>
-                        {lunchFoods.map((food, index) => {
-                          const displayText = typeof food === 'string' 
-                            ? food 
-                            : (food.portion 
-                              ? `${food.portion.amount}${food.portion.unit} ${food.name}` 
-                              : food.name);
-                          return (
-                            <View key={index} style={styles.foodItem}>
-                              <View style={styles.foodBullet} />
-                              <Text style={styles.foodText}>{displayText}</Text>
-                            </View>
-                          );
-                        })}
+                        {lunchFoods.map((food, index) => (
+                          <View key={index} style={styles.foodItem}>
+                            <View style={styles.foodBullet} />
+                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
+                          </View>
+                        ))}
                         {calorieData.lunch > 0 && (
                           <>
                             <View style={styles.calorieRow}>
@@ -227,19 +292,12 @@ export default function DailyLogScreen({ navigation }: any) {
                         )}
                       </View>
                       <>
-                        {dinnerFoods.map((food, index) => {
-                          const displayText = typeof food === 'string' 
-                            ? food 
-                            : (food.portion 
-                              ? `${food.portion.amount}${food.portion.unit} ${food.name}` 
-                              : food.name);
-                          return (
-                            <View key={index} style={styles.foodItem}>
-                              <View style={styles.foodBullet} />
-                              <Text style={styles.foodText}>{displayText}</Text>
-                            </View>
-                          );
-                        })}
+                        {dinnerFoods.map((food, index) => (
+                          <View key={index} style={styles.foodItem}>
+                            <View style={styles.foodBullet} />
+                            <Text style={styles.foodText}>{typeof food === 'string' ? food : food.name}</Text>
+                          </View>
+                        ))}
                         {calorieData.dinner > 0 && (
                           <>
                             <View style={styles.calorieRow}>
@@ -530,6 +588,12 @@ const styles = StyleSheet.create({
   },
   backButton: { marginRight: 12 },
   headerTextContainer: { flex: 1 },
+  exportButton: { 
+    marginLeft: 12,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#F3E8FF'
+  },
   headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#1F2937' },
   headerSubtitle: { fontSize: 14, color: '#6B7280', marginTop: 4 },
   emptyState: {
