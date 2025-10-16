@@ -192,7 +192,7 @@ export default function DailyLogScreen({ navigation }: any) {
                           <>
                             <View style={styles.calorieRow}>
                               <Ionicons name="flame" size={16} color="#F97316" />
-                              <Text style={styles.calorieText}>{calorieData.breakfast} calories</Text>
+                              <Text style={styles.calorieText}>{Math.round(calorieData.breakfast)} calories</Text>
                             </View>
                             <View style={styles.macroRow}>
                               <Text style={styles.macroText}>
@@ -229,7 +229,7 @@ export default function DailyLogScreen({ navigation }: any) {
                         <>
                           <View style={styles.calorieRow}>
                             <Ionicons name="flame" size={16} color="#F97316" />
-                            <Text style={styles.calorieText}>{snack.calories} calories</Text>
+                            <Text style={styles.calorieText}>{Math.round(snack.calories)} calories</Text>
                           </View>
                           <View style={styles.macroRow}>
                             <Text style={styles.macroText}>
@@ -262,7 +262,7 @@ export default function DailyLogScreen({ navigation }: any) {
                           <>
                             <View style={styles.calorieRow}>
                               <Ionicons name="flame" size={16} color="#F97316" />
-                              <Text style={styles.calorieText}>{calorieData.lunch} calories</Text>
+                              <Text style={styles.calorieText}>{Math.round(calorieData.lunch)} calories</Text>
                             </View>
                             <View style={styles.macroRow}>
                               <Text style={styles.macroText}>
@@ -302,7 +302,7 @@ export default function DailyLogScreen({ navigation }: any) {
                           <>
                             <View style={styles.calorieRow}>
                               <Ionicons name="flame" size={16} color="#F97316" />
-                              <Text style={styles.calorieText}>{calorieData.dinner} calories</Text>
+                              <Text style={styles.calorieText}>{Math.round(calorieData.dinner)} calories</Text>
                             </View>
                             <View style={styles.macroRow}>
                               <Text style={styles.macroText}>
@@ -336,7 +336,7 @@ export default function DailyLogScreen({ navigation }: any) {
                     <View style={styles.nutritionSummaryCard}>
                       <View style={styles.totalCaloriesRow}>
                         <Ionicons name="flame" size={24} color="#F97316" />
-                        <Text style={styles.totalCaloriesText}>{calorieData.total} calories</Text>
+                        <Text style={styles.totalCaloriesText}>{Math.round(calorieData.total)} calories</Text>
                       </View>
                       <View style={styles.macrosSummaryRow}>
                         <View style={styles.macroSummaryItem}>

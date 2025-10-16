@@ -256,7 +256,7 @@ export default function DashboardScreen() {
               <>
                 <View style={styles.calorieRow}>
                   <Ionicons name="flame" size={16} color="#fff" />
-                  <Text style={styles.calorieText} data-testid="text-total-calories">{calorieData.total} cal</Text>
+                  <Text style={styles.calorieText} data-testid="text-total-calories">{Math.round(calorieData.total)} cal</Text>
                 </View>
                 <View style={styles.macroRow}>
                   <Text style={styles.macroText} data-testid="text-total-macros">
