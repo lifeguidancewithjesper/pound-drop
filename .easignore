@@ -1,1 +1,50 @@
-# Build 23
+node_modules/
+.expo/
+.expo-shared/
+dist/
+web-build/
+.git/
+build/
+*.log
+.vscode/
+.idea/
+.DS_Store
+*.md
+__tests__/
+*.test.js
+*.test.tsx
+.env.local
+.env.development
+coverage/
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# Git (this is HUGE and not needed)
+.git/
+.git/**
+
+# Build outputs
+build/
+*.log
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Docs and tests
+*.md
+__tests__/
+*.test.js
+*.test.tsx
+
+# Other unnecessary files
+.env.local
+.env.development
+coverage/

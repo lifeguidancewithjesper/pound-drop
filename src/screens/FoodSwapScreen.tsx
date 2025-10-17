@@ -111,6 +111,26 @@ export default function FoodSwapScreen() {
           </Text>
         </View>
 
+        {/* Medical Citations */}
+        <View style={styles.citationContainer}>
+          <Text style={styles.citationTitle}>📚 Sources & Citations</Text>
+          <Text style={styles.citationText}>
+            Nutritional information and calorie estimates are based on data from:
+          </Text>
+          <Text style={styles.citationSource}>
+            • USDA FoodData Central (https://fdc.nal.usda.gov)
+          </Text>
+          <Text style={styles.citationSource}>
+            • National Institutes of Health (NIH) Dietary Guidelines
+          </Text>
+          <Text style={styles.citationSource}>
+            • Academy of Nutrition and Dietetics
+          </Text>
+          <Text style={styles.citationDisclaimer}>
+            These food swaps are general suggestions for healthier alternatives. Individual nutritional needs vary. Consult a healthcare provider or registered dietitian for personalized dietary advice.
+          </Text>
+        </View>
+
         <View style={{ height: 20 }} />
       </ScrollView>
     </View>
@@ -310,5 +330,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1976D2',
     lineHeight: 20,
+  },
+  citationContainer: {
+    backgroundColor: '#F9FAFB',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  citationTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  citationText: {
+    fontSize: 13,
+    color: '#4B5563',
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  citationSource: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  citationDisclaimer: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 12,
+    lineHeight: 16,
+    fontStyle: 'italic',
   },
 });

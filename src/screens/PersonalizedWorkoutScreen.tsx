@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { naturalExercises, workoutPlans, WorkoutPlan } from '../data/naturalExercises';
+import { useStorage } from '../context/StorageContext';
 
 type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
 type FitnessGoal = 'weight-loss' | 'toning' | 'flexibility' | 'general-fitness';
@@ -11,6 +12,8 @@ export default function PersonalizedWorkoutScreen() {
   const navigation = useNavigation();
   const [selectedLevel, setSelectedLevel] = useState<FitnessLevel>('beginner');
   const [selectedGoal, setSelectedGoal] = useState<FitnessGoal>('general-fitness');
+  const { updateTodayLog, getTodayLog } = useStorage();
+  const todayLog = getTodayLog();
 
   const selectedPlan = workoutPlans.find(
     plan => plan.level === selectedLevel && plan.goal === selectedGoal
@@ -18,6 +21,29 @@ export default function PersonalizedWorkoutScreen() {
 
   const getExerciseDetails = (exerciseId: string) => {
     return naturalExercises.find(ex => ex.id === exerciseId);
+  };
+
+  const logWorkout = () => {
+    if (!selectedPlan) return;
+    
+    const currentWorkouts = todayLog?.workouts || [];
+    const workoutLog = {
+      type: selectedPlan.name,
+      duration: selectedPlan.duration,
+      calories: undefined
+    };
+    
+    updateTodayLog({
+      workouts: [...currentWorkouts, workoutLog]
+    });
+
+    Alert.alert(
+      '✅ Workout Logged!',
+      `${selectedPlan.name} (${selectedPlan.duration}) has been added to your daily log`,
+      [
+        { text: 'OK', style: 'default' }
+      ]
+    );
   };
 
   const renderLevelButton = (level: FitnessLevel, label: string, icon: any) => (
@@ -180,6 +206,16 @@ export default function PersonalizedWorkoutScreen() {
                   : 'Minimal equipment needed (chair)'}
               </Text>
             </View>
+
+            {/* Log Workout Button */}
+            <TouchableOpacity 
+              style={styles.logButton} 
+              onPress={logWorkout}
+              data-testid="button-log-workout"
+            >
+              <Ionicons name="checkmark-circle" size={20} color="#fff" />
+              <Text style={styles.logButtonText}>Log This Workout</Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -189,6 +225,13 @@ export default function PersonalizedWorkoutScreen() {
           <Ionicons name="bulb" size={24} color="#F59E0B" />
           <Text style={styles.tipText}>
             💪 Tip: Start with proper form, listen to your body, and stay hydrated. Consistency beats intensity!
+          </Text>
+        </View>
+
+        {/* Exercise Science Citations */}
+        <View style={styles.citationsBox}>
+          <Text style={styles.citationsText}>
+            📚 Exercise Science: ACSM Guidelines (2020) - Resistance training promotes lean muscle development. CDC Physical Activity Guidelines - Regular exercise supports weight management and metabolic health.
           </Text>
         </View>
       </View>
@@ -434,6 +477,21 @@ const styles = StyleSheet.create({
     color: '#16A34A',
     flex: 1,
   },
+  logButton: {
+    backgroundColor: '#9333EA',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    gap: 8,
+  },
+  logButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+  },
   footer: {
     padding: 20,
     paddingBottom: 40,
@@ -453,5 +511,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#92400E',
     lineHeight: 20,
+  },
+  citationsBox: {
+    backgroundColor: '#F3F4F6',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#9333EA',
+  },
+  citationsText: {
+    fontSize: 11,
+    color: '#6B7280',
+    lineHeight: 16,
   },
 });
