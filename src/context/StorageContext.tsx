@@ -10,10 +10,6 @@ interface FoodWithNutrition {
   fat?: number;
   fiber?: number;
   isEstimated?: boolean; // Flag to indicate if nutrition was estimated by AI
-  portion?: {
-    amount: number;
-    unit: string; // 'g', 'cups', 'pieces', 'oz', etc.
-  };
 }
 
 interface DailyLog {
@@ -77,6 +73,17 @@ interface DailyLog {
   };
 }
 
+export interface CustomFood {
+  id: string;
+  name: string;
+  category: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+}
+
 interface StorageContextType {
   logs: DailyLog[];
   addLog: (log: Partial<DailyLog>) => void;
@@ -106,6 +113,9 @@ interface StorageContextType {
   startChallenge: () => Promise<void>;
   getCurrentChallengeDay: () => number | null;
   reloadAllData: () => Promise<void>;
+  customFoods: CustomFood[];
+  addCustomFood: (food: Omit<CustomFood, 'id'>) => Promise<void>;
+  getCustomFoods: () => CustomFood[];
 }
 
 const StorageContext = createContext<StorageContextType | undefined>(undefined);
@@ -117,6 +127,7 @@ const STARTING_WEIGHT_KEY = 'pounddrop_starting_weight';
 const STARTING_WEIGHT_UNIT_KEY = 'pounddrop_starting_weight_unit';
 const HIGHEST_MILESTONE_KEY = 'pounddrop_highest_milestone';
 const CHALLENGE_START_DATE_KEY = 'pounddrop_challenge_start_date';
+const CUSTOM_FOODS_KEY = 'pounddrop_custom_foods';
 
 // Deep merge helper for nested objects
 function deepMerge(target: any, source: any): any {
@@ -143,6 +154,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const [startingWeightUnit, setStartingWeightUnitState] = useState<'lbs' | 'kg'>('lbs');
   const [highestMilestone, setHighestMilestoneState] = useState<number>(0);
   const [challengeStartDate, setChallengeStartDateState] = useState<string | null>(null);
+  const [customFoods, setCustomFoods] = useState<CustomFood[]>([]);
 
   // Load data on mount
   useEffect(() => {
@@ -152,6 +164,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     loadStartingWeight();
     loadHighestMilestone();
     loadChallengeStartDate();
+    loadCustomFoods();
   }, []);
 
   // Save data whenever logs change
@@ -362,6 +375,39 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     return diffDays;
   };
 
+  const loadCustomFoods = async () => {
+    try {
+      const data = await SecureStore.getItemAsync(CUSTOM_FOODS_KEY);
+      if (data) {
+        setCustomFoods(JSON.parse(data));
+      }
+    } catch (error) {
+      console.error('Error loading custom foods:', error);
+    }
+  };
+
+  const saveCustomFoods = async (foods: CustomFood[]) => {
+    try {
+      await SecureStore.setItemAsync(CUSTOM_FOODS_KEY, JSON.stringify(foods));
+    } catch (error) {
+      console.error('Error saving custom foods:', error);
+    }
+  };
+
+  const addCustomFood = async (food: Omit<CustomFood, 'id'>) => {
+    const newFood: CustomFood = {
+      ...food,
+      id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    };
+    const updatedFoods = [...customFoods, newFood];
+    setCustomFoods(updatedFoods);
+    await saveCustomFoods(updatedFoods);
+  };
+
+  const getCustomFoods = () => {
+    return customFoods;
+  };
+
   const getTodayLog = () => {
     const today = new Date().toISOString().split('T')[0];
     return logs.find(log => log.date === today);
@@ -403,7 +449,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     const getCaloriesForMeal = (mealItems: (string | FoodWithNutrition)[] | undefined) => {
       if (!mealItems || mealItems.length === 0) return 0;
       return mealItems.reduce((total, foodItem) => {
-        // If it's a FoodWithNutrition object, use its calories (already scaled if portion exists)
+        // If it's a FoodWithNutrition object, use its calories
         if (typeof foodItem === 'object' && foodItem.calories !== undefined) {
           return total + foodItem.calories;
         }
@@ -432,7 +478,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
         return { protein: 0, carbs: 0, fat: 0 };
       }
       return mealItems.reduce((totals, foodItem) => {
-        // If it's a FoodWithNutrition object, use its macros (already scaled if portion exists)
+        // If it's a FoodWithNutrition object, use its macros
         if (typeof foodItem === 'object') {
           return {
             protein: totals.protein + (foodItem.protein || 0),
@@ -474,6 +520,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     await loadStartingWeight();
     await loadHighestMilestone();
     await loadChallengeStartDate();
+    await loadCustomFoods();
   };
 
   return (
@@ -500,7 +547,10 @@ export function StorageProvider({ children }: { children: ReactNode }) {
       getChallengeStartDate,
       startChallenge,
       getCurrentChallengeDay,
-      reloadAllData
+      reloadAllData,
+      customFoods,
+      addCustomFood,
+      getCustomFoods
     }}>
       {children}
     </StorageContext.Provider>

@@ -474,9 +474,18 @@ function WaterTab() {
 }
 
 function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (q: string) => void }) {
-  const { getTodayLog, updateTodayLog } = useStorage();
+  const { getTodayLog, updateTodayLog, customFoods, addCustomFood } = useStorage();
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner'>('breakfast');
-  const foods = searchFoods(searchQuery);
+  
+  // Merge custom foods with regular foods in search
+  const regularFoods = searchFoods(searchQuery);
+  const filteredCustomFoods = searchQuery.trim() 
+    ? customFoods.filter(food => 
+        food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        food.category.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : customFoods;
+  const foods = [...filteredCustomFoods, ...regularFoods];
 
   const addFood = (foodItem: string | { name: string; calories?: number; protein?: number; carbs?: number; fat?: number; fiber?: number; isEstimated?: boolean }) => {
     const foodName = typeof foodItem === 'string' ? foodItem : foodItem.name;
@@ -634,6 +643,80 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
     });
   };
 
+  const createCustomFood = () => {
+    Alert.prompt(
+      'Add Custom Food',
+      'Enter food name',
+      (name) => {
+        if (!name || !name.trim()) {
+          Alert.alert('Error', 'Food name is required');
+          return;
+        }
+        
+        Alert.prompt(
+          'Calories',
+          'Enter calories (whole number)',
+          (caloriesStr) => {
+            const calories = Math.round(parseFloat(caloriesStr || '0'));
+            if (isNaN(calories) || calories < 0) {
+              Alert.alert('Error', 'Please enter a valid calorie amount');
+              return;
+            }
+            
+            Alert.prompt(
+              'Protein (g)',
+              'Enter protein in grams (whole number)',
+              (proteinStr) => {
+                const protein = Math.round(parseFloat(proteinStr || '0'));
+                if (isNaN(protein) || protein < 0) {
+                  Alert.alert('Error', 'Please enter a valid protein amount');
+                  return;
+                }
+                
+                Alert.prompt(
+                  'Carbs (g)',
+                  'Enter carbs in grams (whole number)',
+                  (carbsStr) => {
+                    const carbs = Math.round(parseFloat(carbsStr || '0'));
+                    if (isNaN(carbs) || carbs < 0) {
+                      Alert.alert('Error', 'Please enter a valid carbs amount');
+                      return;
+                    }
+                    
+                    Alert.prompt(
+                      'Fat (g)',
+                      'Enter fat in grams (whole number)',
+                      (fatStr) => {
+                        const fat = Math.round(parseFloat(fatStr || '0'));
+                        if (isNaN(fat) || fat < 0) {
+                          Alert.alert('Error', 'Please enter a valid fat amount');
+                          return;
+                        }
+                        
+                        // Save custom food
+                        addCustomFood({
+                          name: name.trim(),
+                          category: 'Custom',
+                          calories,
+                          protein,
+                          carbs,
+                          fat,
+                          fiber: 0
+                        });
+                        
+                        Alert.alert('Success!', `${name} has been added to your custom foods database. You can now search for it when logging meals!`);
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    );
+  };
+
   const todayLog = getTodayLog();
   const currentMealItems = todayLog?.meals?.[selectedMeal] || [];
 
@@ -693,6 +776,16 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
         onChangeText={setSearchQuery}
         data-testid="input-search-food"
       />
+      
+      <TouchableOpacity 
+        style={styles.customFoodButton}
+        onPress={createCustomFood}
+        data-testid="button-add-custom-food"
+      >
+        <Ionicons name="add-circle" size={20} color="#9333EA" />
+        <Text style={styles.customFoodButtonText}>Can't find your food? Add custom food</Text>
+      </TouchableOpacity>
+      
       <ScrollView style={styles.foodList}>
         {foods.slice(0, 20).map((food) => (
           <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addFoodWithModifier(food.name)}>
@@ -706,9 +799,18 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
 }
 
 function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSearchQuery: (q: string) => void }) {
-  const { getTodayLog, updateTodayLog } = useStorage();
+  const { getTodayLog, updateTodayLog, customFoods, addCustomFood } = useStorage();
   const todayLog = getTodayLog();
-  const foods = searchFoods(searchQuery);
+  
+  // Merge custom foods with regular foods in search
+  const regularFoods = searchFoods(searchQuery);
+  const filteredCustomFoods = searchQuery.trim() 
+    ? customFoods.filter(food => 
+        food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        food.category.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : customFoods;
+  const foods = [...filteredCustomFoods, ...regularFoods];
 
   const addSnack = (foodItem: string | { name: string; calories?: number; protein?: number; carbs?: number; fat?: number; fiber?: number; isEstimated?: boolean }) => {
     const foodName = typeof foodItem === 'string' ? foodItem : foodItem.name;
@@ -840,6 +942,80 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
     });
   };
 
+  const createCustomFood = () => {
+    Alert.prompt(
+      'Add Custom Food',
+      'Enter food name',
+      (name) => {
+        if (!name || !name.trim()) {
+          Alert.alert('Error', 'Food name is required');
+          return;
+        }
+        
+        Alert.prompt(
+          'Calories',
+          'Enter calories (whole number)',
+          (caloriesStr) => {
+            const calories = Math.round(parseFloat(caloriesStr || '0'));
+            if (isNaN(calories) || calories < 0) {
+              Alert.alert('Error', 'Please enter a valid calorie amount');
+              return;
+            }
+            
+            Alert.prompt(
+              'Protein (g)',
+              'Enter protein in grams (whole number)',
+              (proteinStr) => {
+                const protein = Math.round(parseFloat(proteinStr || '0'));
+                if (isNaN(protein) || protein < 0) {
+                  Alert.alert('Error', 'Please enter a valid protein amount');
+                  return;
+                }
+                
+                Alert.prompt(
+                  'Carbs (g)',
+                  'Enter carbs in grams (whole number)',
+                  (carbsStr) => {
+                    const carbs = Math.round(parseFloat(carbsStr || '0'));
+                    if (isNaN(carbs) || carbs < 0) {
+                      Alert.alert('Error', 'Please enter a valid carbs amount');
+                      return;
+                    }
+                    
+                    Alert.prompt(
+                      'Fat (g)',
+                      'Enter fat in grams (whole number)',
+                      (fatStr) => {
+                        const fat = Math.round(parseFloat(fatStr || '0'));
+                        if (isNaN(fat) || fat < 0) {
+                          Alert.alert('Error', 'Please enter a valid fat amount');
+                          return;
+                        }
+                        
+                        // Save custom food
+                        addCustomFood({
+                          name: name.trim(),
+                          category: 'Custom',
+                          calories,
+                          protein,
+                          carbs,
+                          fat,
+                          fiber: 0
+                        });
+                        
+                        Alert.alert('Success!', `${name} has been added to your custom foods database. You can now search for it when logging snacks!`);
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    );
+  };
+
   return (
     <View style={styles.tabCard}>
       <View style={styles.snackHeader}>
@@ -879,6 +1055,16 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
         onChangeText={setSearchQuery}
         data-testid="input-search-snack"
       />
+      
+      <TouchableOpacity 
+        style={styles.customFoodButton}
+        onPress={createCustomFood}
+        data-testid="button-add-custom-food-snack"
+      >
+        <Ionicons name="add-circle" size={20} color="#9333EA" />
+        <Text style={styles.customFoodButtonText}>Can't find your food? Add custom food</Text>
+      </TouchableOpacity>
+      
       <ScrollView style={styles.foodList}>
         {foods.slice(0, 20).map((food) => (
           <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addSnackWithModifier(food.name)}>
@@ -1697,6 +1883,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#1F2937',
     flex: 1,
+  },
+  customFoodButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    backgroundColor: '#F3E8FF',
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#9333EA',
+    borderStyle: 'dashed',
+  },
+  customFoodButtonText: {
+    fontSize: 14,
+    color: '#9333EA',
+    fontWeight: '600',
+    marginLeft: 8,
   },
   bottomPadding: { height: 40 },
 });
