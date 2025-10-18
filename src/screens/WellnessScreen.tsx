@@ -601,10 +601,10 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
 
       addFood({
         name: finalName,
-        calories: foundFood.calories * multiplier,
-        protein: foundFood.protein * multiplier,
-        carbs: foundFood.carbs * multiplier,
-        fat: foundFood.fat * multiplier,
+        calories: (foundFood.calories || 0) * multiplier,
+        protein: (foundFood.protein || 0) * multiplier,
+        carbs: (foundFood.carbs || 0) * multiplier,
+        fat: (foundFood.fat || 0) * multiplier,
         portion: { amount, unit }
       });
     };
@@ -910,10 +910,10 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
 
       addSnack({
         name: finalName,
-        calories: foundFood.calories * multiplier,
-        protein: foundFood.protein * multiplier,
-        carbs: foundFood.carbs * multiplier,
-        fat: foundFood.fat * multiplier,
+        calories: (foundFood.calories || 0) * multiplier,
+        protein: (foundFood.protein || 0) * multiplier,
+        carbs: (foundFood.carbs || 0) * multiplier,
+        fat: (foundFood.fat || 0) * multiplier,
         portion: { amount, unit }
       });
     };
