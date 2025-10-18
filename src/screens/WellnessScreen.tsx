@@ -11,7 +11,7 @@ type Tab = 'weight' | 'steps' | 'water' | 'meals' | 'snacks' | 'mood' | 'measure
 export default function WellnessScreen() {
   const navigation = useNavigation();
   const route = useRoute();
-  const { getTodayLog, updateTodayLog, getChallengeStartDate, getCurrentChallengeDay, calculateMacros } = useStorage();
+  const { getTodayLog, updateTodayLog, getChallengeStartDate, getCurrentChallengeDay, calculateMacros, getCustomFoods, addCustomFood } = useStorage();
   const todayLog = getTodayLog();
   const scrollViewRef = useRef<ScrollView>(null);
   const tabContentRef = useRef<View>(null);
@@ -546,10 +546,16 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
   // Add food from database with optional modifier
   const addFoodWithModifier = (baseFoodName: string) => {
     // Find the food in the database to get nutrition data
-    const foundFood = fullFoodDatabase.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+    let foundFood = fullFoodDatabase.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+    
+    // If not in main database, check custom foods
+    if (!foundFood) {
+      const customFoods = getCustomFoods();
+      foundFood = customFoods.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+    }
     
     if (!foundFood) {
-      // If not found in database, just add as string (fallback)
+      // If not found in either database, just add as string (fallback)
       addFood(baseFoodName);
       return;
     }

@@ -175,15 +175,27 @@ export default function DailyLogScreen({ navigation }: any) {
         htmlContent += `</tbody></table></div>`;
       }
 
-      // Snacks
+      // Snacks - sorted by time
       if (dayLog.snacks && dayLog.snacks.length > 0) {
+        // Sort snacks by timestamp
+        const snacksWithTimes = dayLog.snacks.map((snack: any, index: number) => ({
+          snack,
+          time: dayLog.snackTimes?.[index] || ''
+        }));
+        snacksWithTimes.sort((a, b) => {
+          if (!a.time) return 1;
+          if (!b.time) return -1;
+          return a.time.localeCompare(b.time);
+        });
+        
         htmlContent += `
       <div class="meal-section">
         <div class="meal-title">🍎 Snacks</div>
         <table>
           <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
           <tbody>`;
-        dayLog.snacks.forEach((food: any) => {
+        snacksWithTimes.forEach((item: any) => {
+          const food = item.snack;
           const foodName = typeof food === 'string' ? food : food.name;
           const portion = (typeof food !== 'string' && food.portion) ? `${food.portion.amount} ${food.portion.unit}` : '—';
           const calories = (typeof food !== 'string' && food.calories) ? Math.round(food.calories) : '—';
@@ -296,16 +308,28 @@ export default function DailyLogScreen({ navigation }: any) {
         });
       }
 
-      // Snacks
+      // Snacks - sorted by time
       if (dayLog.snacks) {
-        dayLog.snacks.forEach((food: any, index: number) => {
+        // Sort snacks by timestamp
+        const snacksWithTimes = dayLog.snacks.map((snack: any, index: number) => ({
+          snack,
+          time: dayLog.snackTimes?.[index] || ''
+        }));
+        snacksWithTimes.sort((a, b) => {
+          if (!a.time) return 1;
+          if (!b.time) return -1;
+          return a.time.localeCompare(b.time);
+        });
+        
+        snacksWithTimes.forEach((item: any) => {
+          const food = item.snack;
           const foodName = typeof food === 'string' ? food : food.name;
           const portion = (typeof food !== 'string' && food.portion) ? `${food.portion.amount}${food.portion.unit}` : '';
           const calories = (typeof food !== 'string' && food.calories) ? Math.round(food.calories) : '';
           const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) : '';
           const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) : '';
           const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) : '';
-          const time = dayLog.snackTimes?.[index] || '';
+          const time = item.time;
           csvContent += `${date},Snack,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${time},\n`;
         });
       }
@@ -387,10 +411,26 @@ export default function DailyLogScreen({ navigation }: any) {
             const breakfastFoods = dayLog.meals?.breakfast || [];
             const lunchFoods = dayLog.meals?.lunch || [];
             const dinnerFoods = dayLog.meals?.dinner || [];
-            const snackFoods = dayLog.snacks || [];
+            const rawSnackFoods = dayLog.snacks || [];
             const workouts = dayLog.workouts || [];
             const waterGlasses = dayLog.water || 0;
             const steps = dayLog.steps || '0';
+            
+            // Sort snacks by timestamp chronologically
+            const snacksWithTimes = rawSnackFoods.map((snack, index) => ({
+              snack,
+              time: dayLog.snackTimes?.[index] || '',
+              originalIndex: index
+            }));
+            
+            snacksWithTimes.sort((a, b) => {
+              if (!a.time) return 1;
+              if (!b.time) return -1;
+              return a.time.localeCompare(b.time);
+            });
+            
+            const snackFoods = snacksWithTimes.map(item => item.snack);
+            const sortedSnackTimes = snacksWithTimes.map(item => item.time);
             
             const calorieData = dayLog.meals ? calculateCalories(dayLog.meals, dayLog.snacks) : { total: 0, breakfast: 0, lunch: 0, dinner: 0 };
             const macroData = dayLog.meals ? calculateMacros(dayLog.meals, dayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 } };
@@ -463,8 +503,8 @@ export default function DailyLogScreen({ navigation }: any) {
                       <View style={styles.mealHeader}>
                         <Ionicons name="warning" size={18} color="#F59E0B" />
                         <Text style={[styles.mealTitle, { color: '#F59E0B' }]}>Snack</Text>
-                        {dayLog.snackTimes && dayLog.snackTimes[index] && (
-                          <Text style={styles.mealTime}>{dayLog.snackTimes[index]}</Text>
+                        {sortedSnackTimes[index] && (
+                          <Text style={styles.mealTime}>{sortedSnackTimes[index]}</Text>
                         )}
                       </View>
                       <View style={styles.foodItem}>
