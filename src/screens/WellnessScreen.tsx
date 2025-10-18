@@ -660,8 +660,8 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
         }
         
         Alert.prompt(
-          'Calories',
-          'Enter calories (whole number)',
+          'Calories (per 100g)',
+          'Enter calories per 100g (whole number)',
           (caloriesStr) => {
             const calories = Math.round(parseFloat(caloriesStr || '0'));
             if (isNaN(calories) || calories < 0) {
@@ -670,8 +670,8 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
             }
             
             Alert.prompt(
-              'Protein (g)',
-              'Enter protein in grams (whole number)',
+              'Protein (per 100g)',
+              'Enter protein in grams per 100g (whole number)',
               (proteinStr) => {
                 const protein = Math.round(parseFloat(proteinStr || '0'));
                 if (isNaN(protein) || protein < 0) {
@@ -680,8 +680,8 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
                 }
                 
                 Alert.prompt(
-                  'Carbs (g)',
-                  'Enter carbs in grams (whole number)',
+                  'Carbs (per 100g)',
+                  'Enter carbs in grams per 100g (whole number)',
                   (carbsStr) => {
                     const carbs = Math.round(parseFloat(carbsStr || '0'));
                     if (isNaN(carbs) || carbs < 0) {
@@ -690,8 +690,8 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
                     }
                     
                     Alert.prompt(
-                      'Fat (g)',
-                      'Enter fat in grams (whole number)',
+                      'Fat (per 100g)',
+                      'Enter fat in grams per 100g (whole number)',
                       (fatStr) => {
                         const fat = Math.round(parseFloat(fatStr || '0'));
                         if (isNaN(fat) || fat < 0) {
@@ -795,8 +795,16 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
       <ScrollView style={styles.foodList}>
         {foods.slice(0, 20).map((food) => (
           <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addFoodWithModifier(food.name)}>
-            <Text style={styles.foodName}>{food.name}</Text>
-            <Text style={styles.foodCategory}>{food.category}</Text>
+            <View style={styles.foodItemHeader}>
+              <Text style={styles.foodName}>{food.name}</Text>
+              <Text style={styles.foodCategory}>{food.category}</Text>
+            </View>
+            <View style={styles.foodMacros}>
+              <Text style={styles.foodMacroText}>🔥 {Math.round(food.calories)} cal</Text>
+              <Text style={styles.foodMacroText}>P: {Math.round(food.protein)}g</Text>
+              <Text style={styles.foodMacroText}>C: {Math.round(food.carbs)}g</Text>
+              <Text style={styles.foodMacroText}>F: {Math.round(food.fat)}g</Text>
+            </View>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -1074,8 +1082,16 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
       <ScrollView style={styles.foodList}>
         {foods.slice(0, 20).map((food) => (
           <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addSnackWithModifier(food.name)}>
-            <Text style={styles.foodName}>{food.name}</Text>
-            <Text style={styles.foodCategory}>{food.category}</Text>
+            <View style={styles.foodItemHeader}>
+              <Text style={styles.foodName}>{food.name}</Text>
+              <Text style={styles.foodCategory}>{food.category}</Text>
+            </View>
+            <View style={styles.foodMacros}>
+              <Text style={styles.foodMacroText}>🔥 {Math.round(food.calories)} cal</Text>
+              <Text style={styles.foodMacroText}>P: {Math.round(food.protein)}g</Text>
+              <Text style={styles.foodMacroText}>C: {Math.round(food.carbs)}g</Text>
+              <Text style={styles.foodMacroText}>F: {Math.round(food.fat)}g</Text>
+            </View>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -1720,8 +1736,11 @@ const styles = StyleSheet.create({
   searchInput: { backgroundColor: '#F3F4F6', padding: 16, borderRadius: 12, fontSize: 16, marginBottom: 16 },
   foodList: { maxHeight: 300 },
   foodItem: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+  foodItemHeader: { marginBottom: 8 },
   foodName: { fontSize: 16, fontWeight: '600', color: '#1F2937' },
   foodCategory: { fontSize: 12, color: '#6B7280', marginTop: 4 },
+  foodMacros: { flexDirection: 'row', gap: 12, marginTop: 4 },
+  foodMacroText: { fontSize: 12, color: '#9333EA', fontWeight: '500' },
   moodContainer: { flexDirection: 'row', justifyContent: 'space-around' },
   moodButton: { padding: 12, borderRadius: 12, backgroundColor: '#F3F4F6', alignItems: 'center' },
   moodButtonActive: { backgroundColor: '#FEE2E2', borderWidth: 2, borderColor: '#EF4444' },
