@@ -800,10 +800,10 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
               <Text style={styles.foodCategory}>{food.category}</Text>
             </View>
             <View style={styles.foodMacros}>
-              <Text style={styles.foodMacroText}>🔥 {Math.round(food.calories)} cal</Text>
-              <Text style={styles.foodMacroText}>P: {Math.round(food.protein)}g</Text>
-              <Text style={styles.foodMacroText}>C: {Math.round(food.carbs)}g</Text>
-              <Text style={styles.foodMacroText}>F: {Math.round(food.fat)}g</Text>
+              <Text style={styles.foodMacroText}>🔥 {Math.round(food.calories || 0)} cal</Text>
+              <Text style={styles.foodMacroText}>P: {Math.round(food.protein || 0)}g</Text>
+              <Text style={styles.foodMacroText}>C: {Math.round(food.carbs || 0)}g</Text>
+              <Text style={styles.foodMacroText}>F: {Math.round(food.fat || 0)}g</Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -1087,10 +1087,10 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
               <Text style={styles.foodCategory}>{food.category}</Text>
             </View>
             <View style={styles.foodMacros}>
-              <Text style={styles.foodMacroText}>🔥 {Math.round(food.calories)} cal</Text>
-              <Text style={styles.foodMacroText}>P: {Math.round(food.protein)}g</Text>
-              <Text style={styles.foodMacroText}>C: {Math.round(food.carbs)}g</Text>
-              <Text style={styles.foodMacroText}>F: {Math.round(food.fat)}g</Text>
+              <Text style={styles.foodMacroText}>🔥 {Math.round(food.calories || 0)} cal</Text>
+              <Text style={styles.foodMacroText}>P: {Math.round(food.protein || 0)}g</Text>
+              <Text style={styles.foodMacroText}>C: {Math.round(food.carbs || 0)}g</Text>
+              <Text style={styles.foodMacroText}>F: {Math.round(food.fat || 0)}g</Text>
             </View>
           </TouchableOpacity>
         ))}
