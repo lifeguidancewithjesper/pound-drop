@@ -371,7 +371,7 @@ export default function DashboardScreen() {
                 {todayLog.workouts.map((workout, idx) => (
                   <View key={idx} style={styles.workoutChip}>
                     <Text style={styles.workoutText}>
-                      {workout.type} • {workout.duration}min
+                      {workout.type} • {workout.duration}
                       {workout.calories ? ` • ${workout.calories}cal` : ''}
                     </Text>
                   </View>

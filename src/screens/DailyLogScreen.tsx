@@ -816,7 +816,7 @@ export default function DailyLogScreen({ navigation }: any) {
                         <View style={styles.workoutDetails}>
                           <View style={styles.workoutDetail}>
                             <Ionicons name="time-outline" size={14} color="#6B7280" />
-                            <Text style={styles.workoutDetailText}>{workout.duration} min</Text>
+                            <Text style={styles.workoutDetailText}>{workout.duration}</Text>
                           </View>
                           {workout.calories && (
                             <View style={styles.workoutDetail}>
