@@ -379,7 +379,17 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     try {
       const data = await SecureStore.getItemAsync(CUSTOM_FOODS_KEY);
       if (data) {
-        setCustomFoods(JSON.parse(data));
+        const parsedFoods = JSON.parse(data);
+        // Normalize old custom foods to ensure all have complete nutrition data
+        const normalizedFoods = parsedFoods.map((food: any) => ({
+          ...food,
+          calories: food.calories ?? 0,
+          protein: food.protein ?? 0,
+          carbs: food.carbs ?? 0,
+          fat: food.fat ?? 0,
+          fiber: food.fiber ?? 0
+        }));
+        setCustomFoods(normalizedFoods);
       }
     } catch (error) {
       console.error('Error loading custom foods:', error);

@@ -550,7 +550,6 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
     
     // If not in main database, check custom foods
     if (!foundFood) {
-      const customFoods = getCustomFoods();
       foundFood = customFoods.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
     }
     
@@ -851,9 +850,16 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
 
   // Add food from database with optional modifier
   const addSnackWithModifier = (baseFoodName: string) => {
-    const foundFood = fullFoodDatabase.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+    // Find the food in the database to get nutrition data
+    let foundFood = fullFoodDatabase.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+    
+    // If not in main database, check custom foods
+    if (!foundFood) {
+      foundFood = customFoods.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+    }
     
     if (!foundFood) {
+      // If not found in either database, just add as string (fallback)
       addSnack(baseFoodName);
       return;
     }
