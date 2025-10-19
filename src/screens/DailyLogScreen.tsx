@@ -177,6 +177,16 @@ export default function DailyLogScreen({ navigation }: any) {
 
       // Snacks - sorted by time
       if (dayLog.snacks && dayLog.snacks.length > 0) {
+        // Helper to convert 12-hour time to 24-hour for sorting
+        const convertTo24Hour = (time12h: string) => {
+          if (!time12h) return '';
+          const [time, period] = time12h.split(' ');
+          let [hours, minutes] = time.split(':').map(Number);
+          if (period === 'PM' && hours !== 12) hours += 12;
+          if (period === 'AM' && hours === 12) hours = 0;
+          return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        };
+        
         // Sort snacks by timestamp
         const snacksWithTimes = dayLog.snacks.map((snack: any, index: number) => ({
           snack,
@@ -185,7 +195,7 @@ export default function DailyLogScreen({ navigation }: any) {
         snacksWithTimes.sort((a, b) => {
           if (!a.time) return 1;
           if (!b.time) return -1;
-          return a.time.localeCompare(b.time);
+          return convertTo24Hour(a.time).localeCompare(convertTo24Hour(b.time));
         });
         
         htmlContent += `
@@ -310,6 +320,16 @@ export default function DailyLogScreen({ navigation }: any) {
 
       // Snacks - sorted by time
       if (dayLog.snacks) {
+        // Helper to convert 12-hour time to 24-hour for sorting
+        const convertTo24Hour = (time12h: string) => {
+          if (!time12h) return '';
+          const [time, period] = time12h.split(' ');
+          let [hours, minutes] = time.split(':').map(Number);
+          if (period === 'PM' && hours !== 12) hours += 12;
+          if (period === 'AM' && hours === 12) hours = 0;
+          return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        };
+        
         // Sort snacks by timestamp
         const snacksWithTimes = dayLog.snacks.map((snack: any, index: number) => ({
           snack,
@@ -318,7 +338,7 @@ export default function DailyLogScreen({ navigation }: any) {
         snacksWithTimes.sort((a, b) => {
           if (!a.time) return 1;
           if (!b.time) return -1;
-          return a.time.localeCompare(b.time);
+          return convertTo24Hour(a.time).localeCompare(convertTo24Hour(b.time));
         });
         
         snacksWithTimes.forEach((item: any) => {
@@ -416,6 +436,16 @@ export default function DailyLogScreen({ navigation }: any) {
             const waterGlasses = dayLog.water || 0;
             const steps = dayLog.steps || '0';
             
+            // Helper to convert 12-hour time to 24-hour for sorting
+            const convertTo24Hour = (time12h: string) => {
+              if (!time12h) return '';
+              const [time, period] = time12h.split(' ');
+              let [hours, minutes] = time.split(':').map(Number);
+              if (period === 'PM' && hours !== 12) hours += 12;
+              if (period === 'AM' && hours === 12) hours = 0;
+              return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            };
+            
             // Sort snacks by timestamp chronologically
             const snacksWithTimes = rawSnackFoods.map((snack, index) => ({
               snack,
@@ -426,7 +456,7 @@ export default function DailyLogScreen({ navigation }: any) {
             snacksWithTimes.sort((a, b) => {
               if (!a.time) return 1;
               if (!b.time) return -1;
-              return a.time.localeCompare(b.time);
+              return convertTo24Hour(a.time).localeCompare(convertTo24Hour(b.time));
             });
             
             const snackFoods = snacksWithTimes.map(item => item.snack);
@@ -434,6 +464,78 @@ export default function DailyLogScreen({ navigation }: any) {
             
             const calorieData = dayLog.meals ? calculateCalories(dayLog.meals, dayLog.snacks) : { total: 0, breakfast: 0, lunch: 0, dinner: 0 };
             const macroData = dayLog.meals ? calculateMacros(dayLog.meals, dayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 } };
+
+            // Combine all meals and snacks with timestamps for chronological sorting
+            const allFoodItems: Array<{ type: 'meal' | 'snack', time: string, data: any }> = [];
+            
+            // Add breakfast
+            if (breakfastFoods.length > 0) {
+              allFoodItems.push({
+                type: 'meal',
+                time: dayLog.mealTimes?.breakfast || '00:00 AM',
+                data: {
+                  mealType: 'breakfast',
+                  icon: 'sunny',
+                  iconColor: '#FACC15',
+                  title: 'Breakfast',
+                  foods: breakfastFoods,
+                  calories: calorieData.breakfast,
+                  macros: macroData.breakfast,
+                  feeling: dayLog.mealFeelings?.breakfast
+                }
+              });
+            }
+            
+            // Add each snack
+            snacksWithTimes.forEach((item, index) => {
+              allFoodItems.push({
+                type: 'snack',
+                time: item.time || '23:59 PM',
+                data: {
+                  snack: item.snack,
+                  index: index
+                }
+              });
+            });
+            
+            // Add lunch
+            if (lunchFoods.length > 0) {
+              allFoodItems.push({
+                type: 'meal',
+                time: dayLog.mealTimes?.lunch || '12:00 PM',
+                data: {
+                  mealType: 'lunch',
+                  icon: 'partly-sunny',
+                  iconColor: '#06B6D4',
+                  title: 'Lunch',
+                  foods: lunchFoods,
+                  calories: calorieData.lunch,
+                  macros: macroData.lunch,
+                  feeling: dayLog.mealFeelings?.lunch
+                }
+              });
+            }
+            
+            // Add dinner
+            if (dinnerFoods.length > 0) {
+              allFoodItems.push({
+                type: 'meal',
+                time: dayLog.mealTimes?.dinner || '18:00 PM',
+                data: {
+                  mealType: 'dinner',
+                  icon: 'moon',
+                  iconColor: '#9333EA',
+                  title: 'Dinner',
+                  foods: dinnerFoods,
+                  calories: calorieData.dinner,
+                  macros: macroData.dinner,
+                  feeling: dayLog.mealFeelings?.dinner
+                }
+              });
+            }
+            
+            // Sort all items chronologically by time
+            allFoodItems.sort((a, b) => convertTo24Hour(a.time).localeCompare(convertTo24Hour(b.time)));
 
             return (
               <View key={dayLog.date} style={styles.daySection}>
@@ -450,185 +552,93 @@ export default function DailyLogScreen({ navigation }: any) {
                     <Text style={styles.sectionTitle}>Meals & Snacks (Chronological)</Text>
                   </View>
 
-                  {/* Breakfast */}
-                  {breakfastFoods.length > 0 && (
-                    <View style={styles.mealCard}>
-                      <View style={styles.mealHeader}>
-                        <Ionicons name="sunny" size={18} color="#FACC15" />
-                        <Text style={styles.mealTitle}>Breakfast</Text>
-                        {dayLog.mealTimes?.breakfast && (
-                          <Text style={styles.mealTime}>{dayLog.mealTimes.breakfast}</Text>
-                        )}
-                      </View>
-                      <>
-                        {breakfastFoods.map((food, index) => (
-                          <View key={index} style={styles.foodItem}>
+                  {/* Render all food items in chronological order */}
+                  {allFoodItems.map((item, idx) => {
+                    if (item.type === 'meal') {
+                      const { icon, iconColor, title, foods, calories, macros, feeling } = item.data;
+                      return (
+                        <View key={`meal-${item.data.mealType}-${idx}`} style={styles.mealCard}>
+                          <View style={styles.mealHeader}>
+                            <Ionicons name={icon as any} size={18} color={iconColor} />
+                            <Text style={styles.mealTitle}>{title}</Text>
+                            <Text style={styles.mealTime}>{item.time}</Text>
+                          </View>
+                          <>
+                            {foods.map((food: any, index: number) => (
+                              <View key={index} style={styles.foodItem}>
+                                <View style={styles.foodBullet} />
+                                <Text style={styles.foodText}>
+                                  {typeof food === 'string' 
+                                    ? food 
+                                    : food.portion 
+                                      ? `${food.portion.amount} ${food.portion.unit} of ${food.name}`
+                                      : food.name
+                                  }
+                                </Text>
+                              </View>
+                            ))}
+                            {calories > 0 && (
+                              <>
+                                <View style={styles.calorieRow}>
+                                  <Ionicons name="flame" size={16} color="#F97316" />
+                                  <Text style={styles.calorieText}>{Math.round(calories)} calories</Text>
+                                </View>
+                                <View style={styles.macroRow}>
+                                  <Text style={styles.macroText}>
+                                    P: {Math.round(macros.protein)}g | C: {Math.round(macros.carbs)}g | F: {Math.round(macros.fat)}g
+                                  </Text>
+                                </View>
+                              </>
+                            )}
+                            {feeling && (
+                              <View style={styles.feelingRow}>
+                                <Ionicons name="heart" size={16} color="#EF4444" />
+                                <Text style={styles.feelingText}>Feeling: {feeling}/10</Text>
+                              </View>
+                            )}
+                          </>
+                        </View>
+                      );
+                    } else {
+                      // Snack
+                      const { snack } = item.data;
+                      return (
+                        <View key={`snack-${idx}`} style={styles.snackCard}>
+                          <View style={styles.mealHeader}>
+                            <Ionicons name="warning" size={18} color="#F59E0B" />
+                            <Text style={[styles.mealTitle, { color: '#F59E0B' }]}>Snack</Text>
+                            <Text style={styles.mealTime}>{item.time}</Text>
+                          </View>
+                          <View style={styles.foodItem}>
                             <View style={styles.foodBullet} />
                             <Text style={styles.foodText}>
-                              {typeof food === 'string' 
-                                ? food 
-                                : food.portion 
-                                  ? `${food.portion.amount} ${food.portion.unit} of ${food.name}`
-                                  : food.name
+                              {typeof snack === 'string' 
+                                ? snack 
+                                : snack.portion 
+                                  ? `${snack.portion.amount} ${snack.portion.unit} of ${snack.name}`
+                                  : snack.name
                               }
                             </Text>
                           </View>
-                        ))}
-                        {calorieData.breakfast > 0 && (
-                          <>
-                            <View style={styles.calorieRow}>
-                              <Ionicons name="flame" size={16} color="#F97316" />
-                              <Text style={styles.calorieText}>{Math.round(calorieData.breakfast)} calories</Text>
-                            </View>
-                            <View style={styles.macroRow}>
-                              <Text style={styles.macroText}>
-                                P: {Math.round(macroData.breakfast.protein)}g | C: {Math.round(macroData.breakfast.carbs)}g | F: {Math.round(macroData.breakfast.fat)}g
-                              </Text>
-                            </View>
-                          </>
-                        )}
-                        {dayLog.mealFeelings?.breakfast && (
-                          <View style={styles.feelingRow}>
-                            <Ionicons name="heart" size={16} color="#EF4444" />
-                            <Text style={styles.feelingText}>Feeling: {dayLog.mealFeelings.breakfast}/10</Text>
-                          </View>
-                        )}
-                      </>
-                    </View>
-                  )}
+                          {typeof snack !== 'string' && snack.calories && (
+                            <>
+                              <View style={styles.calorieRow}>
+                                <Ionicons name="flame" size={16} color="#F97316" />
+                                <Text style={styles.calorieText}>{Math.round(snack.calories)} calories</Text>
+                              </View>
+                              <View style={styles.macroRow}>
+                                <Text style={styles.macroText}>
+                                  P: {Math.round(snack.protein || 0)}g | C: {Math.round(snack.carbs || 0)}g | F: {Math.round(snack.fat || 0)}g
+                                </Text>
+                              </View>
+                            </>
+                          )}
+                        </View>
+                      );
+                    }
+                  })}
 
-                  {/* Snacks with individual timestamps */}
-                  {snackFoods.map((snack, index) => (
-                    <View key={`snack-${index}`} style={styles.snackCard}>
-                      <View style={styles.mealHeader}>
-                        <Ionicons name="warning" size={18} color="#F59E0B" />
-                        <Text style={[styles.mealTitle, { color: '#F59E0B' }]}>Snack</Text>
-                        {sortedSnackTimes[index] && (
-                          <Text style={styles.mealTime}>{sortedSnackTimes[index]}</Text>
-                        )}
-                      </View>
-                      <View style={styles.foodItem}>
-                        <View style={styles.foodBullet} />
-                        <Text style={styles.foodText}>
-                          {typeof snack === 'string' 
-                            ? snack 
-                            : snack.portion 
-                              ? `${snack.portion.amount} ${snack.portion.unit} of ${snack.name}`
-                              : snack.name
-                          }
-                        </Text>
-                      </View>
-                      {typeof snack !== 'string' && snack.calories && (
-                        <>
-                          <View style={styles.calorieRow}>
-                            <Ionicons name="flame" size={16} color="#F97316" />
-                            <Text style={styles.calorieText}>{Math.round(snack.calories)} calories</Text>
-                          </View>
-                          <View style={styles.macroRow}>
-                            <Text style={styles.macroText}>
-                              P: {Math.round(snack.protein || 0)}g | C: {Math.round(snack.carbs || 0)}g | F: {Math.round(snack.fat || 0)}g
-                            </Text>
-                          </View>
-                        </>
-                      )}
-                    </View>
-                  ))}
-
-                  {/* Lunch */}
-                  {lunchFoods.length > 0 && (
-                    <View style={styles.mealCard}>
-                      <View style={styles.mealHeader}>
-                        <Ionicons name="partly-sunny" size={18} color="#06B6D4" />
-                        <Text style={styles.mealTitle}>Lunch</Text>
-                        {dayLog.mealTimes?.lunch && (
-                          <Text style={styles.mealTime}>{dayLog.mealTimes.lunch}</Text>
-                        )}
-                      </View>
-                      <>
-                        {lunchFoods.map((food, index) => (
-                          <View key={index} style={styles.foodItem}>
-                            <View style={styles.foodBullet} />
-                            <Text style={styles.foodText}>
-                              {typeof food === 'string' 
-                                ? food 
-                                : food.portion 
-                                  ? `${food.portion.amount} ${food.portion.unit} of ${food.name}`
-                                  : food.name
-                              }
-                            </Text>
-                          </View>
-                        ))}
-                        {calorieData.lunch > 0 && (
-                          <>
-                            <View style={styles.calorieRow}>
-                              <Ionicons name="flame" size={16} color="#F97316" />
-                              <Text style={styles.calorieText}>{Math.round(calorieData.lunch)} calories</Text>
-                            </View>
-                            <View style={styles.macroRow}>
-                              <Text style={styles.macroText}>
-                                P: {Math.round(macroData.lunch.protein)}g | C: {Math.round(macroData.lunch.carbs)}g | F: {Math.round(macroData.lunch.fat)}g
-                              </Text>
-                            </View>
-                          </>
-                        )}
-                        {dayLog.mealFeelings?.lunch && (
-                          <View style={styles.feelingRow}>
-                            <Ionicons name="heart" size={16} color="#EF4444" />
-                            <Text style={styles.feelingText}>Feeling: {dayLog.mealFeelings.lunch}/10</Text>
-                          </View>
-                        )}
-                      </>
-                    </View>
-                  )}
-
-                  {/* Dinner */}
-                  {dinnerFoods.length > 0 && (
-                    <View style={styles.mealCard}>
-                      <View style={styles.mealHeader}>
-                        <Ionicons name="moon" size={18} color="#9333EA" />
-                        <Text style={styles.mealTitle}>Dinner</Text>
-                        {dayLog.mealTimes?.dinner && (
-                          <Text style={styles.mealTime}>{dayLog.mealTimes.dinner}</Text>
-                        )}
-                      </View>
-                      <>
-                        {dinnerFoods.map((food, index) => (
-                          <View key={index} style={styles.foodItem}>
-                            <View style={styles.foodBullet} />
-                            <Text style={styles.foodText}>
-                              {typeof food === 'string' 
-                                ? food 
-                                : food.portion 
-                                  ? `${food.portion.amount} ${food.portion.unit} of ${food.name}`
-                                  : food.name
-                              }
-                            </Text>
-                          </View>
-                        ))}
-                        {calorieData.dinner > 0 && (
-                          <>
-                            <View style={styles.calorieRow}>
-                              <Ionicons name="flame" size={16} color="#F97316" />
-                              <Text style={styles.calorieText}>{Math.round(calorieData.dinner)} calories</Text>
-                            </View>
-                            <View style={styles.macroRow}>
-                              <Text style={styles.macroText}>
-                                P: {Math.round(macroData.dinner.protein)}g | C: {Math.round(macroData.dinner.carbs)}g | F: {Math.round(macroData.dinner.fat)}g
-                              </Text>
-                            </View>
-                          </>
-                        )}
-                        {dayLog.mealFeelings?.dinner && (
-                          <View style={styles.feelingRow}>
-                            <Ionicons name="heart" size={16} color="#EF4444" />
-                            <Text style={styles.feelingText}>Feeling: {dayLog.mealFeelings.dinner}/10</Text>
-                          </View>
-                        )}
-                      </>
-                    </View>
-                  )}
-
-                  {!breakfastFoods.length && !lunchFoods.length && !dinnerFoods.length && !snackFoods.length && (
+                  {allFoodItems.length === 0 && (
                     <Text style={styles.emptyText}>No meals or snacks logged</Text>
                   )}
                 </View>
