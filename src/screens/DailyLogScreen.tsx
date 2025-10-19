@@ -472,7 +472,7 @@ export default function DailyLogScreen({ navigation }: any) {
             if (breakfastFoods.length > 0) {
               allFoodItems.push({
                 type: 'meal',
-                time: dayLog.mealTimes?.breakfast || '00:00 AM',
+                time: dayLog.mealTimes?.breakfast || '7:00 AM',
                 data: {
                   mealType: 'breakfast',
                   icon: 'sunny',
@@ -485,18 +485,6 @@ export default function DailyLogScreen({ navigation }: any) {
                 }
               });
             }
-            
-            // Add each snack
-            snacksWithTimes.forEach((item, index) => {
-              allFoodItems.push({
-                type: 'snack',
-                time: item.time || '23:59 PM',
-                data: {
-                  snack: item.snack,
-                  index: index
-                }
-              });
-            });
             
             // Add lunch
             if (lunchFoods.length > 0) {
@@ -520,7 +508,7 @@ export default function DailyLogScreen({ navigation }: any) {
             if (dinnerFoods.length > 0) {
               allFoodItems.push({
                 type: 'meal',
-                time: dayLog.mealTimes?.dinner || '18:00 PM',
+                time: dayLog.mealTimes?.dinner || '6:00 PM',
                 data: {
                   mealType: 'dinner',
                   icon: 'moon',
@@ -534,8 +522,26 @@ export default function DailyLogScreen({ navigation }: any) {
               });
             }
             
-            // Sort all items chronologically by time
-            allFoodItems.sort((a, b) => convertTo24Hour(a.time).localeCompare(convertTo24Hour(b.time)));
+            // Add each snack with its timestamp
+            snacksWithTimes.forEach((item, index) => {
+              if (item.time) {
+                allFoodItems.push({
+                  type: 'snack',
+                  time: item.time,
+                  data: {
+                    snack: item.snack,
+                    index: index
+                  }
+                });
+              }
+            });
+            
+            // Sort all items chronologically by converting to 24-hour time
+            allFoodItems.sort((a, b) => {
+              const timeA = convertTo24Hour(a.time);
+              const timeB = convertTo24Hour(b.time);
+              return timeA.localeCompare(timeB);
+            });
 
             return (
               <View key={dayLog.date} style={styles.daySection}>
