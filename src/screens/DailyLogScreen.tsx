@@ -438,11 +438,23 @@ export default function DailyLogScreen({ navigation }: any) {
             
             // Helper to convert 12-hour time to 24-hour for sorting
             const convertTo24Hour = (time12h: string) => {
-              if (!time12h) return '';
-              const [time, period] = time12h.split(' ');
-              let [hours, minutes] = time.split(':').map(Number);
+              if (!time12h) return '99:99'; // Put empty times at the end
+              const trimmed = time12h.trim();
+              const parts = trimmed.split(' ');
+              if (parts.length !== 2) return '99:99'; // Invalid format
+              
+              const [time, period] = parts;
+              const timeParts = time.split(':');
+              if (timeParts.length !== 2) return '99:99'; // Invalid format
+              
+              let hours = parseInt(timeParts[0], 10);
+              let minutes = parseInt(timeParts[1], 10);
+              
+              if (isNaN(hours) || isNaN(minutes)) return '99:99'; // Invalid numbers
+              
               if (period === 'PM' && hours !== 12) hours += 12;
               if (period === 'AM' && hours === 12) hours = 0;
+              
               return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
             };
             
