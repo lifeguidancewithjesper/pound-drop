@@ -111,6 +111,14 @@ export default function PersonalizedWorkoutScreen() {
         </View>
       </View>
 
+      {/* Medical Disclaimer */}
+      <View style={styles.disclaimerBox}>
+        <Ionicons name="medical" size={20} color="#DC2626" />
+        <Text style={styles.disclaimerText}>
+          <Text style={styles.disclaimerBold}>Medical Advisory:</Text> Start slowly and listen to your body. Consult with your physician before beginning any new exercise program, especially if you have pre-existing health conditions, injuries, or concerns.
+        </Text>
+      </View>
+
       {/* Fitness Level Selection */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Select Your Fitness Level</Text>
@@ -282,6 +290,28 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  disclaimerBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    padding: 14,
+    marginHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#DC2626',
+    gap: 12,
+  },
+  disclaimerText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 19,
+  },
+  disclaimerBold: {
+    fontWeight: '700',
+    color: '#DC2626',
   },
   section: {
     padding: 20,

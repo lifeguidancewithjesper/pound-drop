@@ -183,6 +183,14 @@ export default function QuickWorkoutsScreen() {
         </View>
       </View>
 
+      {/* Medical Disclaimer */}
+      <View style={styles.disclaimerBox}>
+        <Ionicons name="medical" size={18} color="#DC2626" />
+        <Text style={styles.disclaimerText}>
+          <Text style={styles.disclaimerBold}>Medical Advisory:</Text> Start slowly and listen to your body. Consult with your physician before beginning any new exercise program.
+        </Text>
+      </View>
+
       {/* Filter Tabs */}
       <ScrollView 
         horizontal 
@@ -308,6 +316,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     marginTop: 2,
+  },
+  disclaimerBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#DC2626',
+    gap: 10,
+  },
+  disclaimerText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 18,
+  },
+  disclaimerBold: {
+    fontWeight: '700',
+    color: '#DC2626',
   },
   filterScrollView: {
     flexGrow: 0,

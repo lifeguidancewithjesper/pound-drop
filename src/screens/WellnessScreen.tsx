@@ -89,6 +89,12 @@ export default function WellnessScreen() {
             <Text style={styles.methodHeadline}>Eat Less, Move Less</Text>
             <Text style={[styles.methodBullet, { fontStyle: 'italic' }]}>• Consume 1-3 meals daily, and walk min 30 mins daily.</Text>
             <Text style={styles.methodSubtitle}>Get sufficient proteins and wholefoods, eating in a way that doesn't spike blood sugar and insulin. Managing insulin supports weight loss. NO calorie or carb counting - use hand-based portion guidelines instead!</Text>
+            
+            <View style={styles.medicalDisclaimer}>
+              <Ionicons name="medical" size={16} color="#DC2626" />
+              <Text style={styles.disclaimerText}>Important: Start slowly with any exercise routine. Consult with your physician before beginning any new exercise program, especially if you have pre-existing health conditions.</Text>
+            </View>
+            
             <View style={styles.methodSteps}>
               <MethodStep number="1" title="Diet" desc="Use hand-based portions (NOT calorie counting) Veggies = 2 cupped hands. Protein = palm size. Starches = fist size. Fats = thumb size. Breakfast: Get sufficient protein (palm size) with fiber-rich wholefoods. Eat greens first, then proteins, fats, and carbs last to keep blood sugar low. Lunch: Natural wholefoods, non-starchy vegetables (2 cupped hands), with sufficient protein (palm size). Dinner: Lighter version of lunch - can add small portions of starchy vegetables (fist size)." />
               <MethodStep number="2" title="Fasting" desc="Fast between meals and practice 16-hour intermittent fasting daily to improve insulin sensitivity and support fat metabolism." />
@@ -1672,6 +1678,23 @@ const styles = StyleSheet.create({
   methodHeadline: { fontSize: 18, fontWeight: 'bold', color: '#9333EA', marginBottom: 8, textAlign: 'center' },
   methodBullet: { fontSize: 14, color: '#4B5563', marginBottom: 8, textAlign: 'center' },
   methodSubtitle: { fontSize: 13, color: '#6B7280', marginBottom: 16, textAlign: 'center', fontStyle: 'italic' },
+  medicalDisclaimer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#DC2626',
+    marginBottom: 16,
+    gap: 10,
+  },
+  disclaimerText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 18,
+  },
   methodSteps: { gap: 12 },
   methodStep: { flexDirection: 'row', alignItems: 'flex-start' },
   methodNumber: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#9333EA', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
