@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
@@ -10,12 +10,27 @@ type MealFilter = 'all' | 'breakfast' | 'lunch' | 'dinner';
 export default function MealPlannerScreen() {
   const navigation = useNavigation();
   const [filter, setFilter] = useState<MealFilter>('all');
+  const [showRecipeModal, setShowRecipeModal] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState<MealTemplate | null>(null);
   const { getTodayLog, updateTodayLog } = useStorage();
   const todayLog = getTodayLog();
 
   const filteredMeals = filter === 'all' 
     ? mealTemplates 
     : mealTemplates.filter(meal => meal.mealType === filter);
+
+  // Consolidate duplicate foods into quantities
+  const consolidateFoods = (foods: string[]): string[] => {
+    const foodCounts: { [key: string]: number } = {};
+    
+    foods.forEach(food => {
+      foodCounts[food] = (foodCounts[food] || 0) + 1;
+    });
+
+    return Object.entries(foodCounts).map(([food, count]) => {
+      return count > 1 ? `${count} ${food}` : food;
+    });
+  };
 
   const addMealTemplate = (template: MealTemplate) => {
     Alert.alert(
@@ -184,13 +199,23 @@ export default function MealPlannerScreen() {
             {/* Foods List */}
             <View style={styles.foodsList}>
               <Text style={styles.foodsTitle}>Includes:</Text>
-              {template.foods.slice(0, 4).map((food, index) => (
+              {consolidateFoods(template.foods).map((food, index) => (
                 <Text key={index} style={styles.foodItem}>• {food}</Text>
               ))}
-              {template.foods.length > 4 && (
-                <Text style={styles.foodItem}>+ {template.foods.length - 4} more items</Text>
-              )}
             </View>
+
+            {/* Recipe Button */}
+            <TouchableOpacity
+              style={styles.recipeButton}
+              onPress={() => {
+                setSelectedRecipe(template);
+                setShowRecipeModal(true);
+              }}
+              data-testid={`button-recipe-${template.id}`}
+            >
+              <Ionicons name="book-outline" size={18} color="#9333EA" />
+              <Text style={styles.recipeButtonText}>Show Recipe</Text>
+            </TouchableOpacity>
 
             {/* Add Button */}
             <TouchableOpacity
@@ -204,6 +229,72 @@ export default function MealPlannerScreen() {
           </View>
         ))}
       </ScrollView>
+
+      {/* Recipe Modal */}
+      <Modal
+        visible={showRecipeModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowRecipeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{selectedRecipe?.name}</Text>
+              <TouchableOpacity
+                onPress={() => setShowRecipeModal(false)}
+                style={styles.closeButton}
+                data-testid="button-close-recipe"
+              >
+                <Ionicons name="close-circle" size={32} color="#9333EA" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Recipe Content */}
+            <ScrollView style={styles.recipeScroll} contentContainerStyle={styles.recipeScrollContent}>
+              {selectedRecipe && (
+                <>
+                  <Text style={styles.recipeSubtitle}>Prep Time: {selectedRecipe.prepTime}</Text>
+                  
+                  <View style={styles.recipeSection}>
+                    <Text style={styles.recipeSectionTitle}>📋 Instructions:</Text>
+                    {selectedRecipe.recipe.map((step, index) => (
+                      <View key={index} style={styles.recipeStep}>
+                        <Text style={styles.recipeStepNumber}>{index + 1}.</Text>
+                        <Text style={styles.recipeStepText}>{step}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <View style={styles.recipeSection}>
+                    <Text style={styles.recipeSectionTitle}>🥗 Ingredients:</Text>
+                    {consolidateFoods(selectedRecipe.foods).map((food, index) => (
+                      <Text key={index} style={styles.recipeIngredient}>• {food}</Text>
+                    ))}
+                  </View>
+
+                  <View style={styles.recipeNutrition}>
+                    <Text style={styles.recipeSectionTitle}>📊 Nutrition:</Text>
+                    <Text style={styles.recipeNutritionText}>
+                      {selectedRecipe.totalCalories} calories | P: {selectedRecipe.totalProtein}g | C: {selectedRecipe.totalCarbs}g | F: {selectedRecipe.totalFat}g
+                    </Text>
+                  </View>
+                </>
+              )}
+            </ScrollView>
+
+            {/* Close Button */}
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowRecipeModal(false)}
+              data-testid="button-done-recipe"
+            >
+              <Text style={styles.modalCloseButtonText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -375,6 +466,21 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     marginVertical: 2,
   },
+  recipeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3E8FF',
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 6,
+    marginBottom: 8,
+  },
+  recipeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#9333EA',
+  },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -386,6 +492,104 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
+    paddingTop: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    flex: 1,
+  },
+  closeButton: {
+    marginLeft: 12,
+  },
+  recipeScroll: {
+    flex: 1,
+  },
+  recipeScrollContent: {
+    padding: 20,
+  },
+  recipeSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 16,
+    fontWeight: '500',
+  },
+  recipeSection: {
+    marginBottom: 24,
+  },
+  recipeSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  recipeStep: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  recipeStepNumber: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#9333EA',
+    marginRight: 8,
+    minWidth: 24,
+  },
+  recipeStepText: {
+    fontSize: 15,
+    color: '#374151',
+    flex: 1,
+    lineHeight: 22,
+  },
+  recipeIngredient: {
+    fontSize: 14,
+    color: '#374151',
+    marginLeft: 4,
+    marginVertical: 4,
+  },
+  recipeNutrition: {
+    backgroundColor: '#F9FAFB',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  recipeNutritionText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  modalCloseButton: {
+    backgroundColor: '#9333EA',
+    marginHorizontal: 20,
+    marginVertical: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalCloseButtonText: {
+    fontSize: 16,
     fontWeight: '600',
     color: '#fff',
   },

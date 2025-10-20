@@ -11,6 +11,7 @@ export interface MealTemplate {
   totalFat: number;
   prepTime: string;
   poundDropCompliant: boolean;
+  recipe: string[];
 }
 
 export const mealTemplates: MealTemplate[] = [
@@ -28,6 +29,13 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 15,
     prepTime: '10 min',
     poundDropCompliant: true,
+    recipe: [
+      'Boil 3 eggs for 8-10 minutes until fully cooked',
+      'Wash and lightly steam spinach for 2-3 minutes',
+      'Peel eggs and slice in half',
+      'Serve eggs with spinach on the side',
+      'Top with fresh mixed berries'
+    ],
   },
   {
     id: 'b2',
@@ -42,6 +50,13 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 15,
     prepTime: '5 min',
     poundDropCompliant: true,
+    recipe: [
+      'Add Greek yogurt to a bowl',
+      'Mix in 1 scoop of your favorite protein powder',
+      'Stir until smooth and well combined',
+      'Top with mixed fresh berries',
+      'Sprinkle almonds on top for crunch'
+    ],
   },
   {
     id: 'b3',
@@ -56,6 +71,14 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 15,
     prepTime: '12 min',
     poundDropCompliant: true,
+    recipe: [
+      'Chop bell peppers and mushrooms into small pieces',
+      'Heat a non-stick pan over medium heat',
+      'Sauté vegetables for 3-4 minutes until soft',
+      'Add spinach and cook until wilted',
+      'Crack 3 eggs into the pan and scramble everything together',
+      'Cook for 3-4 minutes, stirring occasionally until eggs are fully cooked'
+    ],
   },
   {
     id: 'b4',
@@ -70,6 +93,13 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 26,
     prepTime: '3 min',
     poundDropCompliant: true,
+    recipe: [
+      'Scoop cottage cheese into a bowl',
+      'Wash and drain mixed berries',
+      'Top cottage cheese with fresh berries',
+      'Sprinkle walnuts over the top',
+      'Enjoy immediately'
+    ],
   },
   {
     id: 'b5',
@@ -84,6 +114,14 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 35,
     prepTime: '8 min',
     poundDropCompliant: true,
+    recipe: [
+      'Toast whole wheat bread until golden brown',
+      'Mash avocado in a small bowl',
+      'Spread mashed avocado on toast',
+      'Layer salmon on top of avocado',
+      'Slice tomatoes and arrange on top',
+      'Season with black pepper if desired'
+    ],
   },
 
   // LUNCH TEMPLATES (80% wholefoods + 20g protein)
@@ -100,6 +138,14 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 18,
     prepTime: '15 min',
     poundDropCompliant: true,
+    recipe: [
+      'Season chicken breast with salt and pepper',
+      'Grill chicken for 6-7 minutes per side until fully cooked',
+      'Wash and chop mixed greens, tomatoes, cucumbers, and bell peppers',
+      'Arrange vegetables in a large bowl',
+      'Slice grilled chicken and place on top of salad',
+      'Drizzle with olive oil and serve'
+    ],
   },
   {
     id: 'l2',
@@ -114,6 +160,14 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 17,
     prepTime: '20 min',
     poundDropCompliant: true,
+    recipe: [
+      'Cook quinoa according to package directions',
+      'Season salmon with salt, pepper, and lemon juice',
+      'Bake salmon at 400°F for 12-15 minutes',
+      'Chop sweet potato, broccoli, and asparagus',
+      'Roast vegetables at 425°F for 15 minutes',
+      'Arrange quinoa in a bowl, top with salmon and roasted vegetables'
+    ],
   },
   {
     id: 'l3',
@@ -128,6 +182,14 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 25,
     prepTime: '10 min',
     poundDropCompliant: true,
+    recipe: [
+      'Lay whole wheat wrap flat on a plate',
+      'Layer lettuce, sliced tomatoes, and cucumbers on wrap',
+      'Add sliced turkey breast on top',
+      'Mash avocado and spread on top of turkey',
+      'Roll wrap tightly, folding in the sides',
+      'Cut in half and serve'
+    ],
   },
   {
     id: 'l4',
@@ -142,6 +204,14 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 19,
     prepTime: '12 min',
     poundDropCompliant: true,
+    recipe: [
+      'Cook quinoa according to package directions and let cool',
+      'Drain tuna and flake with a fork',
+      'Chop tomatoes, bell peppers, and spinach',
+      'Combine quinoa, tuna, and vegetables in a bowl',
+      'Drizzle with olive oil',
+      'Toss everything together and serve'
+    ],
   },
   {
     id: 'l5',
@@ -156,6 +226,15 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 6,
     prepTime: '18 min',
     poundDropCompliant: true,
+    recipe: [
+      'Cook brown rice according to package directions',
+      'Slice chicken breast into bite-sized pieces',
+      'Chop broccoli, bell peppers, carrots, and zucchini',
+      'Heat a pan or wok over medium-high heat',
+      'Stir-fry chicken for 5-6 minutes until cooked',
+      'Add vegetables and stir-fry for 4-5 minutes',
+      'Serve over brown rice'
+    ],
   },
   {
     id: 'l6',
@@ -170,6 +249,15 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 2,
     prepTime: '15 min',
     poundDropCompliant: true,
+    recipe: [
+      'Clean and devein shrimp if needed',
+      'Chop broccoli, cauliflower, zucchini, and bell peppers',
+      'Heat a pan over medium-high heat',
+      'Cook shrimp for 2-3 minutes per side until pink',
+      'Add vegetables to the pan',
+      'Sauté for 5-6 minutes until tender-crisp',
+      'Season with garlic and lemon if desired'
+    ],
   },
 
   // DINNER TEMPLATES (Light meal, protein focused)
@@ -186,6 +274,14 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 4,
     prepTime: '15 min',
     poundDropCompliant: true,
+    recipe: [
+      'Season chicken breast with herbs and spices',
+      'Grill chicken for 6-7 minutes per side until cooked through',
+      'Chop broccoli, green beans, and cauliflower',
+      'Steam vegetables for 5-6 minutes until tender',
+      'Plate chicken with steamed vegetables on the side',
+      'Serve warm'
+    ],
   },
   {
     id: 'd2',
@@ -200,6 +296,15 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 16,
     prepTime: '20 min',
     poundDropCompliant: true,
+    recipe: [
+      'Preheat oven to 400°F',
+      'Season cod with lemon, salt, and pepper',
+      'Bake fish for 12-15 minutes until flaky',
+      'Trim asparagus and arrange on baking sheet',
+      'Drizzle asparagus with olive oil and roast for 10 minutes',
+      'Sauté spinach and kale until wilted',
+      'Serve fish with greens and asparagus'
+    ],
   },
   {
     id: 'd3',
@@ -214,6 +319,14 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 1,
     prepTime: '18 min',
     poundDropCompliant: true,
+    recipe: [
+      'Slice turkey breast into portions',
+      'Grill or bake turkey for 15-18 minutes at 375°F',
+      'Halve Brussels sprouts and chop zucchini and bell peppers',
+      'Roast vegetables at 425°F for 15 minutes',
+      'Season with garlic powder and herbs',
+      'Serve turkey with roasted vegetables'
+    ],
   },
   {
     id: 'd4',
@@ -228,6 +341,15 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 2,
     prepTime: '12 min',
     poundDropCompliant: true,
+    recipe: [
+      'Clean and devein shrimp',
+      'Chop broccoli, bell peppers, mushrooms, and zucchini',
+      'Heat a wok or large pan over high heat',
+      'Stir-fry shrimp for 3-4 minutes until pink',
+      'Remove shrimp and set aside',
+      'Stir-fry vegetables for 4-5 minutes',
+      'Add shrimp back to pan, toss together and serve'
+    ],
   },
   {
     id: 'd5',
@@ -242,6 +364,15 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 15,
     prepTime: '10 min',
     poundDropCompliant: true,
+    recipe: [
+      'Slice mushrooms and tomatoes',
+      'Heat a pan over medium heat',
+      'Sauté mushrooms for 3-4 minutes',
+      'Add spinach and cook until wilted',
+      'Add tomatoes and cook for 2 minutes',
+      'Boil 3 eggs for 8-10 minutes',
+      'Peel and serve eggs with sautéed vegetables'
+    ],
   },
   {
     id: 'd6',
@@ -256,5 +387,13 @@ export const mealTemplates: MealTemplate[] = [
     totalFat: 13,
     prepTime: '16 min',
     poundDropCompliant: true,
+    recipe: [
+      'Season salmon with lemon, dill, and black pepper',
+      'Grill or bake salmon at 400°F for 12-15 minutes',
+      'Trim asparagus and chop broccoli',
+      'Steam asparagus and broccoli for 5-6 minutes',
+      'Lightly sauté spinach until just wilted',
+      'Plate salmon with steamed greens on the side'
+    ],
   },
 ];
