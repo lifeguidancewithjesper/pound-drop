@@ -192,7 +192,7 @@ export default function MealPlannerScreen() {
             </View>
             <View style={styles.macroRow}>
               <Text style={styles.macroText} data-testid={`text-macros-${template.id}`}>
-                P: {template.totalProtein}g | C: {template.totalCarbs}g | F: {template.totalFat}g
+                P: {template.totalProtein}g | C: {template.totalCarbs}g | F: {template.totalFat}g | Fiber: {template.totalFiber || 0}g
               </Text>
             </View>
 
@@ -277,7 +277,7 @@ export default function MealPlannerScreen() {
                   <View style={styles.recipeNutrition}>
                     <Text style={styles.recipeSectionTitle}>📊 Nutrition:</Text>
                     <Text style={styles.recipeNutritionText}>
-                      {selectedRecipe.totalCalories} calories | P: {selectedRecipe.totalProtein}g | C: {selectedRecipe.totalCarbs}g | F: {selectedRecipe.totalFat}g
+                      {selectedRecipe.totalCalories} calories | P: {selectedRecipe.totalProtein}g | C: {selectedRecipe.totalCarbs}g | F: {selectedRecipe.totalFat}g | Fiber: {selectedRecipe.totalFiber || 0}g
                     </Text>
                   </View>
                 </>

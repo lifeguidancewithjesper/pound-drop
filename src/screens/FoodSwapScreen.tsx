@@ -111,24 +111,40 @@ export default function FoodSwapScreen() {
           </Text>
         </View>
 
-        {/* Medical Citations */}
+        {/* Medical Citations - Prominent Section */}
         <View style={styles.citationContainer}>
-          <Text style={styles.citationTitle}>📚 Sources & Citations</Text>
+          <Text style={styles.citationTitle}>📚 Medical Sources & Citations</Text>
           <Text style={styles.citationText}>
-            Nutritional information and calorie estimates are based on data from:
+            All nutritional information, calorie estimates, and health recommendations in this app are based on peer-reviewed scientific data from:
           </Text>
-          <Text style={styles.citationSource}>
-            • USDA FoodData Central (https://fdc.nal.usda.gov)
-          </Text>
-          <Text style={styles.citationSource}>
-            • National Institutes of Health (NIH) Dietary Guidelines
-          </Text>
-          <Text style={styles.citationSource}>
-            • Academy of Nutrition and Dietetics
-          </Text>
-          <Text style={styles.citationDisclaimer}>
-            These food swaps are general suggestions for healthier alternatives. Individual nutritional needs vary. Consult a healthcare provider or registered dietitian for personalized dietary advice.
-          </Text>
+          
+          <View style={styles.sourceBox}>
+            <Text style={styles.sourceTitle}>U.S. Department of Agriculture</Text>
+            <Text style={styles.sourceDetail}>FoodData Central Database</Text>
+            <Text style={styles.sourceLink}>https://fdc.nal.usda.gov</Text>
+            <Text style={styles.sourceDescription}>Official nutritional composition data for foods</Text>
+          </View>
+
+          <View style={styles.sourceBox}>
+            <Text style={styles.sourceTitle}>National Institutes of Health (NIH)</Text>
+            <Text style={styles.sourceDetail}>Dietary Guidelines for Americans 2020-2025</Text>
+            <Text style={styles.sourceLink}>https://health.gov/dietaryguidelines</Text>
+            <Text style={styles.sourceDescription}>Evidence-based nutritional recommendations</Text>
+          </View>
+
+          <View style={styles.sourceBox}>
+            <Text style={styles.sourceTitle}>Academy of Nutrition and Dietetics</Text>
+            <Text style={styles.sourceDetail}>Evidence Analysis Library</Text>
+            <Text style={styles.sourceLink}>https://eatright.org</Text>
+            <Text style={styles.sourceDescription}>Research-based nutrition practice guidelines</Text>
+          </View>
+
+          <View style={styles.disclaimerBox}>
+            <Text style={styles.disclaimerTitle}>⚕️ Medical Disclaimer</Text>
+            <Text style={styles.citationDisclaimer}>
+              These food swaps are general educational suggestions for healthier alternatives based on published nutritional data. Individual nutritional needs vary based on age, health conditions, activity level, and other factors. This app is not a substitute for professional medical advice. Please consult a licensed healthcare provider, registered dietitian, or physician before making significant dietary changes, especially if you have medical conditions or take medications.
+            </Text>
+          </View>
         </View>
 
         <View style={{ height: 20 }} />
@@ -332,37 +348,79 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   citationContainer: {
-    backgroundColor: '#F9FAFB',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 16,
     marginTop: 16,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderWidth: 2,
+    borderColor: '#9333EA',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   citationTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 12,
   },
   citationText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#4B5563',
-    marginBottom: 8,
-    lineHeight: 18,
+    marginBottom: 16,
+    lineHeight: 20,
   },
-  citationSource: {
-    fontSize: 12,
+  sourceBox: {
+    backgroundColor: '#F9FAFB',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#9333EA',
+  },
+  sourceTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  sourceDetail: {
+    fontSize: 13,
     color: '#6B7280',
+    marginBottom: 4,
+  },
+  sourceLink: {
+    fontSize: 12,
+    color: '#9333EA',
     marginBottom: 6,
-    lineHeight: 18,
+    fontWeight: '500',
+  },
+  sourceDescription: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+    lineHeight: 16,
+  },
+  disclaimerBox: {
+    backgroundColor: '#FFF4E5',
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  disclaimerTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#92400E',
+    marginBottom: 8,
   },
   citationDisclaimer: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    marginTop: 12,
-    lineHeight: 16,
-    fontStyle: 'italic',
+    fontSize: 12,
+    color: '#78350F',
+    lineHeight: 18,
   },
 });

@@ -104,10 +104,10 @@ interface StorageContextType {
   updateHighestMilestone: (milestone: number) => Promise<void>;
   calculateCalories: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => { total: number; breakfast: number; lunch: number; dinner: number };
   calculateMacros: (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => { 
-    total: { protein: number; carbs: number; fat: number }; 
-    breakfast: { protein: number; carbs: number; fat: number }; 
-    lunch: { protein: number; carbs: number; fat: number }; 
-    dinner: { protein: number; carbs: number; fat: number };
+    total: { protein: number; carbs: number; fat: number; fiber: number }; 
+    breakfast: { protein: number; carbs: number; fat: number; fiber: number }; 
+    lunch: { protein: number; carbs: number; fat: number; fiber: number }; 
+    dinner: { protein: number; carbs: number; fat: number; fiber: number };
   };
   getChallengeStartDate: () => string | null;
   startChallenge: () => Promise<void>;
@@ -485,7 +485,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const calculateMacros = (meals: { breakfast?: (string | FoodWithNutrition)[]; lunch?: (string | FoodWithNutrition)[]; dinner?: (string | FoodWithNutrition)[] }, snacks?: (string | FoodWithNutrition)[]) => {
     const getMacrosForMeal = (mealItems: (string | FoodWithNutrition)[] | undefined) => {
       if (!mealItems || mealItems.length === 0) {
-        return { protein: 0, carbs: 0, fat: 0 };
+        return { protein: 0, carbs: 0, fat: 0, fiber: 0 };
       }
       return mealItems.reduce((totals, foodItem) => {
         // If it's a FoodWithNutrition object, use its macros
@@ -493,7 +493,8 @@ export function StorageProvider({ children }: { children: ReactNode }) {
           return {
             protein: totals.protein + (foodItem.protein || 0),
             carbs: totals.carbs + (foodItem.carbs || 0),
-            fat: totals.fat + (foodItem.fat || 0)
+            fat: totals.fat + (foodItem.fat || 0),
+            fiber: totals.fiber + (foodItem.fiber || 0)
           };
         }
         // Otherwise it's a string, look it up in the database
@@ -501,9 +502,10 @@ export function StorageProvider({ children }: { children: ReactNode }) {
         return {
           protein: totals.protein + (food?.protein || 0),
           carbs: totals.carbs + (food?.carbs || 0),
-          fat: totals.fat + (food?.fat || 0)
+          fat: totals.fat + (food?.fat || 0),
+          fiber: totals.fiber + (food?.fiber || 0)
         };
-      }, { protein: 0, carbs: 0, fat: 0 });
+      }, { protein: 0, carbs: 0, fat: 0, fiber: 0 });
     };
 
     const breakfastMacros = getMacrosForMeal(meals.breakfast);
@@ -515,7 +517,8 @@ export function StorageProvider({ children }: { children: ReactNode }) {
       total: {
         protein: breakfastMacros.protein + lunchMacros.protein + dinnerMacros.protein + snacksMacros.protein,
         carbs: breakfastMacros.carbs + lunchMacros.carbs + dinnerMacros.carbs + snacksMacros.carbs,
-        fat: breakfastMacros.fat + lunchMacros.fat + dinnerMacros.fat + snacksMacros.fat
+        fat: breakfastMacros.fat + lunchMacros.fat + dinnerMacros.fat + snacksMacros.fat,
+        fiber: breakfastMacros.fiber + lunchMacros.fiber + dinnerMacros.fiber + snacksMacros.fiber
       },
       breakfast: breakfastMacros,
       lunch: lunchMacros,

@@ -260,7 +260,7 @@ export default function DashboardScreen() {
                 </View>
                 <View style={styles.macroRow}>
                   <Text style={styles.macroText} data-testid="text-total-macros">
-                    P: {Math.round(macroData.total.protein)}g | C: {Math.round(macroData.total.carbs)}g | F: {Math.round(macroData.total.fat)}g
+                    P: {Math.round(macroData.total.protein)}g | C: {Math.round(macroData.total.carbs)}g | F: {Math.round(macroData.total.fat)}g | Fiber: {Math.round(macroData.total.fiber)}g
                   </Text>
                 </View>
               </>

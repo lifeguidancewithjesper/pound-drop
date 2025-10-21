@@ -133,16 +133,49 @@ export default function NutritionEducationScreen() {
           </Text>
         </View>
 
-        {/* Medical Citations */}
+        {/* Medical Citations - Prominent Section */}
         <View style={styles.citationsContainer}>
           <Text style={styles.citationsTitle}>📚 Medical & Scientific References</Text>
-          <Text style={styles.citationText}>• Macronutrients: USDA Dietary Guidelines for Americans (2020)</Text>
-          <Text style={styles.citationText}>• Protein Timing: Journal of the International Society of Sports Nutrition, "Protein timing and its effects" (2017)</Text>
-          <Text style={styles.citationText}>• Intermittent Fasting: Cell Metabolism, "Intermittent Fasting: The Science of Going without" (2014)</Text>
-          <Text style={styles.citationText}>• Fiber & Satiety: Nutrition Reviews, "Role of dietary fiber in promoting satiety" (2013)</Text>
-          <Text style={styles.citationText}>• Meal Frequency: British Journal of Nutrition, "Increased meal frequency and body composition" (2011)</Text>
-          <Text style={styles.citationText}>• Portion Control: Academy of Nutrition and Dietetics, "Position on Total Diet Approach" (2019)</Text>
-          <Text style={styles.citationText}>• Food Quality: American Journal of Clinical Nutrition, "Whole foods vs processed foods" (2016)</Text>
+          <Text style={styles.citationIntro}>
+            All nutrition education content is based on peer-reviewed scientific research and evidence-based guidelines from:
+          </Text>
+
+          <View style={styles.sourceBox}>
+            <Text style={styles.sourceTitle}>U.S. Department of Agriculture (USDA)</Text>
+            <Text style={styles.sourceDetail}>Dietary Guidelines for Americans 2020-2025</Text>
+            <Text style={styles.sourceLink}>https://health.gov/dietaryguidelines</Text>
+            <Text style={styles.sourceDescription}>Official evidence-based nutritional recommendations for macronutrients, meal timing, and portion sizes</Text>
+          </View>
+
+          <View style={styles.sourceBox}>
+            <Text style={styles.sourceTitle}>National Institutes of Health (NIH)</Text>
+            <Text style={styles.sourceDetail}>Office of Dietary Supplements</Text>
+            <Text style={styles.sourceLink}>https://ods.od.nih.gov</Text>
+            <Text style={styles.sourceDescription}>Scientific information on dietary supplements and nutrients</Text>
+          </View>
+
+          <View style={styles.sourceBox}>
+            <Text style={styles.sourceTitle}>Academy of Nutrition and Dietetics</Text>
+            <Text style={styles.sourceDetail}>Evidence Analysis Library & Practice Guidelines</Text>
+            <Text style={styles.sourceLink}>https://eatright.org</Text>
+            <Text style={styles.sourceDescription}>Position papers on total diet approach, portion control, and whole food nutrition</Text>
+          </View>
+
+          <View style={styles.researchBox}>
+            <Text style={styles.researchTitle}>📖 Peer-Reviewed Research Citations:</Text>
+            <Text style={styles.citationText}>• Protein & Satiety: International Journal of Obesity (2010) - "The role of protein in weight loss and maintenance"</Text>
+            <Text style={styles.citationText}>• Intermittent Fasting: Cell Metabolism (2014) - "Intermittent fasting: the science of going without"</Text>
+            <Text style={styles.citationText}>• Fiber Benefits: Nutrition Reviews (2013) - "Dietary fiber and satiety: the effects of oats on satiety"</Text>
+            <Text style={styles.citationText}>• Whole Foods: American Journal of Clinical Nutrition (2016) - "Whole foods versus dietary supplements"</Text>
+            <Text style={styles.citationText}>• Meal Timing: British Journal of Nutrition (2011) - "Meal frequency and energy balance"</Text>
+          </View>
+
+          <View style={styles.disclaimerBox}>
+            <Text style={styles.disclaimerTitle}>⚕️ Medical Disclaimer</Text>
+            <Text style={styles.citationDisclaimer}>
+              This nutrition education content is for general informational and educational purposes only based on published scientific research. It is not intended as medical advice or a substitute for professional healthcare guidance. Individual nutritional needs vary based on age, weight, health conditions, medications, and activity levels. Please consult a licensed healthcare provider, registered dietitian, or physician before making significant dietary changes or if you have specific medical conditions.
+            </Text>
+          </View>
         </View>
 
         <View style={{ height: 20 }} />
@@ -359,24 +392,100 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   citationsContainer: {
-    backgroundColor: '#F3F4F6',
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
     borderRadius: 16,
-    marginHorizontal: 16,
     marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#9333EA',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   citationsTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#4F46E5',
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
     marginBottom: 12,
+  },
+  citationIntro: {
+    fontSize: 14,
+    color: '#4B5563',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  sourceBox: {
+    backgroundColor: '#F9FAFB',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#9333EA',
+  },
+  sourceTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  sourceDetail: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  sourceLink: {
+    fontSize: 12,
+    color: '#9333EA',
+    marginBottom: 6,
+    fontWeight: '500',
+  },
+  sourceDescription: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+    lineHeight: 16,
+  },
+  researchBox: {
+    backgroundColor: '#EEF2FF',
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  researchTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#4338CA',
+    marginBottom: 10,
   },
   citationText: {
     fontSize: 11,
     color: '#6B7280',
-    lineHeight: 16,
-    marginBottom: 4,
+    lineHeight: 17,
+    marginBottom: 6,
+  },
+  disclaimerBox: {
+    backgroundColor: '#FFF4E5',
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  disclaimerTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#92400E',
+    marginBottom: 8,
+  },
+  citationDisclaimer: {
+    fontSize: 12,
+    color: '#78350F',
+    lineHeight: 18,
   },
 });

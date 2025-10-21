@@ -603,7 +603,7 @@ export default function DailyLogScreen({ navigation }: any) {
                                 </View>
                                 <View style={styles.macroRow}>
                                   <Text style={styles.macroText}>
-                                    P: {Math.round(macros.protein)}g | C: {Math.round(macros.carbs)}g | F: {Math.round(macros.fat)}g
+                                    P: {Math.round(macros.protein)}g | C: {Math.round(macros.carbs)}g | F: {Math.round(macros.fat)}g | Fiber: {Math.round(macros.fiber)}g
                                   </Text>
                                 </View>
                               </>
@@ -646,7 +646,7 @@ export default function DailyLogScreen({ navigation }: any) {
                               </View>
                               <View style={styles.macroRow}>
                                 <Text style={styles.macroText}>
-                                  P: {Math.round(snack.protein || 0)}g | C: {Math.round(snack.carbs || 0)}g | F: {Math.round(snack.fat || 0)}g
+                                  P: {Math.round(snack.protein || 0)}g | C: {Math.round(snack.carbs || 0)}g | F: {Math.round(snack.fat || 0)}g | Fiber: {Math.round(snack.fiber || 0)}g
                                 </Text>
                               </View>
                             </>
