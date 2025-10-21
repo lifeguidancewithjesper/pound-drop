@@ -191,7 +191,7 @@ export default function WellnessScreen() {
         </View>
 
         {/* Daily Macro Totals */}
-        {(dailyMacros.protein > 0 || dailyMacros.carbs > 0 || dailyMacros.fat > 0) && (
+        {(dailyMacros.total.protein > 0 || dailyMacros.total.carbs > 0 || dailyMacros.total.fat > 0) && (
           <View style={styles.macroTotalsCard}>
             <View style={styles.macroTotalsHeader}>
               <Ionicons name="nutrition" size={20} color="#9333EA" />
@@ -199,16 +199,20 @@ export default function WellnessScreen() {
             </View>
             <View style={styles.macroTotalsGrid}>
               <View style={styles.macroTotalItem}>
-                <Text style={styles.macroTotalValue}>{Math.round(dailyMacros.protein)}g</Text>
+                <Text style={styles.macroTotalValue}>{Math.round(dailyMacros.total.protein)}g</Text>
                 <Text style={styles.macroTotalLabel}>Protein</Text>
               </View>
               <View style={styles.macroTotalItem}>
-                <Text style={styles.macroTotalValue}>{Math.round(dailyMacros.carbs)}g</Text>
+                <Text style={styles.macroTotalValue}>{Math.round(dailyMacros.total.carbs)}g</Text>
                 <Text style={styles.macroTotalLabel}>Carbs</Text>
               </View>
               <View style={styles.macroTotalItem}>
-                <Text style={styles.macroTotalValue}>{Math.round(dailyMacros.fat)}g</Text>
+                <Text style={styles.macroTotalValue}>{Math.round(dailyMacros.total.fat)}g</Text>
                 <Text style={styles.macroTotalLabel}>Fat</Text>
+              </View>
+              <View style={styles.macroTotalItem}>
+                <Text style={styles.macroTotalValue}>{Math.round(dailyMacros.total.fiber)}g</Text>
+                <Text style={styles.macroTotalLabel}>Fiber</Text>
               </View>
             </View>
           </View>
@@ -610,6 +614,7 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
         protein: (foundFood.protein || 0) * multiplier,
         carbs: (foundFood.carbs || 0) * multiplier,
         fat: (foundFood.fat || 0) * multiplier,
+        fiber: (foundFood.fiber || 0) * multiplier,
         portion: { amount, unit }
       });
     };
@@ -704,18 +709,30 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
                           return;
                         }
                         
-                        // Save custom food
-                        addCustomFood({
-                          name: name.trim(),
-                          category: 'Custom',
-                          calories,
-                          protein,
-                          carbs,
-                          fat,
-                          fiber: 0
-                        });
-                        
-                        Alert.alert('Success!', `${name} has been added to your custom foods database. You can now search for it when logging meals!`);
+                        Alert.prompt(
+                          'Fiber (per 100g)',
+                          'Enter fiber in grams per 100g (whole number)',
+                          (fiberStr) => {
+                            const fiber = Math.round(parseFloat(fiberStr || '0'));
+                            if (isNaN(fiber) || fiber < 0) {
+                              Alert.alert('Error', 'Please enter a valid fiber amount');
+                              return;
+                            }
+                            
+                            // Save custom food
+                            addCustomFood({
+                              name: name.trim(),
+                              category: 'Custom',
+                              calories,
+                              protein,
+                              carbs,
+                              fat,
+                              fiber
+                            });
+                            
+                            Alert.alert('Success!', `${name} has been added to your custom foods database. You can now search for it when logging meals!`);
+                          }
+                        );
                       }
                     );
                   }
@@ -809,6 +826,7 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
               <Text style={styles.foodMacroText}>P: {Math.round(food.protein || 0)}g</Text>
               <Text style={styles.foodMacroText}>C: {Math.round(food.carbs || 0)}g</Text>
               <Text style={styles.foodMacroText}>F: {Math.round(food.fat || 0)}g</Text>
+              <Text style={styles.foodMacroText}>Fiber: {Math.round(food.fiber || 0)}g</Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -926,6 +944,7 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
         protein: (foundFood.protein || 0) * multiplier,
         carbs: (foundFood.carbs || 0) * multiplier,
         fat: (foundFood.fat || 0) * multiplier,
+        fiber: (foundFood.fiber || 0) * multiplier,
         portion: { amount, unit }
       });
     };
@@ -1018,18 +1037,30 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
                           return;
                         }
                         
-                        // Save custom food
-                        addCustomFood({
-                          name: name.trim(),
-                          category: 'Custom',
-                          calories,
-                          protein,
-                          carbs,
-                          fat,
-                          fiber: 0
-                        });
-                        
-                        Alert.alert('Success!', `${name} has been added to your custom foods database. You can now search for it when logging snacks!`);
+                        Alert.prompt(
+                          'Fiber (g)',
+                          'Enter fiber in grams (whole number)',
+                          (fiberStr) => {
+                            const fiber = Math.round(parseFloat(fiberStr || '0'));
+                            if (isNaN(fiber) || fiber < 0) {
+                              Alert.alert('Error', 'Please enter a valid fiber amount');
+                              return;
+                            }
+                            
+                            // Save custom food
+                            addCustomFood({
+                              name: name.trim(),
+                              category: 'Custom',
+                              calories,
+                              protein,
+                              carbs,
+                              fat,
+                              fiber
+                            });
+                            
+                            Alert.alert('Success!', `${name} has been added to your custom foods database. You can now search for it when logging snacks!`);
+                          }
+                        );
                       }
                     );
                   }
@@ -1103,6 +1134,7 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
               <Text style={styles.foodMacroText}>P: {Math.round(food.protein || 0)}g</Text>
               <Text style={styles.foodMacroText}>C: {Math.round(food.carbs || 0)}g</Text>
               <Text style={styles.foodMacroText}>F: {Math.round(food.fat || 0)}g</Text>
+              <Text style={styles.foodMacroText}>Fiber: {Math.round(food.fiber || 0)}g</Text>
             </View>
           </TouchableOpacity>
         ))}
