@@ -554,13 +554,24 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
   };
 
   // Add food from database with optional modifier
-  const addFoodWithModifier = (baseFoodName: string) => {
-    // Find the food in the database to get nutrition data
-    let foundFood = fullFoodDatabase.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+  const addFoodWithModifier = (foodOrName: string | { id: string; name: string; calories?: number; protein?: number; carbs?: number; fat?: number; fiber?: number }) => {
+    let foundFood: any;
+    let baseFoodName: string;
     
-    // If not in main database, check custom foods
-    if (!foundFood) {
-      foundFood = customFoods.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+    // If a food object was passed directly (clicked from list), use it
+    if (typeof foodOrName === 'object') {
+      foundFood = foodOrName;
+      baseFoodName = foodOrName.name;
+    } else {
+      // Otherwise search for it by name
+      baseFoodName = foodOrName;
+      foundFood = fullFoodDatabase.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+      
+      // If not in main database, check custom foods (use the LAST match for duplicates)
+      if (!foundFood) {
+        const matches = customFoods.filter(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+        foundFood = matches.length > 0 ? matches[matches.length - 1] : undefined;
+      }
     }
     
     if (!foundFood) {
@@ -816,7 +827,7 @@ function MealsTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSea
       
       <ScrollView style={styles.foodList}>
         {foods.slice(0, 20).map((food) => (
-          <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addFoodWithModifier(food.name)}>
+          <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addFoodWithModifier(food)}>
             <View style={styles.foodItemHeader}>
               <Text style={styles.foodName}>{food.name}</Text>
               <Text style={styles.foodCategory}>{food.category}</Text>
@@ -873,13 +884,24 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
   };
 
   // Add food from database with optional modifier
-  const addSnackWithModifier = (baseFoodName: string) => {
-    // Find the food in the database to get nutrition data
-    let foundFood = fullFoodDatabase.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+  const addSnackWithModifier = (foodOrName: string | { id: string; name: string; calories?: number; protein?: number; carbs?: number; fat?: number; fiber?: number }) => {
+    let foundFood: any;
+    let baseFoodName: string;
     
-    // If not in main database, check custom foods
-    if (!foundFood) {
-      foundFood = customFoods.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+    // If a food object was passed directly (clicked from list), use it
+    if (typeof foodOrName === 'object') {
+      foundFood = foodOrName;
+      baseFoodName = foodOrName.name;
+    } else {
+      // Otherwise search for it by name
+      baseFoodName = foodOrName;
+      foundFood = fullFoodDatabase.find(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+      
+      // If not in main database, check custom foods (use the LAST match for duplicates)
+      if (!foundFood) {
+        const matches = customFoods.filter(f => f.name.toLowerCase() === baseFoodName.toLowerCase());
+        foundFood = matches.length > 0 ? matches[matches.length - 1] : undefined;
+      }
     }
     
     if (!foundFood) {
@@ -1124,7 +1146,7 @@ function SnacksTab({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
       
       <ScrollView style={styles.foodList}>
         {foods.slice(0, 20).map((food) => (
-          <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addSnackWithModifier(food.name)}>
+          <TouchableOpacity key={food.id} style={styles.foodItem} onPress={() => addSnackWithModifier(food)}>
             <View style={styles.foodItemHeader}>
               <Text style={styles.foodName}>{food.name}</Text>
               <Text style={styles.foodCategory}>{food.category}</Text>
