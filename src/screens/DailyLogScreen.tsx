@@ -16,20 +16,23 @@ export default function DailyLogScreen({ navigation }: any) {
     let totalProtein = 0;
     let totalCarbs = 0;
     let totalFat = 0;
+    let totalFiber = 0;
 
     sortedLogs.forEach((dayLog) => {
       const calorieData = dayLog.meals ? calculateCalories(dayLog.meals, dayLog.snacks) : { total: 0 };
-      const macroData = dayLog.meals ? calculateMacros(dayLog.meals, dayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 } };
+      const macroData = dayLog.meals ? calculateMacros(dayLog.meals, dayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0, fiber: 0 } };
       totalCalories += calorieData.total;
       totalProtein += macroData.total.protein;
       totalCarbs += macroData.total.carbs;
       totalFat += macroData.total.fat;
+      totalFiber += macroData.total.fiber;
     });
 
     const avgCalories = Math.round(totalCalories / sortedLogs.length);
     const avgProtein = Math.round(totalProtein / sortedLogs.length);
     const avgCarbs = Math.round(totalCarbs / sortedLogs.length);
     const avgFat = Math.round(totalFat / sortedLogs.length);
+    const avgFiber = Math.round(totalFiber / sortedLogs.length);
 
     // Generate HTML content
     let htmlContent = `<!DOCTYPE html>
@@ -96,13 +99,17 @@ export default function DailyLogScreen({ navigation }: any) {
         <div class="stat-value">${avgFat}g</div>
         <div class="stat-label">Avg Fat/Day</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-value">${avgFiber}g</div>
+        <div class="stat-label">Avg Fiber/Day</div>
+      </div>
     </div>
 `;
 
     sortedLogs.forEach((dayLog) => {
       const date = formatDateHeader(dayLog.date);
       const calorieData = dayLog.meals ? calculateCalories(dayLog.meals, dayLog.snacks) : { total: 0, breakfast: 0, lunch: 0, dinner: 0 };
-      const macroData = dayLog.meals ? calculateMacros(dayLog.meals, dayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0 }, lunch: { protein: 0, carbs: 0, fat: 0 }, dinner: { protein: 0, carbs: 0, fat: 0 } };
+      const macroData = dayLog.meals ? calculateMacros(dayLog.meals, dayLog.snacks) : { total: { protein: 0, carbs: 0, fat: 0, fiber: 0 }, breakfast: { protein: 0, carbs: 0, fat: 0, fiber: 0 }, lunch: { protein: 0, carbs: 0, fat: 0, fiber: 0 }, dinner: { protein: 0, carbs: 0, fat: 0, fiber: 0 } };
 
       htmlContent += `
     <div class="day-section">
@@ -117,7 +124,7 @@ export default function DailyLogScreen({ navigation }: any) {
       <div class="meal-section">
         <div class="meal-title">🌅 Breakfast${time ? `<span class="meal-time">${time}</span>` : ''}${feeling ? ` - ${feeling}` : ''}</div>
         <table>
-          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Fiber</th></tr></thead>
           <tbody>`;
         dayLog.meals.breakfast.forEach((food: any) => {
           const foodName = typeof food === 'string' ? food : food.name;
@@ -126,7 +133,8 @@ export default function DailyLogScreen({ navigation }: any) {
           const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) + 'g' : '—';
           const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) + 'g' : '—';
           const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) + 'g' : '—';
-          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td></tr>`;
+          const fiber = (typeof food !== 'string' && food.fiber) ? Math.round(food.fiber) + 'g' : '—';
+          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td><td>${fiber}</td></tr>`;
         });
         htmlContent += `</tbody></table></div>`;
       }
@@ -139,7 +147,7 @@ export default function DailyLogScreen({ navigation }: any) {
       <div class="meal-section">
         <div class="meal-title">☀️ Lunch${time ? `<span class="meal-time">${time}</span>` : ''}${feeling ? ` - ${feeling}` : ''}</div>
         <table>
-          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Fiber</th></tr></thead>
           <tbody>`;
         dayLog.meals.lunch.forEach((food: any) => {
           const foodName = typeof food === 'string' ? food : food.name;
@@ -148,7 +156,8 @@ export default function DailyLogScreen({ navigation }: any) {
           const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) + 'g' : '—';
           const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) + 'g' : '—';
           const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) + 'g' : '—';
-          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td></tr>`;
+          const fiber = (typeof food !== 'string' && food.fiber) ? Math.round(food.fiber) + 'g' : '—';
+          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td><td>${fiber}</td></tr>`;
         });
         htmlContent += `</tbody></table></div>`;
       }
@@ -161,7 +170,7 @@ export default function DailyLogScreen({ navigation }: any) {
       <div class="meal-section">
         <div class="meal-title">🌙 Dinner${time ? `<span class="meal-time">${time}</span>` : ''}${feeling ? ` - ${feeling}` : ''}</div>
         <table>
-          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Fiber</th></tr></thead>
           <tbody>`;
         dayLog.meals.dinner.forEach((food: any) => {
           const foodName = typeof food === 'string' ? food : food.name;
@@ -170,7 +179,8 @@ export default function DailyLogScreen({ navigation }: any) {
           const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) + 'g' : '—';
           const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) + 'g' : '—';
           const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) + 'g' : '—';
-          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td></tr>`;
+          const fiber = (typeof food !== 'string' && food.fiber) ? Math.round(food.fiber) + 'g' : '—';
+          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td><td>${fiber}</td></tr>`;
         });
         htmlContent += `</tbody></table></div>`;
       }
@@ -202,7 +212,7 @@ export default function DailyLogScreen({ navigation }: any) {
       <div class="meal-section">
         <div class="meal-title">🍎 Snacks</div>
         <table>
-          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th></tr></thead>
+          <thead><tr><th>Food Item</th><th>Portion</th><th>Calories</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Fiber</th></tr></thead>
           <tbody>`;
         snacksWithTimes.forEach((item: any) => {
           const food = item.snack;
@@ -212,7 +222,8 @@ export default function DailyLogScreen({ navigation }: any) {
           const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) + 'g' : '—';
           const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) + 'g' : '—';
           const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) + 'g' : '—';
-          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td></tr>`;
+          const fiber = (typeof food !== 'string' && food.fiber) ? Math.round(food.fiber) + 'g' : '—';
+          htmlContent += `<tr><td>${foodName}</td><td>${portion}</td><td>${calories}</td><td>${protein}</td><td>${carbs}</td><td>${fat}</td><td>${fiber}</td></tr>`;
         });
         htmlContent += `</tbody></table></div>`;
       }
@@ -236,6 +247,10 @@ export default function DailyLogScreen({ navigation }: any) {
           <div class="nutrition-item">
             <div class="nutrition-value">${Math.round(macroData.total.fat)}g</div>
             <div class="nutrition-label">Fat</div>
+          </div>
+          <div class="nutrition-item">
+            <div class="nutrition-value">${Math.round(macroData.total.fiber)}g</div>
+            <div class="nutrition-label">Fiber</div>
           </div>
         </div>
       </div>
@@ -268,7 +283,7 @@ export default function DailyLogScreen({ navigation }: any) {
     }
 
     // Generate CSV content
-    let csvContent = 'Date,Meal Type,Food Item,Portion,Calories,Protein (g),Carbs (g),Fat (g),Time,Feeling\n';
+    let csvContent = 'Date,Meal Type,Food Item,Portion,Calories,Protein (g),Carbs (g),Fat (g),Fiber (g),Time,Feeling\n';
 
     sortedLogs.forEach((dayLog) => {
       const date = new Date(dayLog.date).toLocaleDateString();
@@ -282,9 +297,10 @@ export default function DailyLogScreen({ navigation }: any) {
           const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) : '';
           const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) : '';
           const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) : '';
+          const fiber = (typeof food !== 'string' && food.fiber) ? Math.round(food.fiber) : '';
           const time = dayLog.mealTimes?.breakfast || '';
           const feeling = dayLog.mealFeelings?.breakfast || '';
-          csvContent += `${date},Breakfast,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${time},${feeling}\n`;
+          csvContent += `${date},Breakfast,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${fiber},${time},${feeling}\n`;
         });
       }
 
@@ -297,9 +313,10 @@ export default function DailyLogScreen({ navigation }: any) {
           const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) : '';
           const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) : '';
           const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) : '';
+          const fiber = (typeof food !== 'string' && food.fiber) ? Math.round(food.fiber) : '';
           const time = dayLog.mealTimes?.lunch || '';
           const feeling = dayLog.mealFeelings?.lunch || '';
-          csvContent += `${date},Lunch,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${time},${feeling}\n`;
+          csvContent += `${date},Lunch,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${fiber},${time},${feeling}\n`;
         });
       }
 
@@ -312,9 +329,10 @@ export default function DailyLogScreen({ navigation }: any) {
           const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) : '';
           const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) : '';
           const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) : '';
+          const fiber = (typeof food !== 'string' && food.fiber) ? Math.round(food.fiber) : '';
           const time = dayLog.mealTimes?.dinner || '';
           const feeling = dayLog.mealFeelings?.dinner || '';
-          csvContent += `${date},Dinner,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${time},${feeling}\n`;
+          csvContent += `${date},Dinner,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${fiber},${time},${feeling}\n`;
         });
       }
 
@@ -349,8 +367,9 @@ export default function DailyLogScreen({ navigation }: any) {
           const protein = (typeof food !== 'string' && food.protein) ? Math.round(food.protein) : '';
           const carbs = (typeof food !== 'string' && food.carbs) ? Math.round(food.carbs) : '';
           const fat = (typeof food !== 'string' && food.fat) ? Math.round(food.fat) : '';
+          const fiber = (typeof food !== 'string' && food.fiber) ? Math.round(food.fiber) : '';
           const time = item.time;
-          csvContent += `${date},Snack,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${time},\n`;
+          csvContent += `${date},Snack,"${foodName}",${portion},${calories},${protein},${carbs},${fat},${fiber},${time},\n`;
         });
       }
     });
@@ -685,6 +704,10 @@ export default function DailyLogScreen({ navigation }: any) {
                         <View style={styles.macroSummaryItem}>
                           <Text style={styles.macroSummaryValue}>{Math.round(macroData.total.fat)}g</Text>
                           <Text style={styles.macroSummaryLabel}>Fat</Text>
+                        </View>
+                        <View style={styles.macroSummaryItem}>
+                          <Text style={styles.macroSummaryValue}>{Math.round(macroData.total.fiber)}g</Text>
+                          <Text style={styles.macroSummaryLabel}>Fiber</Text>
                         </View>
                       </View>
                     </View>

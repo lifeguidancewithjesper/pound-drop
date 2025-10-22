@@ -114,6 +114,19 @@ export default function NutritionEducationScreen() {
                       ))}
                     </View>
                   )}
+
+                  {/* References */}
+                  {topic.references && topic.references.length > 0 && (
+                    <View style={styles.referencesSection}>
+                      <Text style={styles.sectionTitle}>References:</Text>
+                      {topic.references.map((reference, index) => (
+                        <View key={index} style={styles.referenceRow}>
+                          <Text style={styles.referenceNumber}>[{index + 1}]</Text>
+                          <Text style={styles.referenceText}>{reference}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
 
@@ -484,6 +497,32 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   citationDisclaimer: {
+    fontSize: 12,
+    color: '#78350F',
+    lineHeight: 18,
+  },
+  referencesSection: {
+    backgroundColor: '#FEF3C7',
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#F59E0B',
+  },
+  referenceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  referenceNumber: {
+    fontSize: 12,
+    color: '#92400E',
+    fontWeight: 'bold',
+    marginRight: 6,
+    minWidth: 22,
+  },
+  referenceText: {
+    flex: 1,
     fontSize: 12,
     color: '#78350F',
     lineHeight: 18,
