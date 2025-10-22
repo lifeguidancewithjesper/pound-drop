@@ -84,6 +84,19 @@ export interface CustomFood {
   fiber: number;
 }
 
+export interface ProgressPhoto {
+  id: string;
+  date: string;
+  timestamp: number;
+  weight?: number;
+  waist?: string;
+  hips?: string;
+  frontPhotoUri: string;
+  sidePhotoUri?: string;
+  backPhotoUri?: string;
+  notes?: string;
+}
+
 interface StorageContextType {
   logs: DailyLog[];
   addLog: (log: Partial<DailyLog>) => void;
@@ -116,6 +129,10 @@ interface StorageContextType {
   customFoods: CustomFood[];
   addCustomFood: (food: Omit<CustomFood, 'id'>) => Promise<void>;
   getCustomFoods: () => CustomFood[];
+  progressPhotos: ProgressPhoto[];
+  addProgressPhoto: (photo: Omit<ProgressPhoto, 'id' | 'timestamp'>) => Promise<void>;
+  deleteProgressPhoto: (id: string) => Promise<void>;
+  getProgressPhotos: () => ProgressPhoto[];
 }
 
 const StorageContext = createContext<StorageContextType | undefined>(undefined);
@@ -128,6 +145,7 @@ const STARTING_WEIGHT_UNIT_KEY = 'pounddrop_starting_weight_unit';
 const HIGHEST_MILESTONE_KEY = 'pounddrop_highest_milestone';
 const CHALLENGE_START_DATE_KEY = 'pounddrop_challenge_start_date';
 const CUSTOM_FOODS_KEY = 'pounddrop_custom_foods';
+const PROGRESS_PHOTOS_KEY = 'pounddrop_progress_photos';
 
 // Deep merge helper for nested objects
 function deepMerge(target: any, source: any): any {
@@ -155,6 +173,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
   const [highestMilestone, setHighestMilestoneState] = useState<number>(0);
   const [challengeStartDate, setChallengeStartDateState] = useState<string | null>(null);
   const [customFoods, setCustomFoods] = useState<CustomFood[]>([]);
+  const [progressPhotos, setProgressPhotos] = useState<ProgressPhoto[]>([]);
 
   // Load data on mount
   useEffect(() => {
@@ -165,6 +184,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     loadHighestMilestone();
     loadChallengeStartDate();
     loadCustomFoods();
+    loadProgressPhotos();
   }, []);
 
   // Save data whenever logs change
@@ -418,6 +438,47 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     return customFoods;
   };
 
+  const loadProgressPhotos = async () => {
+    try {
+      const data = await SecureStore.getItemAsync(PROGRESS_PHOTOS_KEY);
+      if (data) {
+        const parsedPhotos = JSON.parse(data);
+        setProgressPhotos(parsedPhotos);
+      }
+    } catch (error) {
+      console.error('Error loading progress photos:', error);
+    }
+  };
+
+  const saveProgressPhotos = async (photos: ProgressPhoto[]) => {
+    try {
+      await SecureStore.setItemAsync(PROGRESS_PHOTOS_KEY, JSON.stringify(photos));
+    } catch (error) {
+      console.error('Error saving progress photos:', error);
+    }
+  };
+
+  const addProgressPhoto = async (photo: Omit<ProgressPhoto, 'id' | 'timestamp'>) => {
+    const newPhoto: ProgressPhoto = {
+      ...photo,
+      id: `photo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: Date.now()
+    };
+    const updatedPhotos = [...progressPhotos, newPhoto].sort((a, b) => b.timestamp - a.timestamp);
+    setProgressPhotos(updatedPhotos);
+    await saveProgressPhotos(updatedPhotos);
+  };
+
+  const deleteProgressPhoto = async (id: string) => {
+    const updatedPhotos = progressPhotos.filter(photo => photo.id !== id);
+    setProgressPhotos(updatedPhotos);
+    await saveProgressPhotos(updatedPhotos);
+  };
+
+  const getProgressPhotos = () => {
+    return progressPhotos;
+  };
+
   const getTodayLog = () => {
     const today = new Date().toISOString().split('T')[0];
     return logs.find(log => log.date === today);
@@ -534,6 +595,7 @@ export function StorageProvider({ children }: { children: ReactNode }) {
     await loadHighestMilestone();
     await loadChallengeStartDate();
     await loadCustomFoods();
+    await loadProgressPhotos();
   };
 
   return (
@@ -563,7 +625,11 @@ export function StorageProvider({ children }: { children: ReactNode }) {
       reloadAllData,
       customFoods,
       addCustomFood,
-      getCustomFoods
+      getCustomFoods,
+      progressPhotos,
+      addProgressPhoto,
+      deleteProgressPhoto,
+      getProgressPhotos
     }}>
       {children}
     </StorageContext.Provider>

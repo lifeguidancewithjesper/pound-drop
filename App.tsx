@@ -22,6 +22,9 @@ import RestaurantGuideScreen from './src/screens/RestaurantGuideScreen';
 import PersonalizedWorkoutScreen from './src/screens/PersonalizedWorkoutScreen';
 import FoodSwapScreen from './src/screens/FoodSwapScreen';
 import NutritionEducationScreen from './src/screens/NutritionEducationScreen';
+import ProgressPhotosScreen from './src/screens/ProgressPhotosScreen';
+import ComparePhotosScreen from './src/screens/ComparePhotosScreen';
+import SharePhotoScreen from './src/screens/SharePhotoScreen';
 import { StorageProvider } from './src/context/StorageContext';
 import { SubscriptionProvider } from './src/context/SubscriptionContext';
 
@@ -172,6 +175,9 @@ export default function App() {
               <Stack.Screen name="PersonalizedWorkout" component={PersonalizedWorkoutScreen} />
               <Stack.Screen name="FoodSwap" component={FoodSwapScreen} />
               <Stack.Screen name="NutritionEducation" component={NutritionEducationScreen} />
+              <Stack.Screen name="ProgressPhotos" component={ProgressPhotosScreen} />
+              <Stack.Screen name="ComparePhotos" component={ComparePhotosScreen} />
+              <Stack.Screen name="SharePhoto" component={SharePhotoScreen} />
             </Stack.Navigator>
           ) : (
             // User is not logged in - show authentication screens
