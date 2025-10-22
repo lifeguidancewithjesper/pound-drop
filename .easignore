@@ -48,3 +48,6 @@ __tests__/
 .env.local
 .env.development
 coverage/
+# Native build folders (EAS rebuilds these from scratch - CRITICAL!)
+ios/
+android/
