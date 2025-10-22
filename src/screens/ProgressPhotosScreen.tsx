@@ -1,8 +1,8 @@
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, Modal } from 'react-native';
 import { useStorage, ProgressPhoto } from '../context/StorageContext';
-import { theme } from '../utils/theme';
+import theme from '../utils/theme';
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
 
 export default function ProgressPhotosScreen({ navigation }: any) {
   const { progressPhotos, addProgressPhoto, deleteProgressPhoto, getTodayLog, weightUnit } = useStorage();

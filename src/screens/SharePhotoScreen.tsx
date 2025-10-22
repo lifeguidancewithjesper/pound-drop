@@ -1,7 +1,7 @@
+import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
-import { useRef } from 'react';
 import { ProgressPhoto, useStorage } from '../context/StorageContext';
-import { theme } from '../utils/theme';
+import theme from '../utils/theme';
 import * as Sharing from 'expo-sharing';
 import { captureRef } from 'react-native-view-shot';
 import * as FileSystem from 'expo-file-system';

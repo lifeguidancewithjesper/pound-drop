@@ -1,7 +1,7 @@
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { useState } from 'react';
 import { useStorage, ProgressPhoto } from '../context/StorageContext';
-import { theme } from '../utils/theme';
+import theme from '../utils/theme';
 
 export default function ComparePhotosScreen({ navigation }: any) {
   const { progressPhotos, weightUnit } = useStorage();
