@@ -618,6 +618,19 @@ export default function DashboardScreen() {
               <Text style={styles.quickActionTitle}>Check Cravings</Text>
               <Text style={styles.quickActionSubtitle}>Track & manage urges</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => navigation.navigate('ProgressPhotos' as never)}
+              activeOpacity={0.8}
+              data-testid="button-progress-photos"
+            >
+              <View style={styles.quickActionIcon}>
+                <Ionicons name="camera" size={32} color="#06B6D4" />
+              </View>
+              <Text style={styles.quickActionTitle}>Progress Photos</Text>
+              <Text style={styles.quickActionSubtitle}>Visual transformation tracker</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
