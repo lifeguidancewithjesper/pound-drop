@@ -52,6 +52,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Good: Quinoa, whole grain bread',
       'Limit: White bread, sugary cereals',
       'Limit: Candy, soda, pastries'
+    ],
+    references: [
+      'USDA Dietary Guidelines - Carbohydrate recommendations',
+      'NIH Office of Dietary Supplements - Complex vs simple carbohydrates',
+      'Academy of Nutrition and Dietetics - Carbohydrate timing for athletes'
     ]
   },
   {
@@ -71,6 +76,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Great: Fatty fish (salmon, mackerel)',
       'Good: Nut butters, seeds',
       'Avoid: Fried foods, margarine'
+    ],
+    references: [
+      'American Heart Association - Monounsaturated and polyunsaturated fats',
+      'NIH Dietary Guidelines - Fat-soluble vitamin absorption',
+      'Academy of Nutrition and Dietetics - Healthy fats and satiety'
     ]
   },
 
@@ -92,6 +102,11 @@ export const nutritionEducation: EducationTopic[] = [
       '3-egg omelet with veggies',
       'Protein smoothie with banana',
       'Cottage cheese with fruit'
+    ],
+    references: [
+      'NIH Dietary Guidelines - Breakfast and appetite control',
+      'American Journal of Clinical Nutrition - Protein breakfast and satiety',
+      'Academy of Nutrition and Dietetics - Morning protein intake benefits'
     ]
   },
   {
@@ -111,6 +126,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Post-workout: rice, sweet potato',
       'Evening: focus on protein + veggies',
       'Morning: balanced with protein'
+    ],
+    references: [
+      'Journal of Sports Science - Nutrient timing and exercise performance',
+      'NIH Dietary Guidelines - Carbohydrate timing for physical activity',
+      'Academy of Nutrition and Dietetics - Post-exercise nutrition'
     ]
   },
   {
@@ -130,6 +150,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Start eating: 11 AM next day',
       'Eat 2-3 meals in 8-hour window',
       'Water, black coffee okay while fasting'
+    ],
+    references: [
+      'NIH Research - Intermittent fasting and metabolic health',
+      'Cell Metabolism Journal - Fasting and cellular autophagy',
+      'American Journal of Clinical Nutrition - Time-restricted eating'
     ]
   },
 
@@ -151,6 +176,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Whole: Eggs, quinoa, salmon',
       'Processed: Chips, cookies, soda',
       'Processed: Frozen meals, candy'
+    ],
+    references: [
+      'USDA Dietary Guidelines - Whole foods vs processed foods',
+      'American Journal of Clinical Nutrition - Ultra-processed foods and health',
+      'NIH Office of Disease Prevention - Nutrient density in whole foods'
     ]
   },
   {
@@ -219,6 +249,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Dinner: Salmon, sweet potato, broccoli',
       'Breakfast: Eggs, toast, fruit',
       'Adjust portions based on hunger'
+    ],
+    references: [
+      'USDA MyPlate - Balanced meal composition guidelines',
+      'American Diabetes Association - Plate method for portion control',
+      'Academy of Nutrition and Dietetics - Visual portion guides'
     ]
   },
   {
@@ -238,6 +273,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Weekend: enjoy social meals',
       'Daily: 1 small treat if desired',
       'Focus on overall week, not one meal'
+    ],
+    references: [
+      'Academy of Nutrition and Dietetics - Sustainable eating patterns',
+      'NIH Behavioral Research - Flexible dietary restraint',
+      'Journal of Nutrition - Long-term diet adherence strategies'
     ]
   },
   {
@@ -257,6 +297,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Rice: size of your fist',
       'Nut butter: size of your thumb',
       'Vegetables: 2 hands full'
+    ],
+    references: [
+      'Academy of Nutrition and Dietetics - Hand-based portion guides',
+      'USDA ChooseMyPlate - Portion size recommendations',
+      'NIH Dietary Guidelines - Practical portion control methods'
     ]
   },
 
@@ -278,6 +323,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Use smaller plates (9-inch)',
       'Drink water between bites',
       'Check hunger: 1-10 scale before eating'
+    ],
+    references: [
+      'NIH Behavioral Research - Mindful eating and weight management',
+      'Academy of Nutrition and Dietetics - Mindfulness in nutrition',
+      'American Journal of Clinical Nutrition - Eating rate and satiety'
     ]
   },
   {
@@ -297,6 +347,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Call a friend',
       'Brush teeth (changes taste)',
       'Have healthy swap ready'
+    ],
+    references: [
+      'NIH Behavioral Research - Food cravings and emotional eating',
+      'Academy of Nutrition and Dietetics - Craving management strategies',
+      'Journal of Health Psychology - Mindfulness and craving reduction'
     ]
   },
   {
@@ -316,6 +371,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Chop veggies for week',
       'Make overnight oats',
       'Pre-portion snacks in baggies'
+    ],
+    references: [
+      'Academy of Nutrition and Dietetics - Meal planning for healthy eating',
+      'USDA Food Safety Guidelines - Safe meal prep and storage',
+      'NIH Behavioral Research - Planning and dietary adherence'
     ]
   },
   {
@@ -335,6 +395,11 @@ export const nutritionEducation: EducationTopic[] = [
       'Skip: creamy sauces, fried apps',
       'Swap: fries for veggies',
       'Share: dessert if desired'
+    ],
+    references: [
+      'Academy of Nutrition and Dietetics - Dining out strategies',
+      'USDA ChooseMyPlate - Making healthy restaurant choices',
+      'NIH Dietary Guidelines - Portion control in restaurants'
     ]
   },
 ];
