@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -117,11 +118,11 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
         <View style={styles.pricingCard}>
           <View style={styles.priceContainer}>
             <Text style={styles.currency}>$</Text>
-            <Text style={styles.price}>4.99</Text>
+            <Text style={styles.price}>4.95</Text>
             <Text style={styles.period}>/month</Text>
           </View>
           <Text style={styles.pricingSubtitle}>
-            or get lifetime access for $49.99 one-time payment
+            or get lifetime access for $47 one-time payment
           </Text>
           <View style={styles.trialBadge}>
             <Ionicons name="gift-outline" size={20} color="#10B981" />
@@ -147,8 +148,29 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
 
         {/* Terms */}
         <Text style={styles.terms}>
-          Your subscription will automatically renew monthly at $4.99 unless canceled at least 24 hours before the end of the current period. Subscriptions are managed through your Apple ID and can be canceled anytime in your iPhone Settings.
+          Your subscription will automatically renew monthly at $4.95 unless canceled at least 24 hours before the end of the current period. Subscriptions are managed through your Apple ID and can be canceled anytime in your iPhone Settings.
         </Text>
+
+        {/* Legal Links */}
+        <View style={styles.legalLinks}>
+          <TouchableOpacity 
+            onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+            style={styles.legalLinkButton}
+          >
+            <Text style={styles.legalLinkText}>Terms of Use (EULA)</Text>
+            <Ionicons name="open-outline" size={14} color="#8B5CF6" />
+          </TouchableOpacity>
+          
+          <Text style={styles.legalSeparator}>•</Text>
+          
+          <TouchableOpacity 
+            onPress={() => Linking.openURL('https://www.apple.com/legal/privacy/')}
+            style={styles.legalLinkButton}
+          >
+            <Text style={styles.legalLinkText}>Privacy Policy</Text>
+            <Ionicons name="open-outline" size={14} color="#8B5CF6" />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* Subscribe Button */}
@@ -334,7 +356,30 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     lineHeight: 18,
     textAlign: 'center',
+    marginBottom: 16,
+  },
+  legalLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
+    paddingHorizontal: 20,
+  },
+  legalLinkButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  legalLinkText: {
+    fontSize: 13,
+    color: '#8B5CF6',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  legalSeparator: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginHorizontal: 12,
   },
   footer: {
     padding: 20,
