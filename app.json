@@ -10,7 +10,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "description": "Your personal weight loss tracking companion with meal logging, habit tracking, and progress insights.",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -37,7 +39,11 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE", "NOTIFICATIONS"]
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "NOTIFICATIONS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -54,10 +60,18 @@
         {
           "ios": {
             "deploymentTarget": "15.1"
+          },
+          "android": {
+            "kotlinVersion": "2.1.20"
           }
         }
       ],
-      "react-native-iap"
+      [
+        "react-native-iap",
+        {
+          "enablePendingPurchases": true
+        }
+      ]
     ]
   }
 }
