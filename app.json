@@ -21,7 +21,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.lifeguidancewithjesper.pounddrop",
-      "buildNumber": "24",
+      "buildNumber": "23",
       "icon": "./assets/logo-pound-drop.png",
       "infoPlist": {
         "NSCameraUsageDescription": "Take photos of your meals for tracking",
@@ -54,7 +54,16 @@
       }
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "react-native-iap",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.1.20"
+          }
+        }
+      ]
     ]
   }
 }
