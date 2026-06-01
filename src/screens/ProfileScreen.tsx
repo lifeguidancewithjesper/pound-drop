@@ -482,43 +482,6 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
     setShowSubscriptionModal(true);
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete Account',
-          style: 'destructive',
-          onPress: async () => {
-            Alert.alert(
-              'Final Confirmation',
-              'This will permanently delete all your data. Type DELETE to confirm.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Confirm Delete',
-                  style: 'destructive',
-                  onPress: async () => {
-                    try {
-                      await SecureStore.deleteItemAsync('pounddrop_user');
-                      await SecureStore.deleteItemAsync('pounddrop_logs');
-                      Alert.alert('Account Deleted', 'Your account and all data have been permanently deleted.');
-                    } catch (error) {
-                      console.error('Error deleting account:', error);
-                      Alert.alert('Error', 'Failed to delete account. Please try again.');
-                    }
-                  }
-                }
-              ]
-            );
-          }
-        }
-      ]
-    );
-  };
-
   const handleResetData = () => {
     Alert.alert(
       'Reset Progress',
@@ -665,6 +628,57 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
             }
           }
         },
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to permanently delete your account? All your data including weight logs, meal history, and progress will be deleted. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Final Confirmation',
+              'This will permanently delete all your data. Are you absolutely sure?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Yes, Delete Everything',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      const keys = [
+                        'pounddrop_user',
+                        'pounddrop_logs',
+                        'pounddrop_subscription',
+                        'pounddrop_challenge_start',
+                        'pounddrop_weight_unit',
+                        'pounddrop_starting_weight',
+                        'pounddrop_milestones',
+                      ];
+                      for (const key of keys) {
+                        await SecureStore.deleteItemAsync(key);
+                      }
+                      Alert.alert(
+                        'Account Deleted',
+                        'Your account and all data have been permanently deleted.',
+                        [{ text: 'OK', onPress: () => { if (onLogout) onLogout(); } }]
+                      );
+                    } catch (error) {
+                      console.error('Error deleting account:', error);
+                      Alert.alert('Error', 'Failed to delete account. Please try again.');
+                    }
+                  }
+                }
+              ]
+            );
+          }
+        }
       ]
     );
   };
@@ -858,6 +872,12 @@ export default function ProfileScreen({ onLogout }: { onLogout?: () => void }) {
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={24} color="#EF4444" />
           <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+
+        {/* Delete Account Button */}
+        <TouchableOpacity style={styles.deleteAccountButton} onPress={handleDeleteAccount}>
+          <Ionicons name="trash-outline" size={24} color="#9CA3AF" />
+          <Text style={styles.deleteAccountText}>Delete Account</Text>
         </TouchableOpacity>
 
         {/* App Version */}
@@ -1080,6 +1100,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#EF4444',
+    marginLeft: 8,
+  },
+  deleteAccountButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  deleteAccountText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#9CA3AF',
     marginLeft: 8,
   },
   versionText: {

@@ -30,6 +30,27 @@ export default function LoginScreen({
   const [isLoading, setIsLoading] = useState(false);
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
 
+  const DEMO_EMAIL = 'test@pounddropapp.com';
+  const DEMO_PASSWORD = 'Harry_46123';
+
+  const ensureDemoAccount = async () => {
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + 3);
+    const demoUser = {
+      username: 'testuser',
+      email: DEMO_EMAIL,
+      password: DEMO_PASSWORD,
+      currentWeight: '180',
+      targetWeight: '160',
+      startWeight: '180',
+      createdAt: new Date().toISOString(),
+      subscriptionStatus: 'trial',
+      trialEndsAt: trialEndDate.toISOString(),
+    };
+    await SecureStore.setItemAsync('pounddrop_user', JSON.stringify(demoUser));
+    return demoUser;
+  };
+
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
@@ -38,8 +59,14 @@ export default function LoginScreen({
 
     setIsLoading(true);
     try {
-      const storedUser = await SecureStore.getItemAsync('pounddrop_user');
+      let storedUser = await SecureStore.getItemAsync('pounddrop_user');
       
+      // Auto-create demo account if logging in with demo credentials and no account exists
+      if (!storedUser && email === DEMO_EMAIL && password === DEMO_PASSWORD) {
+        const demoUser = await ensureDemoAccount();
+        storedUser = JSON.stringify(demoUser);
+      }
+
       if (!storedUser) {
         Alert.alert('Error', 'No account found. Please create an account first.');
         setIsLoading(false);

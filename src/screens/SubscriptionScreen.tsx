@@ -8,212 +8,125 @@ import {
   Alert,
   ActivityIndicator,
   Linking,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSubscription } from '../context/SubscriptionContext';
-import {
-  initConnection,
-  endConnection,
-  getSubscriptions,
-  getProducts,
-  requestPurchase,
-  requestSubscription,
-  finishTransaction,
-  purchaseUpdatedListener,
-  purchaseErrorListener,
-  type ProductPurchase,
-  type PurchaseError,
-  type Product,
-  type Subscription,
-} from 'react-native-iap';
+import Purchases, { PurchasesPackage, PurchasesOffering } from 'react-native-purchases';
+
+const REVENUECAT_IOS_API_KEY = 'appl_dmlsaBLEOqcArrhcWncgFVaxxEs';
+
+// Entitlement identifier (must match exactly what's in RevenueCat dashboard)
+const ENTITLEMENT_ID = 'Pounddrop Pro';
 
 type SubscriptionScreenProps = {
   onClose: () => void;
 };
-
-// Product IDs from App Store Connect
-const SUBSCRIPTION_SKUS = Platform.select({
-  ios: ['com.lifeguidancewithjesper.pounddrop.monthly.v2'],
-  android: ['com.lifeguidancewithjesper.pounddrop.monthly.v2'],
-  default: [],
-});
-
-const PRODUCT_SKUS = Platform.select({
-  ios: ['com.lifeguidancewithjesper.pounddrop.premium_lifetime'],
-  android: ['com.lifeguidancewithjesper.pounddrop.premium_lifetime'],
-  default: [],
-});
 
 export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps) {
   const { activateSubscription, daysRemainingInTrial } = useSubscription();
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [monthlyProduct, setMonthlyProduct] = useState<Subscription | null>(null);
-  const [lifetimeProduct, setLifetimeProduct] = useState<Product | null>(null);
+  const [offering, setOffering] = useState<PurchasesOffering | null>(null);
+  const [monthlyPackage, setMonthlyPackage] = useState<PurchasesPackage | null>(null);
+  const [lifetimePackage, setLifetimePackage] = useState<PurchasesPackage | null>(null);
 
   useEffect(() => {
-    let purchaseUpdateSubscription: any;
-    let purchaseErrorSubscription: any;
-
-    const setupIAP = async () => {
+    const setupRevenueCat = async () => {
       try {
-        // Initialize connection to App Store/Play Store
-        await initConnection();
-        console.log('IAP connection initialized');
+        Purchases.configure({ apiKey: REVENUECAT_IOS_API_KEY });
 
-        // Get available products
-        const subscriptions = await getSubscriptions({ skus: SUBSCRIPTION_SKUS });
-        const products = await getProducts({ skus: PRODUCT_SKUS });
+        const offerings = await Purchases.getOfferings();
+        if (offerings.current) {
+          setOffering(offerings.current);
 
-        if (subscriptions && subscriptions.length > 0) {
-          setMonthlyProduct(subscriptions[0]);
-          console.log('Monthly subscription loaded:', subscriptions[0]);
-        }
-
-        if (products && products.length > 0) {
-          setLifetimeProduct(products[0]);
-          console.log('Lifetime product loaded:', products[0]);
-        }
-
-        // Listen for purchase updates
-        purchaseUpdateSubscription = purchaseUpdatedListener(
-          async (purchase: ProductPurchase) => {
-            console.log('Purchase update received:', purchase);
-            const receipt = purchase.transactionReceipt;
-            
-            if (receipt) {
-              try {
-                // Finish the transaction
-                await finishTransaction({ purchase, isConsumable: false });
-                
-                // Activate subscription in app
-                await activateSubscription();
-                
-                Alert.alert(
-                  'Success! 🎉',
-                  'Your subscription has been activated. Enjoy unlimited access to Pound Drop!',
-                  [
-                    {
-                      text: 'Continue',
-                      onPress: () => onClose()
-                    }
-                  ]
-                );
-              } catch (error) {
-                console.error('Error finishing transaction:', error);
-              }
+          for (const pkg of offerings.current.availablePackages) {
+            const identifier = pkg.product.identifier;
+            if (identifier.includes('monthly')) {
+              setMonthlyPackage(pkg);
+            } else if (identifier.includes('lifetime') || pkg.packageType === 'LIFETIME') {
+              setLifetimePackage(pkg);
             }
           }
-        );
-
-        // Listen for purchase errors
-        purchaseErrorSubscription = purchaseErrorListener(
-          (error: PurchaseError) => {
-            if (error.code !== 'E_USER_CANCELLED') {
-              console.error('Purchase error:', error);
-              Alert.alert('Purchase Failed', error.message || 'An error occurred during purchase.');
-            }
-            setIsPurchasing(false);
-          }
-        );
-
-        setIsLoading(false);
+        }
       } catch (error) {
-        console.error('Error setting up IAP:', error);
-        // Silently fail - still show subscription options with default prices
-        // IAP may not be available in all environments (e.g. simulator)
+        console.log('RevenueCat setup error (non-fatal):', error);
+      } finally {
         setIsLoading(false);
       }
     };
 
-    setupIAP();
-
-    // Cleanup on unmount
-    return () => {
-      if (purchaseUpdateSubscription) {
-        purchaseUpdateSubscription.remove();
-      }
-      if (purchaseErrorSubscription) {
-        purchaseErrorSubscription.remove();
-      }
-      endConnection();
-    };
+    setupRevenueCat();
   }, []);
 
   const handleSubscribeMonthly = async () => {
-    const sku = monthlyProduct?.productId || 'com.lifeguidancewithjesper.pounddrop.monthly.v2';
+    if (!monthlyPackage) {
+      Alert.alert('Subscription Unavailable', 'Unable to load subscription at this time. Please check your internet connection and try again.');
+      return;
+    }
     setIsPurchasing(true);
-    
     try {
-      await requestSubscription({
-        sku,
-        ...(Platform.OS === 'android' && {
-          subscriptionOffers: [
-            {
-              sku,
-              offerToken: (monthlyProduct as any)?.subscriptionOfferDetails?.[0]?.offerToken || '',
-            },
-          ],
-        }),
-      });
-    } catch (error: any) {
-      console.error('Subscription error:', error);
-      if (error.code !== 'E_USER_CANCELLED') {
-        Alert.alert('Error', 'Failed to process subscription. Please try again.');
+      const { customerInfo } = await Purchases.purchasePackage(monthlyPackage);
+      if (customerInfo.entitlements.active[ENTITLEMENT_ID]) {
+        await activateSubscription();
+        Alert.alert(
+          'Success! 🎉',
+          'Your subscription is active. Enjoy Pound Drop!',
+          [{ text: 'Continue', onPress: () => onClose() }]
+        );
       }
+    } catch (error: any) {
+      if (!error.userCancelled) {
+        Alert.alert('Purchase Failed', error.message || 'An error occurred. Please try again.');
+      }
+    } finally {
       setIsPurchasing(false);
     }
   };
 
   const handlePurchaseLifetime = async () => {
-    const sku = lifetimeProduct?.productId || 'com.lifeguidancewithjesper.pounddrop.premium_lifetime';
+    if (!lifetimePackage) {
+      Alert.alert('Purchase Unavailable', 'Unable to load lifetime access at this time. Please check your internet connection and try again.');
+      return;
+    }
     setIsPurchasing(true);
-    
     try {
-      await requestPurchase({ skus: [sku] });
-    } catch (error: any) {
-      console.error('Purchase error:', error);
-      if (error.code !== 'E_USER_CANCELLED') {
-        Alert.alert('Error', 'Failed to process purchase. Please try again.');
+      const { customerInfo } = await Purchases.purchasePackage(lifetimePackage);
+      if (customerInfo.entitlements.active[ENTITLEMENT_ID]) {
+        await activateSubscription();
+        Alert.alert(
+          'Success! 🎉',
+          'You now have lifetime access to Pound Drop!',
+          [{ text: 'Continue', onPress: () => onClose() }]
+        );
       }
+    } catch (error: any) {
+      if (!error.userCancelled) {
+        Alert.alert('Purchase Failed', error.message || 'An error occurred. Please try again.');
+      }
+    } finally {
       setIsPurchasing(false);
     }
   };
 
   const handleRestorePurchases = async () => {
     setIsRestoring(true);
-    
     try {
-      // Note: react-native-iap handles restore automatically
-      // When user taps restore, iOS will check for existing purchases
-      // and trigger purchaseUpdatedListener if found
-      
-      Alert.alert(
-        'Restore Purchases',
-        'Checking for previous purchases...',
-        [
-          {
-            text: 'OK',
-            onPress: async () => {
-              // The restore happens automatically through Apple
-              // If purchase exists, purchaseUpdatedListener will fire
-              setTimeout(() => {
-                setIsRestoring(false);
-                Alert.alert(
-                  'Restore Complete',
-                  'If you had a previous purchase, it has been restored. If not, you may need to subscribe again.'
-                );
-              }, 2000);
-            }
-          }
-        ]
-      );
-    } catch (error) {
-      console.error('Restore error:', error);
-      Alert.alert('Error', 'Failed to restore purchases. Please try again.');
+      const customerInfo = await Purchases.restorePurchases();
+      if (customerInfo.entitlements.active[ENTITLEMENT_ID]) {
+        await activateSubscription();
+        Alert.alert(
+          'Restored! ✅',
+          'Your purchase has been restored.',
+          [{ text: 'Continue', onPress: () => onClose() }]
+        );
+      } else {
+        Alert.alert('No Purchase Found', 'We could not find a previous purchase on this Apple ID.');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to restore purchases. Please try again.');
+    } finally {
       setIsRestoring(false);
     }
   };
@@ -227,12 +140,11 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
     { icon: 'analytics-outline', title: 'Progress Reports', description: 'Celebrate wins and stay motivated' },
   ];
 
-  const monthlyPrice = monthlyProduct?.localizedPrice || '$4.95';
-  const lifetimePrice = lifetimeProduct?.localizedPrice || '$49.99';
+  const monthlyPrice = monthlyPackage?.product.priceString || '$4.95';
+  const lifetimePrice = lifetimePackage?.product.priceString || '$49.99';
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
           <Ionicons name="close" size={28} color="#1F2937" />
@@ -242,7 +154,6 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Loading State */}
         {isLoading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#8B5CF6" />
@@ -252,7 +163,6 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
 
         {!isLoading && (
           <>
-            {/* Trial Banner */}
             {daysRemainingInTrial > 0 && (
               <View style={styles.trialBanner}>
                 <Ionicons name="time-outline" size={24} color="#8B5CF6" />
@@ -262,10 +172,8 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
               </View>
             )}
 
-            {/* Pricing Cards */}
             <View style={styles.pricingSection}>
-              {/* Monthly Subscription - always show */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.pricingCard}
                 onPress={handleSubscribeMonthly}
                 disabled={isPurchasing || isRestoring}
@@ -278,13 +186,10 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
                   <Ionicons name="gift-outline" size={20} color="#10B981" />
                   <Text style={styles.trialBadgeText}>3-day free trial included</Text>
                 </View>
-                <Text style={styles.cardDescription}>
-                  Cancel anytime in iPhone Settings
-                </Text>
+                <Text style={styles.cardDescription}>Cancel anytime in iPhone Settings</Text>
               </TouchableOpacity>
 
-              {/* Lifetime Access - always show */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.pricingCard, styles.lifetimeCard]}
                 onPress={handlePurchaseLifetime}
                 disabled={isPurchasing || isRestoring}
@@ -296,13 +201,10 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
                   <Text style={styles.price}>{lifetimePrice}</Text>
                 </View>
                 <Text style={styles.lifetimeSubtitle}>One-time payment</Text>
-                <Text style={styles.cardDescription}>
-                  Lifetime access • No recurring charges
-                </Text>
+                <Text style={styles.cardDescription}>Lifetime access • No recurring charges</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Benefits Section */}
             <View style={styles.benefitsSection}>
               <Text style={styles.sectionTitle}>What You Get:</Text>
               {benefits.map((benefit, index) => (
@@ -318,24 +220,20 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
               ))}
             </View>
 
-            {/* Terms */}
             <Text style={styles.terms}>
               Your subscription will automatically renew monthly at {monthlyPrice} unless canceled at least 24 hours before the end of the current period. Subscriptions are managed through your Apple ID and can be canceled anytime in your iPhone Settings.
             </Text>
 
-            {/* Legal Links */}
             <View style={styles.legalLinks}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
                 style={styles.legalLinkButton}
               >
                 <Text style={styles.legalLinkText}>Terms of Use (EULA)</Text>
                 <Ionicons name="open-outline" size={14} color="#8B5CF6" />
               </TouchableOpacity>
-              
               <Text style={styles.legalSeparator}>•</Text>
-              
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => Linking.openURL('https://www.apple.com/legal/privacy/')}
                 style={styles.legalLinkButton}
               >
@@ -347,7 +245,6 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
         )}
       </ScrollView>
 
-      {/* Footer with Restore Button */}
       {!isLoading && (
         <View style={styles.footer}>
           <TouchableOpacity
@@ -368,10 +265,7 @@ export default function SubscriptionScreen({ onClose }: SubscriptionScreenProps)
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -382,30 +276,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
     backgroundColor: '#FFFFFF',
   },
-  closeButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  headerSpacer: {
-    width: 36,
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  loadingContainer: {
-    paddingVertical: 60,
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#6B7280',
-  },
+  closeButton: { padding: 4 },
+  headerTitle: { fontSize: 18, fontWeight: '600', color: '#1F2937' },
+  headerSpacer: { width: 36 },
+  scrollView: { flex: 1, paddingHorizontal: 20 },
+  loadingContainer: { paddingVertical: 60, alignItems: 'center' },
+  loadingText: { marginTop: 16, fontSize: 16, color: '#6B7280' },
   trialBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -415,15 +291,8 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 24,
   },
-  trialText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#8B5CF6',
-    marginLeft: 12,
-  },
-  pricingSection: {
-    marginBottom: 24,
-  },
+  trialText: { fontSize: 16, fontWeight: '600', color: '#8B5CF6', marginLeft: 12 },
+  pricingSection: { marginBottom: 24 },
   pricingCard: {
     backgroundColor: '#FFFFFF',
     padding: 24,
@@ -436,10 +305,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     marginBottom: 16,
   },
-  lifetimeCard: {
-    borderWidth: 2,
-    borderColor: '#8B5CF6',
-  },
+  lifetimeCard: { borderWidth: 2, borderColor: '#8B5CF6' },
   lifetimeBadge: {
     backgroundColor: '#8B5CF6',
     paddingHorizontal: 12,
@@ -447,32 +313,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
   },
-  lifetimeBadgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  price: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#8B5CF6',
-  },
-  period: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginTop: 16,
-  },
-  lifetimeSubtitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
+  lifetimeBadgeText: { fontSize: 12, fontWeight: 'bold', color: '#FFFFFF' },
+  priceContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
+  price: { fontSize: 48, fontWeight: 'bold', color: '#8B5CF6' },
+  period: { fontSize: 16, color: '#6B7280', marginTop: 16 },
+  lifetimeSubtitle: { fontSize: 18, fontWeight: '600', color: '#1F2937', marginBottom: 8 },
   trialBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -482,26 +327,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 8,
   },
-  trialBadgeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#10B981',
-    marginLeft: 8,
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  benefitsSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 16,
-  },
+  trialBadgeText: { fontSize: 14, fontWeight: '600', color: '#10B981', marginLeft: 8 },
+  cardDescription: { fontSize: 14, color: '#6B7280', textAlign: 'center' },
+  benefitsSection: { marginBottom: 24 },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#1F2937', marginBottom: 16 },
   benefitItem: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -523,20 +352,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  benefitText: {
-    flex: 1,
-  },
-  benefitTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  benefitDescription: {
-    fontSize: 14,
-    color: '#6B7280',
-    lineHeight: 20,
-  },
+  benefitText: { flex: 1 },
+  benefitTitle: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 4 },
+  benefitDescription: { fontSize: 14, color: '#6B7280', lineHeight: 20 },
   terms: {
     fontSize: 12,
     color: '#9CA3AF',
@@ -551,35 +369,20 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingHorizontal: 20,
   },
-  legalLinkButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
+  legalLinkButton: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legalLinkText: {
     fontSize: 13,
     color: '#8B5CF6',
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
-  legalSeparator: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginHorizontal: 12,
-  },
+  legalSeparator: { fontSize: 12, color: '#9CA3AF', marginHorizontal: 12 },
   footer: {
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
     backgroundColor: '#FFFFFF',
   },
-  restoreButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  restoreButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#8B5CF6',
-  },
+  restoreButton: { paddingVertical: 12, alignItems: 'center' },
+  restoreButtonText: { fontSize: 16, fontWeight: '600', color: '#8B5CF6' },
 });
